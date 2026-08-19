@@ -2,7 +2,13 @@
 // secrets are ever committed to GitHub. See SETUP.md for where to get them.
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -33,8 +39,27 @@ export function firebaseAuth(): Auth {
   return getAuth(getApp());
 }
 
+let firestore: Firestore | null = null;
+
+/**
+ * Firestore with an on-device cache. This is what makes Kite work offline:
+ * previously loaded rooms/messages still open with no signal, and anything
+ * you write while offline is queued and sent automatically once you are
+ * back online — no extra code at the call sites.
+ */
 export function db(): Firestore {
-  return getFirestore(getApp());
+  if (!firestore) {
+    const app = getApp();
+    try {
+      firestore = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      });
+    } catch {
+      // Already initialised (fast refresh), or storage blocked (private mode).
+      firestore = getFirestore(app);
+    }
+  }
+  return firestore;
 }
 
 export function storage(): FirebaseStorage {

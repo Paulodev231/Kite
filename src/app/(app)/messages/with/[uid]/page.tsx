@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { isAdmin, type DmMessage, type DmThread } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { logEvent } from "@/lib/log";
+import { markSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -59,6 +60,11 @@ function DmScreen() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // Reading the conversation clears its unread badge.
+  useEffect(() => {
+    if (threadId && messages.length > 0) markSeen(seenKeys.dmThread(threadId));
+  }, [threadId, messages]);
 
   async function send(text: string, file: File | null) {
     if (!user || !profile || !threadId || !peerUid) return;

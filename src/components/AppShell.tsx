@@ -6,8 +6,10 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { isAdmin } from "@/lib/types";
+import { useNotifications } from "@/context/NotificationContext";
+import { isAdmin, roleTag } from "@/lib/types";
 import PresenceCounter from "@/components/PresenceCounter";
+import OfflineBanner from "@/components/OfflineBanner";
 
 const TABS = [
   { href: "/broadcast", label: "Broadcast", icon: "📢" },
@@ -28,7 +30,10 @@ export default function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { profile, logout } = useAuth();
+  const { dmUnread, broadcastUnread } = useNotifications();
   const admin = isAdmin(profile?.role);
+  const badgeFor = (href: string) =>
+    href === "/messages" ? dmUnread : href === "/broadcast" ? broadcastUnread : 0;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -48,6 +53,8 @@ export default function AppShell({
         </div>
       </header>
 
+      <OfflineBanner />
+
       {/* Screen content */}
       <main className="screen flex-1 overflow-y-auto no-scrollbar">{children}</main>
 
@@ -56,6 +63,7 @@ export default function AppShell({
         <div className="mx-auto flex max-w-lg">
           {TABS.map((tab) => {
             const active = pathname.startsWith(tab.href);
+            const badge = badgeFor(tab.href);
             return (
               <Link
                 key={tab.href}
@@ -64,7 +72,14 @@ export default function AppShell({
                   active ? "text-brand" : "opacity-50"
                 } active:opacity-80`}
               >
-                <span className="text-xl leading-none">{tab.icon}</span>
+                <span className="relative text-xl leading-none">
+                  {tab.icon}
+                  {badge > 0 && (
+                    <span className="absolute -right-2.5 -top-1 min-w-[16px] rounded-full bg-red-500 px-1 text-[9px] font-bold leading-4 text-white">
+                      {badge > 9 ? "9+" : badge}
+                    </span>
+                  )}
+                </span>
                 {tab.label}
               </Link>
             );
@@ -88,7 +103,9 @@ export default function AppShell({
               </span>
               <div>
                 <p className="text-sm font-bold">{profile?.handle ?? "…"}</p>
-                <p className="text-xs capitalize opacity-60">{profile?.role ?? ""}</p>
+                {roleTag(profile?.role) && (
+                  <p className="text-xs font-semibold text-brand">{roleTag(profile?.role)}</p>
+                )}
               </div>
             </div>
             <div className="space-y-1">

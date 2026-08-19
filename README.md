@@ -30,7 +30,10 @@ Support** platform that installs and behaves like a native mobile app (PWA).
 | 🧾 Append-only compliance & event logs | ✅ Phase 2 |
 | 📝 Self-service handle & password changes (Admin-notified) | ✅ Phase 3a |
 | ⛔ Ban/unban, 🗑️ delete users, 🧹 delete posts & messages | ✅ Phase 3a |
-| Push notifications, offline queue, milestone dashboards | 🔜 Phase 3b |
+| 🔔 Unread badges + device notifications (app open/background) | ✅ Phase 3b |
+| 📴 Offline reading & queued sending (Firestore on-device cache) | ✅ Phase 3b |
+| 🎯 Milestones, hindrance logging, committed vs released funding | ✅ Phase 3b |
+| 📊 Admin dashboard: completion, blockers, funding, per-room roll-up | ✅ Phase 3b |
 
 ## Project map
 

@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { isAdmin } from "@/lib/types";
+import { isAdmin, roleTag } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import AccountSettings from "@/components/AccountSettings";
+import NotificationSettings from "@/components/NotificationSettings";
 
 export default function ProfilePage() {
   const { user, profile, logout } = useAuth();
@@ -19,11 +20,15 @@ export default function ProfilePage() {
             {(profile?.handle ?? "?").slice(0, 1).toUpperCase()}
           </span>
           <p className="text-lg font-extrabold">{profile?.handle}</p>
-          <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold capitalize text-brand">
-            {profile?.role}
-          </span>
+          {roleTag(profile?.role) && (
+            <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+              {roleTag(profile?.role)}
+            </span>
+          )}
           <p className="text-xs opacity-50">{user?.email}</p>
         </div>
+
+        <NotificationSettings />
 
         <AccountSettings />
 

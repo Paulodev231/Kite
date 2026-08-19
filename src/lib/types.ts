@@ -9,6 +9,17 @@ export function isAdmin(role: Role | null | undefined): boolean {
   return role === "admin" || role === "superadmin";
 }
 
+/**
+ * Public-facing role label. Only Admins and SuperAdmins carry a visible tag —
+ * members show nothing, and Staff Handles deliberately show nothing so they
+ * appear as ordinary project managers to the rest of the platform.
+ */
+export function roleTag(role: Role | null | undefined): string | null {
+  if (role === "superadmin") return "SuperAdmin";
+  if (role === "admin") return "Admin";
+  return null;
+}
+
 export interface UserProfile {
   uid: string;
   handle: string; // public display handle, e.g. "PM_Ade"
@@ -106,6 +117,46 @@ export interface FormSubmission {
   formId: string;
   answers: Record<string, string | boolean>;
   submittedAt?: Timestamp;
+}
+
+// ---------- Phase 3: milestones & funded outcomes ----------
+
+export type MilestoneStatus = "planned" | "in_progress" | "blocked" | "completed";
+
+/**
+ * Status presentation. Colour NEVER carries the meaning on its own — every
+ * status ships with its icon and label, because the completed-green and
+ * blocked-red are near-identical to red/green colour-blind readers.
+ */
+export const MILESTONE_STATUS: Record<
+  MilestoneStatus,
+  { label: string; icon: string; color: string; darkColor: string }
+> = {
+  planned: { label: "Planned", icon: "📋", color: "#898781", darkColor: "#898781" },
+  in_progress: { label: "In progress", icon: "⏳", color: "#4f46e5", darkColor: "#818cf8" },
+  blocked: { label: "Blocked", icon: "⛔", color: "#d03b3b", darkColor: "#d03b3b" },
+  completed: { label: "Completed", icon: "✅", color: "#0ca30c", darkColor: "#0ca30c" },
+};
+
+export const MILESTONE_STATUS_ORDER: MilestoneStatus[] = [
+  "planned",
+  "in_progress",
+  "blocked",
+  "completed",
+];
+
+export interface Milestone {
+  id: string;
+  title: string;
+  roomId: string;
+  roomName: string;
+  status: MilestoneStatus;
+  fundedAmount: number; // money committed to this milestone
+  spentAmount: number; // money released/spent so far
+  dueDate?: string; // ISO yyyy-mm-dd
+  hindrance?: string; // what is blocking it, when status is "blocked"
+  createdBy: string;
+  createdAt?: Timestamp;
 }
 
 // ---------- Phase 2: compliance & event logs ----------

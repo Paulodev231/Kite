@@ -196,6 +196,14 @@ service cloud.firestore {
       }
     }
 
+    // ---------- Milestones & funded outcomes ----------
+    // Members see the milestones of rooms they belong to (so they can track
+    // their own project); only Admins create and update them.
+    match /milestones/{milestoneId} {
+      allow read: if isElevated() || (isActive() && inRoom(resource.data.roomId));
+      allow create, update, delete: if isAdmin();
+    }
+
     // ---------- Compliance & event logs ----------
     // Append-only audit trail of high-level metadata (no content).
     // Written by the app as actions happen; readable by Admins only;

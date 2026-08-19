@@ -49,6 +49,20 @@ export default function AdminHome() {
 
   const items = [
     {
+      href: "/admin/dashboard",
+      icon: "📊",
+      title: "Dashboard",
+      desc: "Milestone delivery, blockers and funded-outcome tracking at a glance",
+      badge: 0,
+    },
+    {
+      href: "/admin/milestones",
+      icon: "🎯",
+      title: "Milestones",
+      desc: "Record milestones, log hindrances, track committed vs released funding",
+      badge: 0,
+    },
+    {
       href: "/admin/users",
       icon: "👥",
       title: "Members & Accounts",

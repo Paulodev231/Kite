@@ -13,6 +13,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import type { DmThread } from "@/lib/types";
+import { getSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
 
 export default function MessagesPage() {
@@ -43,18 +44,25 @@ export default function MessagesPage() {
         {threads.map((t) => {
           const peerUid = t.participants.find((p) => p !== user?.uid) ?? "";
           const peerHandle = t.handles?.[peerUid] ?? "Member";
+          const unread =
+            Boolean(t.lastSenderUid) &&
+            t.lastSenderUid !== user?.uid &&
+            (t.updatedAt?.toMillis() ?? 0) > getSeen(seenKeys.dmThread(t.id));
           return (
             <Link
               key={t.id}
               href={`/messages/with/${peerUid}?handle=${encodeURIComponent(peerHandle)}`}
               className="app-chrome flex items-center gap-3 rounded-2xl bg-surface p-3.5 shadow-sm active:scale-[0.99]"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+              <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
                 {peerHandle.slice(0, 1).toUpperCase()}
+                {unread && (
+                  <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-red-500" />
+                )}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold">{peerHandle}</p>
-                <p className="truncate text-xs opacity-50">
+                <p className={`truncate text-xs ${unread ? "font-bold" : "opacity-50"}`}>
                   {t.lastSenderUid === user?.uid ? "You: " : ""}
                   {t.lastText ?? ""}
                 </p>

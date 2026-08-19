@@ -18,6 +18,7 @@ import { isAdmin, type BroadcastPost } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { logEvent } from "@/lib/log";
 import { deleteBroadcastPost } from "@/lib/adminActions";
+import { markSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -34,6 +35,11 @@ export default function BroadcastPage() {
       setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as BroadcastPost)),
     );
   }, []);
+
+  // Opening the channel clears its badge.
+  useEffect(() => {
+    if (posts.length > 0) markSeen(seenKeys.broadcast);
+  }, [posts]);
 
   async function post(text: string, file: File | null) {
     if (!user || !profile) return;

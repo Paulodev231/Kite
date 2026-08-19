@@ -25,6 +25,11 @@ const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   account_deleted: { icon: "🗑️", label: "Account deleted" },
   post_deleted: { icon: "🧹", label: "Broadcast post deleted" },
   message_deleted: { icon: "🧹", label: "Room message deleted" },
+  milestone_created: { icon: "🎯", label: "Milestone recorded" },
+  milestone_planned: { icon: "📋", label: "Milestone set to Planned" },
+  milestone_in_progress: { icon: "⏳", label: "Milestone in progress" },
+  milestone_blocked: { icon: "⛔", label: "Milestone blocked" },
+  milestone_completed: { icon: "✅", label: "Milestone completed" },
 };
 
 export default function AdminLogsPage() {

@@ -188,10 +188,35 @@ Console → Firestore Database → Rules → **Publish**. Then:
   a ✕ on every room message. All deletions are recorded in the compliance
   log.
 
-## 🗺️ What's coming next in Phase 3
+## 🆙 Phase 3b upgrade (notifications, offline, milestones & dashboard)
 
-Push notifications, offline queueing, milestone dashboards &
-funded-outcome tracking.
+Once more: **re-paste `firestore.rules`** into Firebase Console → Firestore
+Database → Rules → **Publish** (this adds the new `milestones` collection).
+Then:
+
+- **🔔 Notifications & unread badges:** red counts now appear on the
+  **DMs** and **Broadcast** tabs, and unread conversations show a red dot.
+  Profile tab → **Turn on notifications** to also get device alerts while the
+  app is open or in the background.
+  *Honest limit:* alerts when the app is **fully closed** need a paid server
+  (Cloud Functions), so Kite does not promise those on the free tier.
+- **📴 Works offline:** rooms and messages you've already opened still load
+  with no signal, and anything you type is queued and sent automatically when
+  you reconnect. An amber bar tells the user when they're offline.
+- **🎯 Milestones:** Admin Panel → **Milestones** → record a milestone against
+  a room, set its funding, then tap a status chip: 📋 Planned, ⏳ In progress,
+  ⛔ Blocked (it asks what the hindrance is), ✅ Completed. Tap the money row
+  to update how much funding has been released.
+- **📊 Dashboard:** Admin Panel → **Dashboard** — completion percentage,
+  blocked count, committed vs released funding, milestones by status, and a
+  per-room roll-up that puts rooms with blockers first.
+- **Members see progress too:** each room shows a collapsible
+  “🎯 Project milestones” panel for that room only.
+
+## 🗺️ Possible next steps
+
+Milestone due-date reminders, exporting submissions / milestones to a
+spreadsheet, and richer per-room reporting. Ask and it can be built.
 
 Questions? Open this repo in Claude Code and ask — everything above can be
 adjusted for you.
