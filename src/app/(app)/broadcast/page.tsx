@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { isAdmin, type BroadcastPost } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { logEvent } from "@/lib/log";
+import { deleteBroadcastPost } from "@/lib/adminActions";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -58,10 +59,25 @@ export default function BroadcastPage() {
           )}
           {posts.map((p) => (
             <article key={p.id} className="rounded-2xl bg-surface p-4 shadow-sm">
-              <div className="mb-1.5 flex items-center justify-between">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
                 <UserBadge uid={p.authorUid} handle={p.authorHandle} />
-                <span className="text-[10px] opacity-40">
-                  {p.createdAt?.toDate().toLocaleString() ?? ""}
+                <span className="flex items-center gap-2">
+                  <span className="text-[10px] opacity-40">
+                    {p.createdAt?.toDate().toLocaleString() ?? ""}
+                  </span>
+                  {admin && (
+                    <button
+                      type="button"
+                      aria-label="Delete post"
+                      onClick={() => {
+                        if (window.confirm("Delete this announcement for everyone?"))
+                          deleteBroadcastPost(p.id);
+                      }}
+                      className="app-chrome rounded-full px-1.5 text-sm text-red-500 active:bg-red-500/10"
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </span>
               </div>
               {p.text && <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.text}</p>}

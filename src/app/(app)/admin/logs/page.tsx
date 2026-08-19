@@ -21,6 +21,10 @@ const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   staff_oncall_off: { icon: "⚪", label: "Staff handle Off-Call" },
   broadcast_post: { icon: "📢", label: "Broadcast posted" },
   dm_thread_started: { icon: "💬", label: "DM conversation started" },
+  handle_changed: { icon: "📝", label: "User changed their handle" },
+  account_deleted: { icon: "🗑️", label: "Account deleted" },
+  post_deleted: { icon: "🧹", label: "Broadcast post deleted" },
+  message_deleted: { icon: "🧹", label: "Room message deleted" },
 };
 
 export default function AdminLogsPage() {

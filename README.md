@@ -28,7 +28,9 @@ Support** platform that installs and behaves like a native mobile app (PWA).
 | 📋 Room-embedded forms & ✍️ digital signatures (private submissions) | ✅ Phase 2 |
 | 📥 Centralized Staff master inbox — 🔴 badges, reply-as-handle | ✅ Phase 2 |
 | 🧾 Append-only compliance & event logs | ✅ Phase 2 |
-| Push notifications, offline queue, milestone dashboards | 🔜 Phase 3 |
+| 📝 Self-service handle & password changes (Admin-notified) | ✅ Phase 3a |
+| ⛔ Ban/unban, 🗑️ delete users, 🧹 delete posts & messages | ✅ Phase 3a |
+| Push notifications, offline queue, milestone dashboards | 🔜 Phase 3b |
 
 ## Project map
 

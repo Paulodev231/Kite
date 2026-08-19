@@ -166,7 +166,29 @@ Then the new features are live:
   toggled, conversations started…). Metadata only — never message content —
   and no one, not even the SuperAdmin, can edit or delete entries.
 
-## 🗺️ What's coming in Phase 3
+## 🆙 Phase 3a upgrade (self-service accounts & moderation)
+
+Same single step as before: **re-paste `firestore.rules`** into Firebase
+Console → Firestore Database → Rules → **Publish**. Then:
+
+- **📝 Members control their own identity:** Profile tab → change handle
+  (2–24 characters; the security rules stop them touching anything else) and
+  change password (asks for the current one first). Every handle change is
+  reported to Admins in **Compliance Logs** with the old → new name.
+- **⛔ Ban / Unban:** Admin Panel → Members & Accounts. Banning locks the
+  account out on their very next action but keeps all their data — fully
+  reversible.
+- **🗑️ Delete user:** same screen, with a confirmation prompt. Permanently
+  removes their profile, room access and presence; they are locked out
+  instantly. Admins can delete members; only the SuperAdmin can delete
+  Staff Handles and Admins. To reuse the person's email later, also remove
+  them under Firebase Console → **Authentication → Users** (the login entry
+  can't be deleted from inside the app on the free tier).
+- **🧹 Delete content:** Admins see a 🗑️ button on every broadcast post and
+  a ✕ on every room message. All deletions are recorded in the compliance
+  log.
+
+## 🗺️ What's coming next in Phase 3
 
 Push notifications, offline queueing, milestone dashboards &
 funded-outcome tracking.

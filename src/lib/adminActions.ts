@@ -9,6 +9,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   increment,
   serverTimestamp,
   setDoc,
@@ -121,4 +122,31 @@ export async function setRoomMembership(
 
 export async function deleteBroadcastPost(postId: string) {
   await deleteDoc(doc(db(), "broadcast", postId));
+  logEvent(actorUid(), "post_deleted", { postId });
+}
+
+export async function deleteRoomMessage(roomId: string, messageId: string) {
+  await deleteDoc(doc(db(), "rooms", roomId, "messages", messageId));
+  logEvent(actorUid(), "message_deleted", { roomId, messageId });
+}
+
+/**
+ * Permanently removes a user from the platform: their profile, their room
+ * memberships (and ACL entries) and their presence doc. They are locked out
+ * instantly — with no profile document, the rules deny them everything.
+ * Note: the login record in Firebase *Authentication* cannot be deleted from
+ * the client; remove it in Firebase Console → Authentication → Users if you
+ * want the email address reusable.
+ */
+export async function deleteUserAccount(uid: string) {
+  const memberships = await getDocs(collection(db(), "users", uid, "memberships"));
+  const batch = writeBatch(db());
+  memberships.forEach((m) => {
+    batch.delete(m.ref);
+    batch.set(doc(db(), "rooms", m.id, "acl", "members"), { uids: arrayRemove(uid) }, { merge: true });
+  });
+  batch.delete(doc(db(), "presence", uid));
+  batch.delete(doc(db(), "users", uid));
+  await batch.commit();
+  logEvent(actorUid(), "account_deleted", { uid });
 }

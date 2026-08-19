@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/lib/types";
 import AppShell from "@/components/AppShell";
+import AccountSettings from "@/components/AccountSettings";
 
 export default function ProfilePage() {
   const { user, profile, logout } = useAuth();
@@ -23,6 +24,8 @@ export default function ProfilePage() {
           </span>
           <p className="text-xs opacity-50">{user?.email}</p>
         </div>
+
+        <AccountSettings />
 
         <div className="overflow-hidden rounded-3xl bg-surface shadow-sm">
           {isAdmin(profile?.role) && (

@@ -20,6 +20,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
+import { deleteRoomMessage } from "@/lib/adminActions";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -99,13 +100,29 @@ export default function RoomPage() {
         <div className="flex-1 space-y-2 p-3">
           {messages.map((m) => {
             const mine = m.authorUid === user?.uid;
+            const canModerate = isAdmin(profile?.role);
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 shadow-sm ${
+                  className={`group relative max-w-[85%] rounded-2xl px-3.5 py-2.5 shadow-sm ${
                     mine ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-surface"
                   }`}
                 >
+                  {canModerate && id && (
+                    <button
+                      type="button"
+                      aria-label="Delete message"
+                      onClick={() => {
+                        if (window.confirm("Delete this message for everyone?"))
+                          deleteRoomMessage(id, m.id);
+                      }}
+                      className={`app-chrome absolute -top-2 ${
+                        mine ? "-left-2" : "-right-2"
+                      } flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow`}
+                    >
+                      ✕
+                    </button>
+                  )}
                   {!mine && (
                     <div className="mb-1">
                       <UserBadge uid={m.authorUid} handle={m.authorHandle} />

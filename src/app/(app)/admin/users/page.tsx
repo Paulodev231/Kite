@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { createManagedAccount, setAccountActive } from "@/lib/adminActions";
+import { createManagedAccount, deleteUserAccount, setAccountActive } from "@/lib/adminActions";
 import type { Role, UserProfile } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 
@@ -120,17 +120,43 @@ export default function AdminUsersPage() {
                 </p>
               </div>
               {u.uid !== profile?.uid && u.role !== "superadmin" && (
-                <button
-                  type="button"
-                  onClick={() => setAccountActive(u.uid, u.active === false)}
-                  className={`app-chrome rounded-full px-3 py-1.5 text-[11px] font-bold ${
-                    u.active === false
-                      ? "bg-emerald-500/15 text-emerald-600"
-                      : "bg-red-500/10 text-red-500"
-                  }`}
-                >
-                  {u.active === false ? "Activate" : "Deactivate"}
-                </button>
+                <div className="flex shrink-0 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setAccountActive(u.uid, u.active === false)}
+                    className={`app-chrome rounded-full px-3 py-1.5 text-[11px] font-bold ${
+                      u.active === false
+                        ? "bg-emerald-500/15 text-emerald-600"
+                        : "bg-amber-500/15 text-amber-600"
+                    }`}
+                  >
+                    {u.active === false ? "Unban" : "Ban"}
+                  </button>
+                  {(superadmin || u.role === "member") && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (
+                          !window.confirm(
+                            `Permanently delete ${u.handle}? They lose all room access immediately. This cannot be undone.`,
+                          )
+                        )
+                          return;
+                        try {
+                          await deleteUserAccount(u.uid);
+                          window.alert(
+                            `${u.handle} deleted. To reuse their email later, also remove them in Firebase Console → Authentication → Users.`,
+                          );
+                        } catch {
+                          window.alert("Could not delete that account.");
+                        }
+                      }}
+                      className="app-chrome rounded-full bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-500"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ))}

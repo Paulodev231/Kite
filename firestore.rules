@@ -44,12 +44,21 @@ service cloud.firestore {
       allow create: if isAdmin()
         && request.resource.data.role in ['member', 'staff', 'admin']
         && (request.resource.data.role == 'member' || isSuper());
+      // Self-service: you may change YOUR OWN handle — nothing else (the
+      // field-diff check blocks any attempt to touch role/active/onCall).
       // Role changes & staff on-call: SuperAdmin. Activate/deactivate: Admins.
-      // Nobody can touch a SuperAdmin account, and members can't edit themselves.
-      allow update: if isAdmin()
-        && resource.data.role != 'superadmin'
-        && (request.resource.data.role == resource.data.role || isSuper());
-      allow delete: if isSuper();
+      // Nobody can touch a SuperAdmin account.
+      allow update: if (isActive() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['handle'])
+          && request.resource.data.handle is string
+          && request.resource.data.handle.size() >= 2
+          && request.resource.data.handle.size() <= 24)
+        || (isAdmin()
+          && resource.data.role != 'superadmin'
+          && (request.resource.data.role == resource.data.role || isSuper()));
+      // Delete (permanent removal): Admins may delete members;
+      // only the SuperAdmin may delete staff/admin accounts.
+      allow delete: if isSuper() || (isAdmin() && resource.data.role == 'member');
 
       // Membership records let a member list their own rooms WITHOUT ever
       // seeing who else is in them. Written exclusively by Admins.
@@ -64,9 +73,10 @@ service cloud.firestore {
     // are unreadable to other members, no identity is exposed.
     match /presence/{uid} {
       allow read: if isActive();
-      allow write, delete: if isActive() && request.auth.uid == uid
-        && (request.method == 'delete'
-            || request.resource.data.keys().hasOnly(['lastActive']));
+      allow create, update: if isActive() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['lastActive']);
+      // Admins may clean up the presence doc of a deleted account.
+      allow delete: if (isActive() && request.auth.uid == uid) || isAdmin();
     }
 
     // status/staff holds one number: how many Staff Handles are On-Call.
