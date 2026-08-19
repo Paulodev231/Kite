@@ -1,0 +1,168 @@
+rules_version = '2';
+
+// ============================================================
+// KITE — Firestore Security Rules (the real lock on the data)
+// Paste this whole file into: Firebase Console → Firestore
+// Database → Rules → Publish. See SETUP.md Step 2f.
+// ============================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+    function myDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isActive() {
+      return signedIn() && myDoc().active == true;
+    }
+    function myRole() {
+      return myDoc().role;
+    }
+    function isAdmin() {
+      return isActive() && myRole() in ['admin', 'superadmin'];
+    }
+    function isSuper() {
+      return isActive() && myRole() == 'superadmin';
+    }
+    // Staff Handles automatically have access to all rooms + media rights
+    function isElevated() {
+      return isActive() && myRole() in ['staff', 'admin', 'superadmin'];
+    }
+    function inRoom(roomId) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)/memberships/$(roomId));
+    }
+
+    // ---------- users: directory HIDDEN from members ----------
+    match /users/{uid} {
+      // You may read only YOUR OWN profile; Admins see the full directory.
+      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      // Accounts are minted by Admins only (invite-only platform).
+      // Only SuperAdmin can mint privileged roles, and nobody self-registers.
+      allow create: if isAdmin()
+        && request.resource.data.role in ['member', 'staff', 'admin']
+        && (request.resource.data.role == 'member' || isSuper());
+      // Role changes & staff on-call: SuperAdmin. Activate/deactivate: Admins.
+      // Nobody can touch a SuperAdmin account, and members can't edit themselves.
+      allow update: if isAdmin()
+        && resource.data.role != 'superadmin'
+        && (request.resource.data.role == resource.data.role || isSuper());
+      allow delete: if isSuper();
+
+      // Membership records let a member list their own rooms WITHOUT ever
+      // seeing who else is in them. Written exclusively by Admins.
+      match /memberships/{roomId} {
+        allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+        allow write: if isAdmin();
+      }
+    }
+
+    // ---------- anonymous presence heartbeats ----------
+    // Docs contain ONLY a timestamp (doc id = uid). Since member profiles
+    // are unreadable to other members, no identity is exposed.
+    match /presence/{uid} {
+      allow read: if isActive();
+      allow write, delete: if isActive() && request.auth.uid == uid
+        && (request.method == 'delete'
+            || request.resource.data.keys().hasOnly(['lastActive']));
+    }
+
+    // status/staff holds one number: how many Staff Handles are On-Call.
+    match /status/staff {
+      allow read: if isActive();
+      allow write: if isSuper();
+    }
+
+    // ---------- Main Broadcast Channel: Admins post, everyone reads ----------
+    match /broadcast/{postId} {
+      allow read: if isActive();
+      allow create: if isAdmin() && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- General Community Room: EMOJI ONLY ----------
+    match /community/{reactionId} {
+      allow read: if isActive();
+      allow create: if isActive()
+        && request.resource.data.keys().hasOnly(['uid', 'emoji', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.emoji in ['👍', '🙏', '🔥', '💪', '🎉', '❤️', '👏', '✅'];
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Admin-locked private rooms ----------
+    match /rooms/{roomId} {
+      allow read: if isElevated() || (isActive() && inRoom(roomId));
+      allow create, update, delete: if isAdmin();
+
+      // Participant manifest — Admins/SuperAdmins ONLY. Members can never
+      // read this, so they can never see who else is in a room.
+      match /acl/{aclDoc} {
+        allow read, write: if isAdmin();
+      }
+
+      match /messages/{messageId} {
+        allow read: if isElevated() || (isActive() && inRoom(roomId));
+        allow create: if (isElevated() || (isActive() && inRoom(roomId)))
+          && request.resource.data.authorUid == request.auth.uid
+          // Standard members may NOT attach media anywhere:
+          && (isElevated() || !('mediaUrl' in request.resource.data));
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+
+      // Form/signature submissions (rooms get forms in the next phase):
+      // strictly private — the submitter and Admins only.
+      match /submissions/{submissionId} {
+        allow create: if isActive() && inRoom(roomId)
+          && request.resource.data.uid == request.auth.uid;
+        allow read: if isAdmin()
+          || (isActive() && resource.data.uid == request.auth.uid);
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ---------- Direct Messages: private 1-on-1 ----------
+    // Thread id must equal "<uidA>_<uidB>" with the two uids sorted, which
+    // pins every thread to exactly its two participants.
+    match /dms/{threadId} {
+      function isParticipant() {
+        return isActive() && request.auth.uid in resource.data.participants;
+      }
+      function validThread() {
+        return request.resource.data.participants.size() == 2
+          && request.auth.uid in request.resource.data.participants
+          && threadId == request.resource.data.participants[0]
+                         + '_' + request.resource.data.participants[1];
+      }
+      // SuperAdmin read supports the compliance log & the future centralized
+      // Staff master inbox.
+      allow read: if isParticipant() || isSuper();
+      allow create: if isActive() && validThread();
+      allow update: if isParticipant() && validThread()
+        && request.resource.data.participants == resource.data.participants;
+      allow delete: if isSuper();
+
+      match /messages/{messageId} {
+        function threadData() {
+          return get(/databases/$(database)/documents/dms/$(threadId)).data;
+        }
+        allow read: if isSuper()
+          || (isActive() && request.auth.uid in threadData().participants);
+        allow create: if isActive()
+          && request.auth.uid in threadData().participants
+          && request.resource.data.senderUid == request.auth.uid;
+        allow update: if false;
+        allow delete: if isSuper();
+      }
+    }
+
+    // Everything not explicitly allowed above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,36 @@
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+export default function MediaAttachment({
+  url,
+  type,
+  name,
+}: {
+  url: string;
+  type?: "image" | "video" | "file";
+  name?: string;
+}) {
+  if (type === "image") {
+    return (
+      <img
+        src={url}
+        alt={name ?? "Attached image"}
+        className="mt-2 max-h-72 w-full rounded-xl object-cover"
+        loading="lazy"
+      />
+    );
+  }
+  if (type === "video") {
+    return <video src={url} controls playsInline className="mt-2 w-full rounded-xl" />;
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 flex items-center gap-2 rounded-xl bg-brand-soft px-3 py-2 text-xs font-semibold text-brand"
+    >
+      📄 <span className="truncate">{name ?? "Attachment"}</span>
+    </a>
+  );
+}

@@ -1,0 +1,57 @@
+rules_version = '2';
+
+// ============================================================
+// KITE — Storage Security Rules
+// Paste into: Firebase Console → Storage → Rules → Publish.
+// Enforces: standard users can NEVER upload photos/videos —
+// media is reserved for Admins, SuperAdmins and Staff Handles.
+// ============================================================
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function role() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function signedIn() {
+      return request.auth != null;
+    }
+    function elevated() {
+      return signedIn() && role() in ['staff', 'admin', 'superadmin'];
+    }
+    function admin() {
+      return signedIn() && role() in ['admin', 'superadmin'];
+    }
+    // "Documents": PDFs, Office files, text — explicitly NOT images/videos.
+    function isDocument() {
+      return request.resource.contentType.matches('application/pdf')
+        || request.resource.contentType.matches('application/msword')
+        || request.resource.contentType.matches('application/vnd.*')
+        || request.resource.contentType.matches('text/.*');
+    }
+    function under(mb) {
+      return request.resource.size < mb * 1024 * 1024;
+    }
+
+    // Main Broadcast media: Admins only.
+    match /broadcast/{fileName} {
+      allow read: if signedIn();
+      allow write: if admin() && under(50);
+    }
+
+    // Room attachments: Admins & Staff Handles only (members are text-only).
+    match /rooms/{roomId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if elevated() && under(50);
+    }
+
+    // DM attachments: documents for everyone, any media only if elevated.
+    match /dms/{threadId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && under(25) && (elevated() || isDocument());
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

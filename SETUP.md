@@ -1,0 +1,151 @@
+# 🪁 Kite — Complete Setup Guide (phone-friendly, no coding needed)
+
+Follow these steps **in order**, entirely from your phone's browser. Every
+step is free-tier. When you finish, you'll have a live, installable app.
+
+---
+
+## ✅ Step 0 — What you already have
+
+The code is already in your GitHub repository on the branch
+`claude/enterprise-pwa-platform-9qucc3`. You don't need to write any code.
+
+**Do this now:** on GitHub, open your repo → tap the branch dropdown (says
+`main` or shows branches) → open **Pull requests** → **New pull request** →
+merge `claude/enterprise-pwa-platform-9qucc3` into `main` (or just work from
+this branch directly in Vercel — Step 3 lets you pick the branch).
+
+---
+
+## 🔥 Step 1 — Create the Firebase project (free)
+
+1. Go to **https://console.firebase.google.com** and sign in with Google.
+2. Tap **Create a project** → name it `kite` → you can turn OFF Google
+   Analytics → **Create project**.
+
+### 1a. Turn on Email/Password sign-in
+1. In the left menu: **Build → Authentication → Get started**.
+2. Choose **Email/Password** → toggle **Enable** → **Save**.
+   (Do NOT enable anything else. No Google sign-in, no anonymous — this keeps
+   the platform closed.)
+
+### 1b. Create the database
+1. **Build → Firestore Database → Create database**.
+2. Pick the location closest to you → choose **Start in production mode**
+   (everything locked — our rules will open exactly what's needed) → **Create**.
+
+### 1c. Turn on file Storage
+1. **Build → Storage → Get started** → keep defaults → **Done**.
+   (If Storage asks for a billing plan in your region, you can skip Storage
+   for now — the app works without file uploads until you enable it.)
+
+---
+
+## 🔐 Step 2 — Install the security rules (VERY important)
+
+The rules are the real lock on your data. Two copy-pastes:
+
+### 2a. Firestore rules
+1. **Firestore Database → Rules** tab.
+2. Delete everything in the editor.
+3. Open the file **`firestore.rules`** in your GitHub repo, tap **Copy raw
+   file**, paste it into the editor → **Publish**.
+
+### 2b. Storage rules (skip if you skipped Storage)
+1. **Storage → Rules** tab.
+2. Replace everything with the contents of **`storage.rules`** from the repo
+   → **Publish**.
+
+### 2c. Get your app keys
+1. Tap the ⚙️ gear (top-left) → **Project settings**.
+2. Scroll to **Your apps** → tap the **`</>`** (Web) icon → nickname `kite`
+   → do NOT tick hosting → **Register app**.
+3. You'll see a code block with values like `apiKey: "AIza..."`. **Keep this
+   page open** — you'll copy these 6 values into Vercel in Step 3.
+
+---
+
+## ▲ Step 3 — Deploy on Vercel (free)
+
+1. Go to **https://vercel.com** → **Sign up → Continue with GitHub**.
+2. **Add New… → Project** → find and **Import** your `Kite` repository.
+3. Under **Branch**, pick `claude/enterprise-pwa-platform-9qucc3` (or `main`
+   if you merged in Step 0).
+4. Before deploying, open **Environment Variables** and add these 6, copying
+   each value from the Firebase page you kept open in Step 2c:
+
+   | Name | Value from Firebase |
+   |---|---|
+   | `NEXT_PUBLIC_FIREBASE_API_KEY` | `apiKey` |
+   | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `authDomain` |
+   | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `projectId` |
+   | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | `storageBucket` |
+   | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
+   | `NEXT_PUBLIC_FIREBASE_APP_ID` | `appId` |
+
+5. Tap **Deploy**. In ~2 minutes you get a URL like `kite-xxxx.vercel.app`.
+6. Back in **Firebase → Authentication → Settings → Authorized domains →
+   Add domain** → add your `kite-xxxx.vercel.app` domain.
+
+---
+
+## 👑 Step 4 — Create YOUR SuperAdmin account (one-time, by hand)
+
+The app has no sign-up screen on purpose. Bootstrap yourself:
+
+1. **Firebase → Authentication → Users → Add user** → enter your email and a
+   strong password → **Add user**. Copy the **User UID** shown in the list.
+2. **Firestore Database → Data** tab → **Start collection** → Collection ID:
+   `users` → **Next**.
+3. **Document ID:** paste your UID (exactly). Add these fields:
+   - `handle` (string) → e.g. `Paul` — the name others see
+   - `role` (string) → `superadmin`
+   - `active` (boolean) → `true`
+4. **Save**. Done — that Firestore document is your crown 👑.
+
+---
+
+## 📱 Step 5 — Sign in & install the app
+
+1. Open your Vercel URL on your phone → sign in with the email/password from
+   Step 4.
+2. Install it like a native app:
+   - **Android/Chrome:** menu ⋮ → **Add to Home screen / Install app**
+   - **iPhone/Safari:** Share □↑ → **Add to Home Screen**
+3. It opens full-screen with the kite icon — no browser bar.
+
+---
+
+## 🧭 Step 6 — Run your platform (all inside the app)
+
+- **Invite people:** Drawer ☰ → **Admin Panel → Members & Accounts** →
+  create an account → privately send them the email + password.
+- **Create locked rooms:** **Admin Panel → Private Rooms** → create → tap the
+  room → tick exactly who gets in.
+- **Staff Handles (SuperAdmin):** create accounts with role *Staff Handle*
+  in Members & Accounts, then flip them **On-Call/Off-Call** in
+  **Admin Panel → Staff Handles**. On-Call handles boost the public
+  "⚡ Active Now" counter. To chat *as* a handle, sign in with its credentials.
+- **Broadcast:** the 📢 tab — only Admins see a composer; everyone else reads.
+- **Community:** the 🫶 tab — emoji reactions only, by design.
+- **DMs:** tap any handle/avatar anywhere → instant private chat.
+
+### One small index (first time you open DMs)
+The first time the DM inbox loads, Firestore may log a link in the browser
+console asking to create an index. Easiest path: in Firebase →
+**Firestore → Indexes → Add index**: collection `dms`, field
+`participants` (Array-contains) + `updatedAt` (Descending). Or paste the
+contents of `firestore.indexes.json` if you ever use the Firebase CLI.
+
+---
+
+## 🗺️ What's coming in the next phases
+
+- **Phase 2:** embedded milestone forms & digital signatures inside rooms
+  (submission privacy rules are already installed), centralized Staff master
+  inbox with 🔴 badge counts, compliance event logs.
+- **Phase 3:** push notifications, offline queueing, milestone dashboards &
+  funded-outcome tracking.
+
+Questions? Open this repo in Claude Code and ask — everything above can be
+adjusted for you.
