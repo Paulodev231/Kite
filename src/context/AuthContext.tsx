@@ -28,6 +28,10 @@ interface AuthState {
   profile: UserProfile | null;
   loading: boolean;
   configured: boolean;
+  /** Signed in, but no users/{uid} document exists — account not provisioned. */
+  profileMissing: boolean;
+  /** Signed in, but reading users/{uid} failed (rules/database problem). */
+  profileError: boolean;
   logout: () => Promise<void>;
 }
 
@@ -36,6 +40,8 @@ const AuthContext = createContext<AuthState>({
   profile: null,
   loading: true,
   configured: false,
+  profileMissing: false,
+  profileError: false,
   logout: async () => {},
 });
 
@@ -44,6 +50,8 @@ const HEARTBEAT_MS = 60_000;
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileMissing, setProfileMissing] = useState(false);
+  const [profileError, setProfileError] = useState(false);
   // When Firebase isn't configured yet there is nothing to wait for.
   const [loading, setLoading] = useState(isFirebaseConfigured);
 
@@ -53,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(nextUser);
       if (!nextUser) {
         setProfile(null);
+        setProfileMissing(false);
+        setProfileError(false);
         setLoading(false);
       }
     });
@@ -66,9 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ref,
       (snap) => {
         setProfile(snap.exists() ? ({ uid: snap.id, ...snap.data() } as UserProfile) : null);
+        setProfileMissing(!snap.exists());
+        setProfileError(false);
         setLoading(false);
       },
-      () => setLoading(false),
+      () => {
+        // Permission denied / database unreachable — surface it instead of hanging.
+        setProfile(null);
+        setProfileMissing(false);
+        setProfileError(true);
+        setLoading(false);
+      },
     );
   }, [user]);
 
@@ -95,7 +113,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, configured: isFirebaseConfigured, logout }}
+      value={{
+        user,
+        profile,
+        loading,
+        configured: isFirebaseConfigured,
+        profileMissing,
+        profileError,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
