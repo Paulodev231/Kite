@@ -25,9 +25,10 @@ Support** platform that installs and behaves like a native mobile app (PWA).
 | 🎧 Managed Staff Handles + real-time On-Call presence control | ✅ |
 | Role hierarchy: member / staff / admin / superadmin | ✅ |
 | Firestore + Storage security rules enforcing all of the above | ✅ |
-| Embedded forms & digital signatures | 🔜 Phase 2 |
-| Centralized Staff master inbox with badges | 🔜 Phase 2 |
-| Compliance event logs, push notifications, dashboards | 🔜 Phase 2/3 |
+| 📋 Room-embedded forms & ✍️ digital signatures (private submissions) | ✅ Phase 2 |
+| 📥 Centralized Staff master inbox — 🔴 badges, reply-as-handle | ✅ Phase 2 |
+| 🧾 Append-only compliance & event logs | ✅ Phase 2 |
+| Push notifications, offline queue, milestone dashboards | 🔜 Phase 3 |
 
 ## Project map
 

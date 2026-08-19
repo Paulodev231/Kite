@@ -58,6 +58,66 @@ export interface RoomMessage {
   createdAt?: Timestamp;
 }
 
+// ---------- Phase 2: room-embedded forms & digital signatures ----------
+
+export type FormFieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "date"
+  | "checkbox"
+  | "select"
+  | "signature";
+
+export const FORM_FIELD_TYPES: { value: FormFieldType; label: string }[] = [
+  { value: "text", label: "Short text" },
+  { value: "textarea", label: "Long text" },
+  { value: "number", label: "Number" },
+  { value: "date", label: "Date" },
+  { value: "checkbox", label: "Yes / No" },
+  { value: "select", label: "Dropdown" },
+  { value: "signature", label: "✍️ Digital signature" },
+];
+
+export interface FormField {
+  id: string;
+  label: string;
+  type: FormFieldType;
+  required: boolean;
+  options?: string[]; // for "select"
+}
+
+export interface RoomForm {
+  id: string;
+  title: string;
+  description?: string;
+  fields: FormField[];
+  open: boolean; // closed forms stop accepting submissions
+  createdBy: string;
+  createdAt?: Timestamp;
+}
+
+/** One per user per form: doc id is `${formId}_${uid}`. Signatures are
+ *  stored inline as small PNG data-URLs inside `answers`. */
+export interface FormSubmission {
+  id: string;
+  uid: string;
+  handle: string;
+  formId: string;
+  answers: Record<string, string | boolean>;
+  submittedAt?: Timestamp;
+}
+
+// ---------- Phase 2: compliance & event logs ----------
+
+export interface ComplianceLog {
+  id: string;
+  actorUid: string;
+  category: string; // e.g. account_created, room_member_added, form_submission
+  meta: Record<string, string>;
+  at?: Timestamp;
+}
+
 export interface DmThread {
   id: string;
   participants: string[]; // exactly two uids
@@ -65,6 +125,8 @@ export interface DmThread {
   lastText?: string;
   lastSenderUid?: string;
   updatedAt?: Timestamp;
+  /** Set when the SuperAdmin triages this thread in the master inbox. */
+  staffReadAt?: Timestamp;
 }
 
 export interface DmMessage {

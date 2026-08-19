@@ -3,6 +3,7 @@
 // Inside a private room: real-time chat. Participant lists are never shown
 // to standard members. Media attachments are Admin/Staff only.
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   addDoc,
@@ -13,10 +14,11 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { isAdmin, type Room, type RoomMessage } from "@/lib/types";
+import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
@@ -28,6 +30,7 @@ export default function RoomPage() {
   const { user, profile } = useAuth();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
+  const [forms, setForms] = useState<RoomForm[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const elevated = isAdmin(profile?.role) || profile?.role === "staff";
 
@@ -44,9 +47,16 @@ export default function RoomPage() {
     const unsubMsgs = onSnapshot(q, (snap) =>
       setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomMessage)),
     );
+    // Open forms pinned at the top of the room.
+    const unsubForms = onSnapshot(
+      query(collection(db(), "rooms", id, "forms"), where("open", "==", true)),
+      (snap) => setForms(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomForm)),
+      () => {},
+    );
     return () => {
       unsubRoom();
       unsubMsgs();
+      unsubForms();
     };
   }, [id]);
 
@@ -69,6 +79,23 @@ export default function RoomPage() {
   return (
     <AppShell title={room ? `🔐 ${room.name}` : "Room"}>
       <div className="mx-auto flex min-h-full max-w-lg flex-col">
+        {forms.length > 0 && (
+          <div className="app-chrome flex gap-2 overflow-x-auto p-3 pb-1 no-scrollbar">
+            {forms.map((form) => (
+              <Link
+                key={form.id}
+                href={`/rooms/${id}/forms/${form.id}`}
+                className="flex shrink-0 items-center gap-2 rounded-2xl border border-brand/30 bg-brand-soft px-3.5 py-2.5 shadow-sm active:scale-[0.98]"
+              >
+                <span>📋</span>
+                <span className="text-xs font-bold text-brand">{form.title}</span>
+                <span className="text-[10px] font-semibold text-brand opacity-60">
+                  Fill in →
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
         <div className="flex-1 space-y-2 p-3">
           {messages.map((m) => {
             const mine = m.authorUid === user?.uid;

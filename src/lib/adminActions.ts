@@ -15,8 +15,13 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, firebaseAuth } from "@/lib/firebase";
+import { logEvent } from "@/lib/log";
 import type { Role } from "@/lib/types";
+
+function actorUid(): string {
+  return firebaseAuth().currentUser?.uid ?? "unknown";
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -51,6 +56,7 @@ export async function createManagedAccount(
       createdAt: serverTimestamp(),
     });
     await signOut(getAuth(secondary));
+    logEvent(actorUid(), "account_created", { newUid: uid, role });
     return uid;
   } finally {
     await deleteApp(secondary).catch(() => {});
@@ -59,6 +65,7 @@ export async function createManagedAccount(
 
 export async function setAccountActive(uid: string, active: boolean) {
   await updateDoc(doc(db(), "users", uid), { active });
+  logEvent(actorUid(), active ? "account_activated" : "account_deactivated", { uid });
 }
 
 /** SuperAdmin: flip a Staff Handle On-Call/Off-Call and keep the public
@@ -73,6 +80,7 @@ export async function setStaffOnCall(uid: string, onCall: boolean, wasOnCall: bo
     { merge: true },
   );
   await batch.commit();
+  logEvent(actorUid(), onCall ? "staff_oncall_on" : "staff_oncall_off", { staffUid: uid });
 }
 
 export async function createRoom(name: string, topic: string, createdBy: string) {
@@ -81,6 +89,7 @@ export async function createRoom(name: string, topic: string, createdBy: string)
   batch.set(roomRef, { name, topic, createdBy, createdAt: serverTimestamp() });
   batch.set(doc(db(), "rooms", roomRef.id, "acl", "members"), { uids: [] });
   await batch.commit();
+  logEvent(actorUid(), "room_created", { roomId: roomRef.id });
   return roomRef.id;
 }
 
@@ -104,6 +113,10 @@ export async function setRoomMembership(
     batch.delete(membershipRef);
   }
   await batch.commit();
+  logEvent(actorUid(), present ? "room_member_added" : "room_member_removed", {
+    roomId,
+    memberUid,
+  });
 }
 
 export async function deleteBroadcastPost(postId: string) {

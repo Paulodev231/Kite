@@ -16,6 +16,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin, type BroadcastPost } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
+import { logEvent } from "@/lib/log";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -43,6 +44,7 @@ export default function BroadcastPage() {
       ...(media ? { mediaUrl: media.url, mediaType: media.kind, mediaName: media.name } : {}),
       createdAt: serverTimestamp(),
     });
+    logEvent(user.uid, "broadcast_post", media ? { media: media.kind } : {});
   }
 
   return (

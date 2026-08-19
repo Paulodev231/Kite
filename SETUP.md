@@ -139,13 +139,37 @@ contents of `firestore.indexes.json` if you ever use the Firebase CLI.
 
 ---
 
-## 🗺️ What's coming in the next phases
+## 🆙 Phase 2 upgrade (forms, master inbox, compliance logs)
 
-- **Phase 2:** embedded milestone forms & digital signatures inside rooms
-  (submission privacy rules are already installed), centralized Staff master
-  inbox with 🔴 badge counts, compliance event logs.
-- **Phase 3:** push notifications, offline queueing, milestone dashboards &
-  funded-outcome tracking.
+If your app is already live from Phase 1, activating Phase 2 takes ONE step:
+
+1. **Re-paste the Firestore rules.** Firebase Console → **Firestore Database →
+   Rules** → delete everything → paste the current contents of
+   **`firestore.rules`** from the repo → **Publish**. (Vercel redeploys the
+   app code automatically — the rules are the only manual part.)
+
+Then the new features are live:
+
+- **📋 Forms & digital signatures:** Admin Panel → **Forms & Signatures** →
+  choose a room → **Build a new form** → add questions (short/long text,
+  number, date, yes/no, dropdown, ✍️ signature) → **Publish to room**.
+  Members see the form pinned at the top of that room, fill it in, and sign
+  with their finger. Submissions are private: each member sees only their
+  own; you see everything under **Responses**. Toggle a form **Closed** to
+  stop accepting answers.
+- **📥 Master Inbox (SuperAdmin):** Admin Panel → **Master Inbox** shows
+  every DM sent to any of your managed Staff Handles with 🔴 unread badges.
+  Open a conversation and reply — the member sees the reply coming from the
+  Staff Handle, not from you. No account switching needed.
+- **🧾 Compliance Logs:** Admin Panel → **Compliance Logs** is an append-only
+  audit trail (account created, room access changed, form submitted, on-call
+  toggled, conversations started…). Metadata only — never message content —
+  and no one, not even the SuperAdmin, can edit or delete entries.
+
+## 🗺️ What's coming in Phase 3
+
+Push notifications, offline queueing, milestone dashboards &
+funded-outcome tracking.
 
 Questions? Open this repo in Claude Code and ask — everything above can be
 adjusted for you.

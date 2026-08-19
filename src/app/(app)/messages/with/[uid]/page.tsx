@@ -19,6 +19,7 @@ import { db, dmThreadId } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin, type DmMessage, type DmThread } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
+import { logEvent } from "@/lib/log";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -62,6 +63,8 @@ function DmScreen() {
   async function send(text: string, file: File | null) {
     if (!user || !profile || !threadId || !peerUid) return;
     const attached = file ? await uploadFile(`dms/${threadId}`, file) : null;
+    // Compliance metadata: log when a brand-new conversation starts.
+    if (!thread) logEvent(user.uid, "dm_thread_started", { threadId });
     // Create/update the thread summary first so security rules and the inbox
     // list both have a thread document to work with.
     await setDoc(

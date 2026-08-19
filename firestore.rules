@@ -114,14 +114,27 @@ service cloud.firestore {
         allow delete: if isAdmin();
       }
 
-      // Form/signature submissions (rooms get forms in the next phase):
-      // strictly private — the submitter and Admins only.
+      // Fillable forms published inside the room by Admins.
+      match /forms/{formId} {
+        allow read: if isElevated() || (isActive() && inRoom(roomId));
+        allow create, update, delete: if isAdmin();
+      }
+
+      // Form/signature submissions: strictly private — the submitter and
+      // Admins only. No member can ever read another member's answers.
       match /submissions/{submissionId} {
         allow create: if isActive() && inRoom(roomId)
-          && request.resource.data.uid == request.auth.uid;
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(
+               ['uid', 'handle', 'formId', 'answers', 'submittedAt']);
         allow read: if isAdmin()
           || (isActive() && resource.data.uid == request.auth.uid);
-        allow update, delete: if isAdmin();
+        // The submitter may revise their own submission while the form is open.
+        allow update: if isActive() && inRoom(roomId)
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/rooms/$(roomId)/forms/$(resource.data.formId)).data.open == true;
+        allow delete: if isAdmin();
       }
     }
 
@@ -138,26 +151,51 @@ service cloud.firestore {
           && threadId == request.resource.data.participants[0]
                          + '_' + request.resource.data.participants[1];
       }
-      // SuperAdmin read supports the compliance log & the future centralized
-      // Staff master inbox.
+      // SuperAdmin read powers the centralized Staff master inbox and
+      // compliance oversight.
       allow read: if isParticipant() || isSuper();
       allow create: if isActive() && validThread();
-      allow update: if isParticipant() && validThread()
-        && request.resource.data.participants == resource.data.participants;
+      // Participants update normally; SuperAdmin may update thread metadata
+      // (last message, read markers) when triaging the master inbox —
+      // but nobody can ever change WHO a thread belongs to.
+      allow update: if (isParticipant() && validThread()
+          && request.resource.data.participants == resource.data.participants)
+        || (isSuper()
+          && request.resource.data.participants == resource.data.participants);
       allow delete: if isSuper();
 
       match /messages/{messageId} {
         function threadData() {
           return get(/databases/$(database)/documents/dms/$(threadId)).data;
         }
+        function senderIsManagedStaff() {
+          return get(/databases/$(database)/documents/users/$(request.resource.data.senderUid)).data.role == 'staff';
+        }
         allow read: if isSuper()
           || (isActive() && request.auth.uid in threadData().participants);
-        allow create: if isActive()
-          && request.auth.uid in threadData().participants
-          && request.resource.data.senderUid == request.auth.uid;
+        // Normal case: you send as yourself. Master-inbox case: the
+        // SuperAdmin replies AS one of their managed Staff Handles.
+        allow create: if (isActive()
+            && request.auth.uid in threadData().participants
+            && request.resource.data.senderUid == request.auth.uid)
+          || (isSuper()
+            && request.resource.data.senderUid in threadData().participants
+            && senderIsManagedStaff());
         allow update: if false;
         allow delete: if isSuper();
       }
+    }
+
+    // ---------- Compliance & event logs ----------
+    // Append-only audit trail of high-level metadata (no content).
+    // Written by the app as actions happen; readable by Admins only;
+    // NOBODY can edit or delete an audit entry.
+    match /complianceLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isActive()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['actorUid', 'category', 'meta', 'at']);
+      allow update, delete: if false;
     }
 
     // Everything not explicitly allowed above is denied.
