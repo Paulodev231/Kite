@@ -32,6 +32,8 @@ const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   milestone_completed: { icon: "✅", label: "Milestone completed" },
   funding_granted: { icon: "💰", label: "Member tagged as Funded" },
   funding_cleared: { icon: "○", label: "Member funding removed" },
+  milestone_reassigned: { icon: "🔄", label: "Milestone reassigned" },
+  alert_sent: { icon: "🔔", label: "Alert sent to member" },
 };
 
 export default function AdminLogsPage() {

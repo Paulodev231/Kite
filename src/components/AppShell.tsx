@@ -16,7 +16,7 @@ const TABS = [
   { href: "/community", label: "Community", icon: "🫶" },
   { href: "/rooms", label: "Rooms", icon: "🗂️" },
   { href: "/messages", label: "DMs", icon: "💬" },
-  { href: "/profile", label: "Profile", icon: "👤" },
+  { href: "/profile", label: "Dashboard", icon: "📊" },
 ];
 
 export default function AppShell({
@@ -30,10 +30,16 @@ export default function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { profile, logout } = useAuth();
-  const { dmUnread, broadcastUnread } = useNotifications();
+  const { dmUnread, broadcastUnread, alertUnread } = useNotifications();
   const admin = isAdmin(profile?.role);
   const badgeFor = (href: string) =>
-    href === "/messages" ? dmUnread : href === "/broadcast" ? broadcastUnread : 0;
+    href === "/messages"
+      ? dmUnread
+      : href === "/broadcast"
+        ? broadcastUnread
+        : href === "/profile"
+          ? alertUnread
+          : 0;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">

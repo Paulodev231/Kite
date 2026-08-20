@@ -38,6 +38,8 @@ Support** platform that installs and behaves like a native mobile app (PWA).
 | ⬇️ CSV export: milestones, form responses, full room reports | ✅ Phase 4 |
 | 📑 Per-room reports incl. form response rates | ✅ Phase 4 |
 | 💰 Per-member funding tags (Funded / Not funded + amount) | ✅ Phase 4 |
+| 📊 Member dashboard: own milestones with countdowns, funding, alerts | ✅ Phase 4 |
+| 🔔 Admin-written timing alerts to a member (auto-filled countdown) | ✅ Phase 4 |
 
 ## Project map
 

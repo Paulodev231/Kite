@@ -206,6 +206,19 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // ---------- Admin alerts to one member ----------
+    // Written by Admins, addressed to a single member. The recipient may read
+    // it and mark it read (nothing else); no member can read another's alerts.
+    match /alerts/{alertId} {
+      allow read: if isAdmin()
+        || (isActive() && resource.data.targetUid == request.auth.uid);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (isActive() && resource.data.targetUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['read', 'readAt']));
+    }
+
     // ---------- Compliance & event logs ----------
     // Append-only audit trail of high-level metadata (no content).
     // Written by the app as actions happen; readable by Admins only;

@@ -202,6 +202,26 @@ export interface Milestone {
   createdAt?: Timestamp;
 }
 
+// ---------- Admin-authored alerts to an individual member ----------
+
+/**
+ * A timing nudge written by an Admin and delivered to ONE member's dashboard,
+ * e.g. "20 days to Milestone 2 — you should finish the survey in 19 days".
+ * Only real members receive these; Staff Handles are operator accounts.
+ */
+export interface MemberAlert {
+  id: string;
+  targetUid: string;
+  targetHandle: string;
+  message: string;
+  milestoneId?: string;
+  milestoneTitle?: string;
+  createdBy: string;
+  createdAt?: Timestamp;
+  read?: boolean;
+  readAt?: Timestamp;
+}
+
 // ---------- Phase 2: compliance & event logs ----------
 
 export interface ComplianceLog {

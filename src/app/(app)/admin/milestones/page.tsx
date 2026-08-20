@@ -71,8 +71,9 @@ export default function AdminMilestonesPage() {
     };
   }, []);
 
-  // Anyone who runs a project: members and staff handles, not admins.
-  const owners = people.filter((p) => p.role === "member" || p.role === "staff");
+  // Only real members run projects. Staff Handles are operator accounts
+  // driven by the SuperAdmin, and Admins manage rather than deliver.
+  const owners = people.filter((p) => p.role === "member");
 
   async function create(e: React.FormEvent) {
     e.preventDefault();

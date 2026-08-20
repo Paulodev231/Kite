@@ -20,11 +20,12 @@ import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/f
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { getSeen, seenKeys } from "@/lib/seen";
-import type { BroadcastPost, DmThread } from "@/lib/types";
+import type { BroadcastPost, DmThread, MemberAlert } from "@/lib/types";
 
 interface NotificationState {
   dmUnread: number;
   broadcastUnread: number;
+  alertUnread: number;
   notificationsOn: boolean;
   enableNotifications: () => Promise<boolean>;
 }
@@ -32,6 +33,7 @@ interface NotificationState {
 const NotificationContext = createContext<NotificationState>({
   dmUnread: 0,
   broadcastUnread: 0,
+  alertUnread: 0,
   notificationsOn: false,
   enableNotifications: async () => false,
 });
@@ -50,6 +52,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [threads, setThreads] = useState<DmThread[]>([]);
   const [posts, setPosts] = useState<BroadcastPost[]>([]);
+  const [alerts, setAlerts] = useState<MemberAlert[]>([]);
   const [seenTick, setSeenTick] = useState(0);
   const [notificationsOn, setNotificationsOn] = useState(
     () =>
@@ -58,7 +61,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       Notification.permission === "granted",
   );
   // Skip notifying for the data that was already there when the app opened.
-  const primed = useRef({ dms: false, broadcast: false });
+  const primed = useRef({ dms: false, broadcast: false, alerts: false });
 
   // Re-evaluate badges when something is marked read.
   useEffect(() => {
@@ -71,7 +74,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Signed out: nothing to listen to. The counts below are gated on `user`,
     // so any leftover data stops being counted immediately.
     if (!user) {
-      primed.current = { dms: false, broadcast: false };
+      primed.current = { dms: false, broadcast: false, alerts: false };
       return;
     }
     const unsubDms = onSnapshot(
@@ -118,9 +121,27 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       () => {},
     );
 
+    // Timing alerts an Admin addressed to this member.
+    const unsubAlerts = onSnapshot(
+      query(collection(db(), "alerts"), where("targetUid", "==", user.uid)),
+      (snap) => {
+        if (primed.current.alerts) {
+          for (const change of snap.docChanges()) {
+            if (change.type !== "added") continue;
+            const a = { id: change.doc.id, ...change.doc.data() } as MemberAlert;
+            notify("🔔 Alert from your administrator", a.message.slice(0, 140), `alert-${a.id}`);
+          }
+        }
+        primed.current.alerts = true;
+        setAlerts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MemberAlert));
+      },
+      () => {},
+    );
+
     return () => {
       unsubDms();
       unsubBroadcast();
+      unsubAlerts();
     };
   }, [user]);
 
@@ -147,9 +168,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       ).length
     : 0;
 
+  // Alerts carry their own read flag in Firestore so the Admin can see it.
+  const alertUnread = user ? alerts.filter((a) => !a.read).length : 0;
+
   return (
     <NotificationContext.Provider
-      value={{ dmUnread, broadcastUnread, notificationsOn, enableNotifications }}
+      value={{ dmUnread, broadcastUnread, alertUnread, notificationsOn, enableNotifications }}
     >
       {children}
     </NotificationContext.Provider>

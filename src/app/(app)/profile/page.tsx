@@ -1,5 +1,12 @@
 "use client";
 
+// The member's own dashboard: alerts from their administrator, their funding
+// status, their individual project milestones with countdowns — plus account
+// settings.
+//
+// Project sections are for REAL MEMBERS only. Staff Handles are operator
+// accounts run by the SuperAdmin: they don't run projects, so they get no
+// milestones, funding or alerts. Admins manage from the Admin Panel.
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -7,14 +14,17 @@ import { formatFunding, isAdmin, roleTag } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import AccountSettings from "@/components/AccountSettings";
 import NotificationSettings from "@/components/NotificationSettings";
+import MyAlerts from "@/components/MyAlerts";
 import MyMilestones from "@/components/MyMilestones";
 
-export default function ProfilePage() {
+export default function DashboardPage() {
   const { user, profile, logout } = useAuth();
   const router = useRouter();
+  // Only real members have a project to track.
+  const runsAProject = profile?.role === "member";
 
   return (
-    <AppShell title="👤 My Profile">
+    <AppShell title={runsAProject ? "📊 My Dashboard" : "👤 My Profile"}>
       <div className="mx-auto max-w-lg space-y-4 p-4">
         <div className="flex flex-col items-center gap-2 rounded-3xl bg-surface p-6 shadow-sm">
           <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-brand text-3xl font-bold text-white">
@@ -29,39 +39,42 @@ export default function ProfilePage() {
           <p className="text-xs opacity-50">{user?.email}</p>
         </div>
 
-        {/* Funding status — set by Admins, read-only here */}
-        {profile && profile.role !== "superadmin" && (
-          <div className="rounded-3xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">💰 Funding status</p>
-            {profile.funded ? (
-              <>
-                <p
-                  className="mt-1 text-2xl font-extrabold tabular-nums"
-                  style={{ color: "#0ca30c" }}
-                >
-                  {formatFunding(profile.fundedAmount, profile.fundedCurrency)}
-                </p>
-                <p className="text-xs font-semibold text-emerald-600">✅ Funded</p>
-                {profile.fundedNote && (
-                  <p className="mt-1 text-[11px] opacity-60">{profile.fundedNote}</p>
-                )}
-                {profile.fundedAt && (
-                  <p className="mt-1 text-[10px] opacity-40">
-                    Updated {profile.fundedAt.toDate().toLocaleDateString()}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="mt-1 text-sm font-semibold opacity-60">○ Not funded</p>
-            )}
-            <p className="mt-2 text-[10px] leading-relaxed opacity-40">
-              Your funding status is set by an administrator. Contact them if
-              something looks wrong.
-            </p>
-          </div>
-        )}
+        {runsAProject && (
+          <>
+            <MyAlerts />
+            <MyMilestones />
 
-        <MyMilestones />
+            {/* Funding status — set by Admins, read-only here */}
+            <div className="rounded-3xl bg-surface p-4 shadow-sm">
+              <p className="text-sm font-bold">💰 Funding status</p>
+              {profile?.funded ? (
+                <>
+                  <p
+                    className="mt-1 text-2xl font-extrabold tabular-nums"
+                    style={{ color: "#0ca30c" }}
+                  >
+                    {formatFunding(profile.fundedAmount, profile.fundedCurrency)}
+                  </p>
+                  <p className="text-xs font-semibold text-emerald-600">✅ Funded</p>
+                  {profile.fundedNote && (
+                    <p className="mt-1 text-[11px] opacity-60">{profile.fundedNote}</p>
+                  )}
+                  {profile.fundedAt && (
+                    <p className="mt-1 text-[10px] opacity-40">
+                      Updated {profile.fundedAt.toDate().toLocaleDateString()}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="mt-1 text-sm font-semibold opacity-60">○ Not funded</p>
+              )}
+              <p className="mt-2 text-[10px] leading-relaxed opacity-40">
+                Your funding status is set by an administrator. Contact them if
+                something looks wrong.
+              </p>
+            </div>
+          </>
+        )}
 
         <NotificationSettings />
 

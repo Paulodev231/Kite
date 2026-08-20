@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { dueLabel, dueState, DUE_META } from "@/lib/dates";
+import { daysUntil, dueLabel, dueState, DUE_META } from "@/lib/dates";
 import { MILESTONE_STATUS, type Milestone } from "@/lib/types";
 
 export default function MyMilestones() {
@@ -47,16 +47,22 @@ export default function MyMilestones() {
               <span aria-hidden>{meta.icon}</span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">{m.title}</p>
-                <p className="text-[10px] opacity-50">
-                  {meta.label}
-                  {m.roomName ? ` · 🔐 ${m.roomName}` : ""}
-                  {m.dueDate ? ` · due ${m.dueDate}` : ""}
-                </p>
-                {dm && m.dueDate && (
-                  <p className="text-[10px] font-bold" style={{ color: dm.color }}>
-                    {dm.icon} {dueLabel(m.dueDate)}
+                {/* Countdown first — it's the thing that drives action */}
+                {m.dueDate && m.status !== "completed" && (
+                  <p
+                    className="text-[11px] font-bold"
+                    style={{ color: dm?.color }}
+                  >
+                    {dm ? `${dm.icon} ` : "🗓️ "}
+                    {daysUntil(m.dueDate) >= 0
+                      ? `${daysUntil(m.dueDate)} day${daysUntil(m.dueDate) === 1 ? "" : "s"} to go`
+                      : dueLabel(m.dueDate)}
                   </p>
                 )}
+                <p className="text-[10px] opacity-50">
+                  {meta.label}
+                  {m.dueDate ? ` · due ${m.dueDate}` : ""}
+                </p>
                 {m.status === "blocked" && m.hindrance && (
                   <p className="text-[10px] font-medium text-red-500">⛔ {m.hindrance}</p>
                 )}

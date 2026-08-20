@@ -147,7 +147,7 @@ export default function AdminUsersPage() {
                   {u.role}
                   {u.active === false ? " · deactivated" : ""}
                 </p>
-                {u.role !== "superadmin" &&
+                {u.role === "member" &&
                   (() => {
                     const badge = fundingBadge(u);
                     return (
@@ -204,8 +204,9 @@ export default function AdminUsersPage() {
               )}
               </div>
 
-              {/* Funding tag — admins only; members see it read-only on their profile */}
-              {u.role !== "superadmin" && (
+              {/* Funding tags apply to real members only — Staff Handles and
+                  Admins don't run funded projects. */}
+              {u.role === "member" && (
                 <>
                   {fundingFor === u.uid ? (
                     <FundingEditor user={u} onDone={() => setFundingFor(null)} />

@@ -23,6 +23,13 @@ and never assume a local terminal is available.
   accordingly (Firestore rules are not filters — an unscoped query fails).
 - Per-member funding tags (`users/{uid}.funded/fundedAmount`) are separate
   from per-milestone funding (`fundedAmount`/`spentAmount`).
+- **Milestones are NEVER shown in rooms.** Members see their own milestones,
+  countdowns and admin alerts on their own dashboard (the Profile tab).
+- **Project features are for `role === "member"` only.** Staff Handles are
+  operator accounts run by the SuperAdmin — no milestones, no funding tags,
+  no alerts, no dashboard sections. Admins manage rather than deliver.
+- Admins push timing nudges via `alerts/{id}` (targetUid, message,
+  optional milestoneId); the recipient may only flip `read`/`readAt`.
 
 ## Security model (do not weaken)
 - Roles in `users/{uid}.role`: member | staff | admin | superadmin.

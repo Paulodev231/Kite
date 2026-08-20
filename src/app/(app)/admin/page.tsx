@@ -63,6 +63,13 @@ export default function AdminHome() {
       badge: 0,
     },
     {
+      href: "/admin/alerts",
+      icon: "🔔",
+      title: "Member Alerts",
+      desc: "Write timing nudges to a member — auto-fills the countdown to their milestone",
+      badge: 0,
+    },
+    {
       href: "/admin/reports",
       icon: "📑",
       title: "Room Reports",

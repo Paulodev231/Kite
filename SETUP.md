@@ -276,6 +276,25 @@ own project. Rooms just group people whose projects are similar in scope.
 **“⚠️ Unassigned — choose the member…”** in Admin Panel → Milestones. Pick the
 right member from that dropdown and they're fixed.
 
+## 🆙 Member dashboards & admin alerts
+
+⚠️ **Re-paste `firestore.rules`** (Firebase Console → Firestore Database →
+Rules → Publish) — this adds the new `alerts` collection.
+
+- **Milestones are no longer shown in rooms at all.** Rooms are for chat and
+  forms. Each member sees their own project on the **📊 Dashboard** tab
+  (the old Profile tab), with a countdown on every milestone —
+  “20 days to go”, “🔴 3 days overdue”.
+- **🔔 Write alerts to a member:** Admin Panel → **Member Alerts** → choose the
+  member → tap one of their milestones and the countdown sentence is written
+  for you (e.g. *“20 days to ‘Site survey’ — you should be finishing this
+  within 19 days.”*) → edit the wording → **Send alert**.
+  It appears on that member's dashboard, notifies their phone, and shows you
+  **✅ Read by member** once they've seen it.
+- **Staff Handles are excluded from all of this.** They are operator accounts
+  run by you — no milestones, no funding tags, no alerts, no project
+  dashboard. Only real members appear in those pickers.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

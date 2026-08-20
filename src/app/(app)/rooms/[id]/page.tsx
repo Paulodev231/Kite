@@ -18,17 +18,9 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import {
-  isAdmin,
-  MILESTONE_STATUS,
-  type Milestone,
-  type Room,
-  type RoomForm,
-  type RoomMessage,
-} from "@/lib/types";
+import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { deleteRoomMessage } from "@/lib/adminActions";
-import { dueLabel, dueState, DUE_META } from "@/lib/dates";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -40,7 +32,6 @@ export default function RoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [forms, setForms] = useState<RoomForm[]>([]);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const elevated = isAdmin(profile?.role) || profile?.role === "staff";
 
@@ -63,31 +54,12 @@ export default function RoomPage() {
       (snap) => setForms(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomForm)),
       () => {},
     );
-    // Milestones are per-member, not per-room. A member may only read their
-    // OWN, so the query is scoped to them; admins/staff see the whole room.
-    const milestoneQuery = elevated
-      ? query(collection(db(), "milestones"), where("roomId", "==", id))
-      : user
-        ? query(
-            collection(db(), "milestones"),
-            where("roomId", "==", id),
-            where("ownerUid", "==", user.uid),
-          )
-        : null;
-    const unsubMilestones = milestoneQuery
-      ? onSnapshot(
-          milestoneQuery,
-          (snap) => setMilestones(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Milestone)),
-          () => {},
-        )
-      : () => {};
     return () => {
       unsubRoom();
       unsubMsgs();
       unsubForms();
-      unsubMilestones();
     };
-  }, [id, elevated, user]);
+  }, [id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -108,58 +80,6 @@ export default function RoomPage() {
   return (
     <AppShell title={room ? `🔐 ${room.name}` : "Room"}>
       <div className="mx-auto flex min-h-full max-w-lg flex-col">
-        {milestones.length > 0 && (
-          <div className="p-3 pb-0">
-            <details className="rounded-2xl bg-surface p-3 shadow-sm">
-              <summary className="app-chrome cursor-pointer text-xs font-bold">
-                🎯 {elevated ? "Milestones in this room" : "My milestones"} (
-                {milestones.filter((m) => m.status === "completed").length}/{milestones.length}{" "}
-                done)
-              </summary>
-              <div className="mt-2 space-y-1.5">
-                {milestones.map((m) => {
-                  const meta = MILESTONE_STATUS[m.status] ?? MILESTONE_STATUS.planned;
-                  return (
-                    <div key={m.id} className="flex items-start gap-2 text-xs">
-                      <span aria-hidden>{meta.icon}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="font-semibold">{m.title}</span>
-                        {/* Admins see whose project it is; members only ever see their own */}
-                        {elevated && m.ownerHandle && (
-                          <span className="block text-[10px] font-semibold text-brand">
-                            👤 {m.ownerHandle}
-                          </span>
-                        )}
-                        <span className="block text-[10px] opacity-50">
-                          {meta.label}
-                          {m.dueDate ? ` · due ${m.dueDate}` : ""}
-                        </span>
-                        {(() => {
-                          const dm = DUE_META[dueState(m.dueDate, m.status === "completed")];
-                          if (!dm || !m.dueDate) return null;
-                          return (
-                            <span
-                              className="block text-[10px] font-bold"
-                              style={{ color: dm.color }}
-                            >
-                              {dm.icon} {dueLabel(m.dueDate)}
-                            </span>
-                          );
-                        })()}
-                        {m.status === "blocked" && m.hindrance && (
-                          <span className="block text-[10px] font-medium text-red-500">
-                            ⛔ {m.hindrance}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </details>
-          </div>
-        )}
-
         {forms.length > 0 && (
           <div className="app-chrome flex gap-2 overflow-x-auto p-3 pb-1 no-scrollbar">
             {forms.map((form) => (
