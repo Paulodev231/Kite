@@ -37,6 +37,7 @@ Support** platform that installs and behaves like a native mobile app (PWA).
 | ⏰ Due-date reminders + 🚩 "Needs attention" working list | ✅ Phase 4 |
 | ⬇️ CSV export: milestones, form responses, full room reports | ✅ Phase 4 |
 | 📑 Per-room reports incl. form response rates | ✅ Phase 4 |
+| 💰 Per-member funding tags (Funded / Not funded + amount) | ✅ Phase 4 |
 
 ## Project map
 

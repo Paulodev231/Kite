@@ -64,6 +64,31 @@ export async function createManagedAccount(
   }
 }
 
+/**
+ * Tags a member as Funded / Not funded with an amount. Admin-only: the
+ * security rules let members edit their handle and nothing else, so a member
+ * can never mark themselves funded.
+ */
+export async function setUserFunding(
+  uid: string,
+  funded: boolean,
+  amount: number,
+  currency: string,
+  note: string,
+) {
+  await updateDoc(doc(db(), "users", uid), {
+    funded,
+    fundedAmount: funded ? amount : 0,
+    fundedCurrency: currency,
+    fundedNote: note,
+    fundedAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), funded ? "funding_granted" : "funding_cleared", {
+    uid,
+    amount: String(funded ? amount : 0),
+  });
+}
+
 export async function setAccountActive(uid: string, active: boolean) {
   await updateDoc(doc(db(), "users", uid), { active });
   logEvent(actorUid(), active ? "account_activated" : "account_deactivated", { uid });

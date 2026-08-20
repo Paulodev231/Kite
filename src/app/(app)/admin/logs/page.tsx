@@ -30,6 +30,8 @@ const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   milestone_in_progress: { icon: "⏳", label: "Milestone in progress" },
   milestone_blocked: { icon: "⛔", label: "Milestone blocked" },
   milestone_completed: { icon: "✅", label: "Milestone completed" },
+  funding_granted: { icon: "💰", label: "Member tagged as Funded" },
+  funding_cleared: { icon: "○", label: "Member funding removed" },
 };
 
 export default function AdminLogsPage() {

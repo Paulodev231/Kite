@@ -8,8 +8,9 @@ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { createManagedAccount, deleteUserAccount, setAccountActive } from "@/lib/adminActions";
-import type { Role, UserProfile } from "@/lib/types";
+import { formatFunding, fundingBadge, type Role, type UserProfile } from "@/lib/types";
 import AppShell from "@/components/AppShell";
+import FundingEditor from "@/components/FundingEditor";
 
 export default function AdminUsersPage() {
   const { profile } = useAuth();
@@ -21,6 +22,7 @@ export default function AdminUsersPage() {
   const [role, setRole] = useState<Role>("member");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [fundingFor, setFundingFor] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db(), "users"), orderBy("createdAt", "desc"));
@@ -101,14 +103,41 @@ export default function AdminUsersPage() {
         </form>
 
         <div className="space-y-2">
+          {/* Funding roll-up across the directory */}
+          {(() => {
+            const fundedUsers = users.filter((u) => u.funded);
+            if (fundedUsers.length === 0) return null;
+            const byCurrency = fundedUsers.reduce<Record<string, number>>((acc, u) => {
+              const cur = u.fundedCurrency || "$";
+              acc[cur] = (acc[cur] ?? 0) + (u.fundedAmount ?? 0);
+              return acc;
+            }, {});
+            return (
+              <div className="rounded-2xl bg-surface p-4 shadow-sm">
+                <p className="text-sm font-bold">💰 Funded members</p>
+                <p className="text-[11px] opacity-50">
+                  {fundedUsers.length} of {users.length} tagged as funded
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(byCurrency).map(([cur, sum]) => (
+                    <span
+                      key={cur}
+                      className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold tabular-nums text-brand"
+                    >
+                      {formatFunding(sum, cur)} total
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <p className="px-2 text-xs font-semibold uppercase tracking-wide opacity-40">
             Directory ({users.length}) — visible to Admins only
           </p>
           {users.map((u) => (
-            <div
-              key={u.uid}
-              className="flex items-center gap-3 rounded-2xl bg-surface p-3 shadow-sm"
-            >
+            <div key={u.uid} className="rounded-2xl bg-surface p-3 shadow-sm">
+              <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
                 {u.handle?.slice(0, 1).toUpperCase()}
               </span>
@@ -118,6 +147,21 @@ export default function AdminUsersPage() {
                   {u.role}
                   {u.active === false ? " · deactivated" : ""}
                 </p>
+                {u.role !== "superadmin" &&
+                  (() => {
+                    const badge = fundingBadge(u);
+                    return (
+                      <p
+                        className="text-[10px] font-bold"
+                        style={{ color: u.funded ? badge.color : undefined }}
+                      >
+                        <span className={u.funded ? "" : "opacity-50"}>
+                          {badge.icon} {badge.label}
+                          {u.funded && u.fundedNote ? ` · ${u.fundedNote}` : ""}
+                        </span>
+                      </p>
+                    );
+                  })()}
               </div>
               {u.uid !== profile?.uid && u.role !== "superadmin" && (
                 <div className="flex shrink-0 gap-1.5">
@@ -157,6 +201,24 @@ export default function AdminUsersPage() {
                     </button>
                   )}
                 </div>
+              )}
+              </div>
+
+              {/* Funding tag — admins only; members see it read-only on their profile */}
+              {u.role !== "superadmin" && (
+                <>
+                  {fundingFor === u.uid ? (
+                    <FundingEditor user={u} onDone={() => setFundingFor(null)} />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setFundingFor(u.uid)}
+                      className="app-chrome mt-2 w-full rounded-xl bg-background py-2 text-[11px] font-bold active:scale-[0.99]"
+                    >
+                      💰 {u.funded ? "Edit funding" : "Set funding status"}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           ))}

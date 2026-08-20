@@ -27,6 +27,41 @@ export interface UserProfile {
   active: boolean; // deactivated accounts cannot use the app
   onCall?: boolean; // staff handles only: counted in the presence indicator
   createdAt?: Timestamp;
+
+  // ----- Funding status (set by Admins only; the member sees it read-only) -----
+  funded?: boolean;
+  fundedAmount?: number;
+  fundedCurrency?: string; // symbol, e.g. "$" or "₦"
+  fundedNote?: string; // optional context, e.g. "Tranche 1 of 3"
+  fundedAt?: Timestamp;
+}
+
+/** Currency symbols offered when tagging a member's funding. */
+export const CURRENCIES = ["$", "₦", "£", "€", "₵", "R", "KSh"] as const;
+
+export const DEFAULT_CURRENCY = "$";
+
+/** "$200,000" — grouped thousands, no stray decimals. */
+export function formatFunding(amount: number | undefined, currency?: string): string {
+  return `${currency || DEFAULT_CURRENCY}${(amount ?? 0).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+/** Funding badge text + icon. Icon and words carry the meaning, not colour. */
+export function fundingBadge(profile: {
+  funded?: boolean;
+  fundedAmount?: number;
+  fundedCurrency?: string;
+}): { icon: string; label: string; color: string } {
+  if (profile.funded) {
+    return {
+      icon: "💰",
+      label: `Funded — ${formatFunding(profile.fundedAmount, profile.fundedCurrency)}`,
+      color: "#0ca30c",
+    };
+  }
+  return { icon: "○", label: "Not funded", color: "#898781" };
 }
 
 export interface BroadcastPost {

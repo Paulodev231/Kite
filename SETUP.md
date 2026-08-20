@@ -234,6 +234,22 @@ redeploy is all that's needed. New features:
   members count, completion, overdue count, funding, milestone-by-status
   breakdown, and **how many members have responded to each form**.
 
+## 🆙 Member funding tags
+
+**No Firebase step** — the existing rules already cover it.
+
+- **Tag a member:** Admin Panel → **Members & Accounts** → tap
+  **💰 Set funding status** under any person → choose **💰 Funded** or
+  **○ Not funded** → pick the currency ($, ₦, £, €, ₵, R, KSh), type the
+  amount (numbers only, e.g. `200000`) and optionally a note like
+  “Tranche 1 of 3” → **Save funding**. It shows as `💰 Funded — $200,000`.
+- **The member sees it** on their own **Profile** tab as a read-only card.
+  They cannot change it — the security rules let a member edit only their
+  handle, so funding can never be self-assigned.
+- **Totals:** the top of Members & Accounts shows how many members are
+  funded and the total per currency.
+- Every funding change is recorded in **Compliance Logs**.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress
