@@ -363,6 +363,25 @@ never been created, so the listener failed silently and the list showed empty.
 Every query in the app has been rewritten so **no index is ever required** —
 nothing for you to create in the Firebase console, now or in future.
 
+## 🆙 The "Admin" tag
+
+⚠️ **Re-paste `firestore.rules`** → Publish.
+
+Admins and SuperAdmins now carry a blue **Admin** chip beside their handle
+everywhere it appears — Noticeboard posts, room messages, the DM list and the
+top of a conversation — so members always know who speaks with authority.
+
+- A SuperAdmin reads simply as **Admin**. Members don't need to know the
+  internal hierarchy, only who is in charge.
+- Members and Staff Handles carry **no tag**, so a handle still reads as an
+  ordinary user.
+- Nothing to set up: the first time you open the app after this update your
+  account adds itself to the public admin list automatically.
+
+*(Members cannot read other people's profiles — that's the privacy rule — so
+the app publishes one tiny doc, `status/admins`, containing admin user IDs and
+nothing else. No names, no emails, no roles.)*
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

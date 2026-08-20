@@ -100,7 +100,15 @@ service cloud.firestore {
       allow write: if isSuper();
     }
 
-    // ---------- Main Broadcast Channel: Admins post, everyone reads ----------
+    // status/admins lists admin uids so the app can show an "Admin" tag beside
+    // their handle. Members cannot read other people's profiles, so this tiny
+    // public roster is the only way they can tell who is an administrator.
+    // It holds uids and nothing else — no names, emails or roles.
+    match /status/admins {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
     // ---------- Noticeboard: admins post, members react with one emoji ----------
     match /broadcast/{postId} {
       // A member may change ONLY the `reactions` map, and within it ONLY their

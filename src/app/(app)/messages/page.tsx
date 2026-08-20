@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import type { DmThread } from "@/lib/types";
 import { getSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
+import AdminTag from "@/components/AdminTag";
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -74,7 +75,10 @@ export default function MessagesPage() {
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">{peerHandle}</p>
+                <p className="flex items-center gap-1.5 truncate text-sm font-bold">
+                  {peerHandle}
+                  <AdminTag uid={peerUid} />
+                </p>
                 <p className={`truncate text-xs ${unread ? "font-bold" : "opacity-50"}`}>
                   {t.lastSenderUid === identityUid ? "You: " : ""}
                   {t.lastText ?? ""}

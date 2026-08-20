@@ -24,6 +24,7 @@ import { markSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
+import AdminTag from "@/components/AdminTag";
 
 function DmScreen() {
   const { uid: peerUid } = useParams<{ uid: string }>();
@@ -96,8 +97,9 @@ function DmScreen() {
     <AppShell title={`💬 ${peerHandle}`}>
       <div className="mx-auto flex min-h-full max-w-lg flex-col">
         <div className="flex-1 space-y-2 p-3">
-          <p className="py-2 text-center text-[10px] opacity-40">
-            🔒 Private conversation
+          <p className="flex items-center justify-center gap-1.5 py-2 text-center text-[10px] opacity-60">
+            🔒 Private conversation with {peerHandle}
+            <AdminTag uid={peerUid} />
           </p>
           {messages.map((m) => {
             const mine = m.senderUid === user?.uid;

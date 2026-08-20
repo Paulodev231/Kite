@@ -56,6 +56,10 @@ and never assume a local terminal is available.
 - Presence is anonymous: `presence/{uid}` holds only a timestamp; the
   counter adds `status/staff.onCallCount` (superadmin-managed).
 - DM thread ids are the two sorted uids joined by `_`, enforced in rules.
+- Members cannot read other profiles, so `status/admins` (uids only, world-
+  readable to signed-in users) publishes who is an admin; `AdminTag` renders
+  the chip from it. Admins self-heal into that list on sign-in, and
+  `syncAdminRoster` keeps it current on create/role-change/delete.
 
 ## Verify before pushing
 `npm run lint && npm run build`

@@ -2,8 +2,13 @@
 
 // One-touch DM: tapping any handle/avatar anywhere in the app opens a
 // private 1-on-1 conversation with that user.
+//
+// Admins carry a visible "Admin" tag so everyone knows who speaks with
+// authority. Members and Staff Handles carry none — a Staff Handle should
+// read as an ordinary user.
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import AdminTag from "@/components/AdminTag";
 
 export default function UserBadge({
   uid,
@@ -39,6 +44,7 @@ export default function UserBadge({
       >
         {handle}
       </span>
+      <AdminTag uid={uid} />
     </button>
   );
 }

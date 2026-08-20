@@ -10,14 +10,18 @@ export function isAdmin(role: Role | null | undefined): boolean {
 }
 
 /**
- * Public-facing role label. Only Admins and SuperAdmins carry a visible tag —
- * members show nothing, and Staff Handles deliberately show nothing so they
- * appear as ordinary project managers to the rest of the platform.
+ * Public-facing role label shown next to a handle. Admins and SuperAdmins both
+ * read simply as "Admin" — members don't need to know the internal hierarchy,
+ * only who speaks with authority. Members and Staff Handles carry no tag, so a
+ * Staff Handle still looks like an ordinary user.
  */
 export function roleTag(role: Role | null | undefined): string | null {
-  if (role === "superadmin") return "SuperAdmin";
-  if (role === "admin") return "Admin";
-  return null;
+  return role === "superadmin" || role === "admin" ? "Admin" : null;
+}
+
+/** The single public doc listing admin uids: status/admins { uids: [...] } */
+export interface AdminRoster {
+  uids: string[];
 }
 
 export interface UserProfile {

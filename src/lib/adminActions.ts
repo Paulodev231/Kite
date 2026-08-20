@@ -24,6 +24,19 @@ function actorUid(): string {
   return firebaseAuth().currentUser?.uid ?? "unknown";
 }
 
+/**
+ * Keeps status/admins in step with who is actually an admin. That doc is the
+ * only way members — who cannot read other profiles — learn which handles
+ * carry the "Admin" tag. It holds uids and nothing else.
+ */
+async function syncAdminRoster(uid: string, isAdminRole: boolean) {
+  await setDoc(
+    doc(db(), "status", "admins"),
+    { uids: isAdminRole ? arrayUnion(uid) : arrayRemove(uid) },
+    { merge: true },
+  ).catch(() => {});
+}
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -60,6 +73,7 @@ export async function createManagedAccount(
       createdAt: serverTimestamp(),
     });
     await signOut(getAuth(secondary));
+    if (role === "admin") await syncAdminRoster(uid, true);
     logEvent(actorUid(), "account_created", { newUid: uid, role });
     return uid;
   } finally {
@@ -131,6 +145,7 @@ export async function setUserEmailRecord(uid: string, email: string) {
 /** SuperAdmin: change someone's role. */
 export async function setUserRole(uid: string, role: Role) {
   await updateDoc(doc(db(), "users", uid), { role });
+  await syncAdminRoster(uid, role === "admin" || role === "superadmin");
   logEvent(actorUid(), "role_changed", { uid, role });
 }
 
@@ -245,5 +260,6 @@ export async function deleteUserAccount(uid: string) {
   batch.delete(doc(db(), "presence", uid));
   batch.delete(doc(db(), "users", uid));
   await batch.commit();
+  await syncAdminRoster(uid, false);
   logEvent(actorUid(), "account_deleted", { uid });
 }

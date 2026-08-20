@@ -14,6 +14,7 @@ import {
 } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
+  arrayUnion,
   deleteDoc,
   doc,
   onSnapshot,
@@ -21,7 +22,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db, firebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
-import type { UserProfile } from "@/lib/types";
+import { isAdmin, type UserProfile } from "@/lib/types";
 
 interface AuthState {
   user: User | null;
@@ -32,6 +33,8 @@ interface AuthState {
   profileMissing: boolean;
   /** Signed in, but reading users/{uid} failed (rules/database problem). */
   profileError: boolean;
+  /** Uids of admins, so an "Admin" tag can be shown beside their handle. */
+  adminUids: Set<string>;
   logout: () => Promise<void>;
 }
 
@@ -42,6 +45,7 @@ const AuthContext = createContext<AuthState>({
   configured: false,
   profileMissing: false,
   profileError: false,
+  adminUids: new Set<string>(),
   logout: async () => {},
 });
 
@@ -50,6 +54,7 @@ const HEARTBEAT_MS = 60_000;
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [adminUids, setAdminUids] = useState<Set<string>>(new Set());
   const [profileMissing, setProfileMissing] = useState(false);
   const [profileError, setProfileError] = useState(false);
   // When Firebase isn't configured yet there is nothing to wait for.
@@ -90,6 +95,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }, [user]);
 
+  // The public admin roster: a single doc of uids, readable by everyone, so
+  // members (who cannot read other profiles) can still see who is an admin.
+  useEffect(() => {
+    if (!user) return;
+    return onSnapshot(
+      doc(db(), "status", "admins"),
+      (snap) => setAdminUids(new Set<string>(snap.data()?.uids ?? [])),
+      () => {},
+    );
+  }, [user]);
+
+  // Self-heal: an admin who is not yet listed adds themselves. This means the
+  // hand-created SuperAdmin appears automatically with no manual step.
+  useEffect(() => {
+    if (!user || !profile || !isAdmin(profile.role)) return;
+    if (adminUids.has(user.uid)) return;
+    setDoc(doc(db(), "status", "admins"), { uids: arrayUnion(user.uid) }, { merge: true }).catch(
+      () => {},
+    );
+  }, [user, profile, adminUids]);
+
   // Anonymous presence heartbeat: presence/{uid} holds only a timestamp.
   useEffect(() => {
     if (!user) return;
@@ -120,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         configured: isFirebaseConfigured,
         profileMissing,
         profileError,
+        adminUids,
         logout,
       }}
     >
