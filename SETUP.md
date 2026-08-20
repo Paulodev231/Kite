@@ -386,11 +386,11 @@ nothing else. No names, no emails, no roles.)*
 
 No Firebase step — Vercel's automatic redeploy is all that's needed.
 
-- **Staff Handles can react on the Noticeboard.** Admin Panel → 🎛️ Handle
-  Console → **Noticeboard** tab. Each post now shows the emoji bar with
-  *"React as &lt;name&gt;"* above it — pick the handle in **Speaking as**, tap an
-  emoji, tap it again to undo. Reactions count in the tally exactly like a
-  member's.
+- **Staff Handles react on the Noticeboard — and can stack them.** Admin Panel
+  → 🎛️ Handle Console → **Noticeboard** tab. Pick a handle in **Speaking as**,
+  then tap emoji on any post: **each tap adds one more**, with a running count
+  on the button. A **Clear** link removes everything that handle stacked.
+  Reacting as *yourself* stays one-per-post, exactly like a member.
 - **Bulk create handles.** Admin Panel → **Staff Handles**: the name box now
   takes a whole list — paste one name per line (or separate with commas) and
   the button reads *"Create 5 handles"*. Duplicates and bad names are skipped

@@ -14,7 +14,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { postBroadcastAs } from "@/lib/handleActions";
+import {
+  addHandleReaction,
+  clearHandleReactions,
+  postBroadcastAs,
+} from "@/lib/handleActions";
 import { deleteBroadcastPost } from "@/lib/adminActions";
 import {
   REACTION_EMOJIS,
@@ -51,11 +55,19 @@ export default function ConsoleBroadcast({
 
   const speaking = asUid ? handles.find((h) => h.uid === asUid) : me;
 
-  /** React to a post as whoever is currently selected in "Speaking as" —
-   *  so a Staff Handle can like a Noticeboard post just like a member.
-   *  Tapping the same emoji again clears that reaction. */
+  const speakingAsHandle = Boolean(asUid);
+
+  /**
+   * React as whoever is selected in "Speaking as".
+   *  - As a Staff Handle: every tap ADDS one more, so you can stack them up.
+   *  - As yourself: one reaction only, like any member; tap again to clear.
+   */
   async function reactAs(post: BroadcastPost, emoji: string) {
     if (!speaking) return;
+    if (speakingAsHandle) {
+      await addHandleReaction(post.id, speaking.uid, emoji).catch(() => {});
+      return;
+    }
     const current = post.reactions?.[speaking.uid];
     await updateDoc(doc(db(), "broadcast", post.id), {
       [`reactions.${speaking.uid}`]: current === emoji ? deleteField() : emoji,
@@ -130,7 +142,9 @@ export default function ConsoleBroadcast({
 
       {posts.map((p) => {
         const mine = speaking ? p.reactions?.[speaking.uid] : undefined;
-        const tally = tallyReactions(p.reactions);
+        const myStack = speaking ? (p.handleReactions?.[speaking.uid] ?? {}) : {};
+        const myStackTotal = Object.values(myStack).reduce((a, b) => a + b, 0);
+        const tally = tallyReactions(p.reactions, p.handleReactions);
         return (
           <article key={p.id} className="rounded-2xl bg-surface p-4 shadow-sm">
             <div className="mb-1 flex items-center gap-2">
@@ -171,27 +185,46 @@ export default function ConsoleBroadcast({
               </div>
             )}
 
-            {/* React as the selected identity — handles included */}
+            {/* React as the selected identity — handles can stack */}
             <div className="mt-2 border-t border-black/5 pt-2 dark:border-white/10">
-              <p className="mb-1 text-[10px] font-semibold opacity-50">
-                React as {speaking?.handle ?? "…"}
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {REACTION_EMOJIS.map((emoji) => (
+              <div className="mb-1 flex items-center gap-2">
+                <p className="text-[10px] font-semibold opacity-50">
+                  React as {speaking?.handle ?? "…"}
+                  {speakingAsHandle ? " · tap repeatedly to add more" : ""}
+                </p>
+                {speakingAsHandle && myStackTotal > 0 && (
                   <button
-                    key={emoji}
                     type="button"
-                    onClick={() => reactAs(p, emoji)}
-                    aria-label={`React ${emoji}`}
-                    className={`app-chrome flex h-9 w-9 items-center justify-center rounded-xl text-lg transition active:scale-125 ${
-                      mine === emoji
-                        ? "bg-brand-soft ring-1 ring-brand"
-                        : "active:bg-brand-soft"
-                    }`}
+                    onClick={() => clearHandleReactions(p.id, speaking!.uid)}
+                    className="app-chrome ml-auto text-[10px] font-bold text-red-500"
                   >
-                    {emoji}
+                    Clear {myStackTotal}
                   </button>
-                ))}
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {REACTION_EMOJIS.map((emoji) => {
+                  const stacked = myStack[emoji] ?? 0;
+                  const active = speakingAsHandle ? stacked > 0 : mine === emoji;
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => reactAs(p, emoji)}
+                      aria-label={`React ${emoji}`}
+                      className={`app-chrome relative flex h-9 w-9 items-center justify-center rounded-xl text-lg transition active:scale-125 ${
+                        active ? "bg-brand-soft ring-1 ring-brand" : "active:bg-brand-soft"
+                      }`}
+                    >
+                      {emoji}
+                      {stacked > 0 && (
+                        <span className="absolute -right-1 -top-1 min-w-[15px] rounded-full bg-brand px-1 text-[9px] font-bold leading-4 text-white">
+                          {stacked}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </article>

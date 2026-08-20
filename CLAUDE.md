@@ -49,6 +49,10 @@ and never assume a local terminal is available.
 - **Noticeboard** (`broadcast/*`) is the single public channel: admins post,
   everyone else may only write their own key in the post's `reactions` map
   (validated in rules). Admins may also edit/pin posts and edit room messages.
+- Members get ONE reaction each (`reactions`: uid -> emoji). Staff Handles
+  stack instead (`handleReactions`: handleUid -> emoji -> count, incremented
+  per tap from the console). `tallyReactions` sums both; the member rule's
+  `hasOnly(['reactions'])` keeps members out of the stacked counters.
 - **Never write a Firestore query that filters on one field and sorts by
   another** — it needs a composite index, and without one the listener fails
   silently (this caused DMs to look undelivered). Filter in the query, sort in

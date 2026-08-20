@@ -95,7 +95,7 @@ export default function NoticeboardPage() {
 
           {ordered.map((p) => {
             const mine = user ? p.reactions?.[user.uid] : undefined;
-            const tally = tallyReactions(p.reactions);
+            const tally = tallyReactions(p.reactions, p.handleReactions);
             return (
               <article
                 key={p.id}

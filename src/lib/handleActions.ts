@@ -7,7 +7,9 @@
 import {
   addDoc,
   collection,
+  deleteField,
   doc,
+  increment,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -93,6 +95,24 @@ export async function sendDmAs(
   });
   logEvent(actorUid, "dm_as_handle", { handleUid: as.uid });
   return threadId;
+}
+
+/**
+ * Adds ONE more of an emoji on behalf of a Staff Handle. Unlike members — who
+ * get a single reaction each — a handle can tap repeatedly to stack them up,
+ * so the SuperAdmin can weight a post's response.
+ */
+export async function addHandleReaction(postId: string, handleUid: string, emoji: string) {
+  await updateDoc(doc(db(), "broadcast", postId), {
+    [`handleReactions.${handleUid}.${emoji}`]: increment(1),
+  });
+}
+
+/** Removes everything a given handle stacked on a post. */
+export async function clearHandleReactions(postId: string, handleUid: string) {
+  await updateDoc(doc(db(), "broadcast", postId), {
+    [`handleReactions.${handleUid}`]: deleteField(),
+  }).catch(() => {});
 }
 
 /** Marks a staff thread as triaged so the console badge clears. */

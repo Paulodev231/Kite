@@ -87,7 +87,10 @@ export interface BroadcastPost {
   mediaUrl?: string;
   mediaType?: "image" | "video" | "file";
   mediaName?: string;
+  /** One emoji per person: uid -> emoji. Members and admins get exactly one. */
   reactions?: Record<string, string>;
+  /** Staff Handles may stack reactions: handleUid -> emoji -> how many taps. */
+  handleReactions?: Record<string, Record<string, number>>;
   pinned?: boolean;
   pinnedAt?: Timestamp;
   editedAt?: Timestamp;
@@ -97,13 +100,22 @@ export interface BroadcastPost {
 /** The only replies members can give on the Noticeboard. */
 export const REACTION_EMOJIS = ["👍", "🙏", "🔥", "💪", "🎉", "❤️", "👏", "✅"] as const;
 
-/** Tally of a post's reactions, most-used first. */
+/**
+ * Combined tally of a post's reactions, most-used first: one per person from
+ * `reactions`, plus every stacked tap a Staff Handle contributed.
+ */
 export function tallyReactions(
   reactions: Record<string, string> | undefined,
+  handleReactions?: Record<string, Record<string, number>>,
 ): { emoji: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const emoji of Object.values(reactions ?? {})) {
     counts.set(emoji, (counts.get(emoji) ?? 0) + 1);
+  }
+  for (const perHandle of Object.values(handleReactions ?? {})) {
+    for (const [emoji, n] of Object.entries(perHandle ?? {})) {
+      if (n > 0) counts.set(emoji, (counts.get(emoji) ?? 0) + n);
+    }
   }
   return [...counts.entries()]
     .map(([emoji, count]) => ({ emoji, count }))
