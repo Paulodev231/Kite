@@ -122,10 +122,10 @@ The app has no sign-up screen on purpose. Bootstrap yourself:
   create an account → privately send them the email + password.
 - **Create locked rooms:** **Admin Panel → Private Rooms** → create → tap the
   room → tick exactly who gets in.
-- **Staff Handles (SuperAdmin):** create accounts with role *Staff Handle*
-  in Members & Accounts, then flip them **On-Call/Off-Call** in
-  **Admin Panel → Staff Handles**. On-Call handles boost the public
-  "⚡ Active Now" counter. To chat *as* a handle, sign in with its credentials.
+- **Staff Handles (SuperAdmin):** create them by name in **Admin Panel →
+  Staff Handles** (no email or password), flip them **On-Call/Off-Call**
+  there to boost the public "⚡ Active Now" counter, and operate them from
+  **Admin Panel → 🎛️ Handle Console** — you never sign in as a handle.
 - **Broadcast:** the 📢 tab — only Admins see a composer; everyone else reads.
 - **Community:** the 🫶 tab — emoji reactions only, by design.
 - **DMs:** tap any handle/avatar anywhere → instant private chat.
