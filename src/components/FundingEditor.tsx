@@ -42,8 +42,12 @@ export default function FundingEditor({
     }
   }
 
-  const inputCls =
-    "w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
+  // Width is applied per-field: inside the flex row the amount input must be
+  // `flex-1 min-w-0`, never `w-full`, or it overflows the row and gets pushed
+  // off the side of the screen.
+  const baseInput =
+    "rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
+  const inputCls = `w-full ${baseInput}`;
 
   return (
     <div className="mt-2 space-y-2 rounded-xl bg-background p-3">
@@ -75,7 +79,7 @@ export default function FundingEditor({
       <label className="block text-[11px] font-bold opacity-60">Amount funded</label>
       <div className="flex gap-2">
         <select
-          className={`${inputCls} w-24 shrink-0`}
+          className={`w-20 shrink-0 ${baseInput}`}
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           aria-label="Currency"
@@ -87,7 +91,7 @@ export default function FundingEditor({
           ))}
         </select>
         <input
-          className={inputCls}
+          className={`min-w-0 flex-1 ${baseInput}`}
           type="number"
           inputMode="decimal"
           min="0"
