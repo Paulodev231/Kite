@@ -382,6 +382,21 @@ top of a conversation — so members always know who speaks with authority.
 the app publishes one tiny doc, `status/admins`, containing admin user IDs and
 nothing else. No names, no emails, no roles.)*
 
+## 🆙 Handle reactions & bulk creation
+
+No Firebase step — Vercel's automatic redeploy is all that's needed.
+
+- **Staff Handles can react on the Noticeboard.** Admin Panel → 🎛️ Handle
+  Console → **Noticeboard** tab. Each post now shows the emoji bar with
+  *"React as &lt;name&gt;"* above it — pick the handle in **Speaking as**, tap an
+  emoji, tap it again to undo. Reactions count in the tally exactly like a
+  member's.
+- **Bulk create handles.** Admin Panel → **Staff Handles**: the name box now
+  takes a whole list — paste one name per line (or separate with commas) and
+  the button reads *"Create 5 handles"*. Duplicates and bad names are skipped
+  with a reason and left in the box so you can fix and retry; everything else
+  is created.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

@@ -3,11 +3,25 @@
 // Post announcements as yourself or as any Staff Handle, without leaving
 // the console.
 import { useEffect, useRef, useState } from "react";
-import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  deleteField,
+  doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { postBroadcastAs } from "@/lib/handleActions";
 import { deleteBroadcastPost } from "@/lib/adminActions";
-import type { BroadcastPost, UserProfile } from "@/lib/types";
+import {
+  REACTION_EMOJIS,
+  tallyReactions,
+  type BroadcastPost,
+  type UserProfile,
+} from "@/lib/types";
 import HandlePicker from "@/components/console/HandlePicker";
 import MediaAttachment from "@/components/MediaAttachment";
 
@@ -36,6 +50,17 @@ export default function ConsoleBroadcast({
   }, []);
 
   const speaking = asUid ? handles.find((h) => h.uid === asUid) : me;
+
+  /** React to a post as whoever is currently selected in "Speaking as" —
+   *  so a Staff Handle can like a Noticeboard post just like a member.
+   *  Tapping the same emoji again clears that reaction. */
+  async function reactAs(post: BroadcastPost, emoji: string) {
+    if (!speaking) return;
+    const current = post.reactions?.[speaking.uid];
+    await updateDoc(doc(db(), "broadcast", post.id), {
+      [`reactions.${speaking.uid}`]: current === emoji ? deleteField() : emoji,
+    }).catch(() => {});
+  }
 
   async function send() {
     if (!speaking || (!text.trim() && !file) || busy) return;
@@ -103,31 +128,75 @@ export default function ConsoleBroadcast({
         </div>
       </div>
 
-      {posts.map((p) => (
-        <article key={p.id} className="rounded-2xl bg-surface p-4 shadow-sm">
-          <div className="mb-1 flex items-center gap-2">
-            <span className="text-xs font-bold text-brand">{p.authorHandle}</span>
-            <span className="ml-auto text-[10px] opacity-40">
-              {p.createdAt?.toDate().toLocaleString() ?? ""}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm("Delete this announcement for everyone?"))
-                  deleteBroadcastPost(p.id);
-              }}
-              aria-label="Delete post"
-              className="app-chrome text-sm text-red-500"
-            >
-              🗑️
-            </button>
-          </div>
-          {p.text && <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.text}</p>}
-          {p.mediaUrl && (
-            <MediaAttachment url={p.mediaUrl} type={p.mediaType} name={p.mediaName} />
-          )}
-        </article>
-      ))}
+      {posts.map((p) => {
+        const mine = speaking ? p.reactions?.[speaking.uid] : undefined;
+        const tally = tallyReactions(p.reactions);
+        return (
+          <article key={p.id} className="rounded-2xl bg-surface p-4 shadow-sm">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-xs font-bold text-brand">{p.authorHandle}</span>
+              {p.pinned && <span className="text-[10px] font-bold text-brand">📌</span>}
+              <span className="ml-auto text-[10px] opacity-40">
+                {p.createdAt?.toDate().toLocaleString() ?? ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm("Delete this announcement for everyone?"))
+                    deleteBroadcastPost(p.id);
+                }}
+                aria-label="Delete post"
+                className="app-chrome text-sm text-red-500"
+              >
+                🗑️
+              </button>
+            </div>
+            {p.text && <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.text}</p>}
+            {p.mediaUrl && (
+              <MediaAttachment url={p.mediaUrl} type={p.mediaType} name={p.mediaName} />
+            )}
+
+            {tally.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tally.map((t) => (
+                  <span
+                    key={t.emoji}
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      mine === t.emoji ? "bg-brand text-white" : "bg-background"
+                    }`}
+                  >
+                    {t.emoji} {t.count}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* React as the selected identity — handles included */}
+            <div className="mt-2 border-t border-black/5 pt-2 dark:border-white/10">
+              <p className="mb-1 text-[10px] font-semibold opacity-50">
+                React as {speaking?.handle ?? "…"}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {REACTION_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => reactAs(p, emoji)}
+                    aria-label={`React ${emoji}`}
+                    className={`app-chrome flex h-9 w-9 items-center justify-center rounded-xl text-lg transition active:scale-125 ${
+                      mine === emoji
+                        ? "bg-brand-soft ring-1 ring-brand"
+                        : "active:bg-brand-soft"
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }

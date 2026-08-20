@@ -12,7 +12,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import type { UserProfile } from "@/lib/types";
 import {
-  createStaffHandle,
+  createStaffHandles,
   deleteUserAccount,
   renameStaffHandle,
   setStaffOnCall,
@@ -50,17 +50,39 @@ export default function AdminStaffPage() {
 
   const onCallCount = handles.filter((s) => s.onCall).length;
 
+  // One name or a whole pasted list — split on new lines and commas alike.
+  const requestedNames = name
+    .split(/[\n,]/)
+    .map((n) => n.trim())
+    .filter(Boolean);
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (requestedNames.length === 0) return;
     setBusy(true);
     setNotice(null);
     try {
-      await createStaffHandle(name.trim());
-      setNotice(`✅ Handle “${name.trim()}” created. Use it from the Handle Console.`);
-      setName("");
+      const result = await createStaffHandles(
+        requestedNames,
+        handles.map((h) => h.handle),
+      );
+      const parts: string[] = [];
+      if (result.created.length > 0) {
+        parts.push(
+          `✅ Created ${result.created.length} handle${
+            result.created.length === 1 ? "" : "s"
+          }: ${result.created.join(", ")}.`,
+        );
+      }
+      for (const s of result.skipped) {
+        parts.push(`⚠️ Skipped “${s.name}” — ${s.reason}.`);
+      }
+      if (result.created.length > 0) parts.push("Use them from the Handle Console.");
+      setNotice(parts.join(" "));
+      // Keep anything that failed so it can be corrected and retried.
+      setName(result.skipped.map((s) => s.name).join("\n"));
     } catch {
-      setNotice("❌ Could not create the handle.");
+      setNotice("❌ Could not create the handles.");
     } finally {
       setBusy(false);
     }
@@ -73,26 +95,28 @@ export default function AdminStaffPage() {
     <AppShell title="🎧 Staff Handles">
       <div className="mx-auto max-w-lg space-y-3 p-3">
         <form onSubmit={create} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">➕ Create a Staff Handle</p>
+          <p className="text-sm font-bold">➕ Create Staff Handles</p>
           <p className="text-[11px] leading-relaxed opacity-50">
-            No email or password needed — a handle never signs in. You operate it
-            from the 🎛️ Handle Console.
+            No email or password needed — a handle never signs in. Type one name,
+            or paste a whole list to create them in bulk (one per line).
           </p>
-          <input
-            className={inputCls}
-            placeholder="Handle name (e.g. Support_Desk)"
+          <textarea
+            className={`${inputCls} min-h-[92px] resize-y`}
+            placeholder={"Support_Desk\nField_Officer\nFinance_Desk"}
             required
-            minLength={2}
-            maxLength={24}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <button
             type="submit"
-            disabled={busy || !name.trim()}
+            disabled={busy || requestedNames.length === 0}
             className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Creating…" : "Create handle"}
+            {busy
+              ? "Creating…"
+              : requestedNames.length > 1
+                ? `Create ${requestedNames.length} handles`
+                : "Create handle"}
           </button>
           {notice && (
             <p className="rounded-xl bg-brand-soft px-3 py-2 text-xs font-medium">{notice}</p>
