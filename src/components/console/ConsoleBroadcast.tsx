@@ -58,7 +58,7 @@ export default function ConsoleBroadcast({
   return (
     <div className="space-y-2">
       <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">📢 Post an announcement</p>
+        <p className="text-sm font-bold">📣 Post to the Noticeboard</p>
         <HandlePicker
           handles={handles}
           value={asUid}

@@ -1,13 +1,5 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "dms",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
-      ]
-    }
-  ],
+  "comment": "No composite indexes are required. Every query in the app either filters OR sorts, never both on different fields, so Firestore's automatic single-field indexes are enough. Keep it that way: a query that needs a composite index fails silently for anyone who has not created it by hand.",
+  "indexes": [],
   "fieldOverrides": []
 }

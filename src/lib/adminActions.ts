@@ -190,6 +190,33 @@ export async function setRoomMembership(
   });
 }
 
+/** Correct the wording of an announcement after posting. */
+export async function editPostText(postId: string, text: string) {
+  await updateDoc(doc(db(), "broadcast", postId), {
+    text: text.trim(),
+    editedAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), "post_edited", { postId });
+}
+
+/** Pin an announcement to the top of the Noticeboard (or unpin it). */
+export async function setPostPinned(postId: string, pinned: boolean) {
+  await updateDoc(doc(db(), "broadcast", postId), {
+    pinned,
+    pinnedAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), pinned ? "post_pinned" : "post_unpinned", { postId });
+}
+
+/** Correct the wording of a room message. */
+export async function editRoomMessage(roomId: string, messageId: string, text: string) {
+  await updateDoc(doc(db(), "rooms", roomId, "messages", messageId), {
+    text: text.trim(),
+    editedAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), "message_edited", { roomId, messageId });
+}
+
 export async function deleteBroadcastPost(postId: string) {
   await deleteDoc(doc(db(), "broadcast", postId));
   logEvent(actorUid(), "post_deleted", { postId });

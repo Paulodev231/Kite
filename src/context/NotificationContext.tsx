@@ -78,12 +78,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return;
     }
     const unsubDms = onSnapshot(
-      query(
-        collection(db(), "dms"),
-        where("participants", "array-contains", user.uid),
-        orderBy("updatedAt", "desc"),
-        limit(50),
-      ),
+      // Filter only — adding a sort would require a composite index.
+      query(collection(db(), "dms"), where("participants", "array-contains", user.uid)),
       (snap) => {
         const next = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as DmThread);
         if (primed.current.dms) {
@@ -111,7 +107,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             if (change.type !== "added") continue;
             const p = { id: change.doc.id, ...change.doc.data() } as BroadcastPost;
             if (p.authorUid !== user.uid) {
-              notify("📢 New announcement", p.text?.slice(0, 120) || "Tap to read", "broadcast");
+              notify("📣 New announcement", p.text?.slice(0, 120) || "Tap to read", "broadcast");
             }
           }
         }

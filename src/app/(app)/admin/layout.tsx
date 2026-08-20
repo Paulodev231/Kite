@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !isAdmin(profile?.role)) router.replace("/broadcast");
+    if (!loading && !isAdmin(profile?.role)) router.replace("/noticeboard");
   }, [loading, profile, router]);
 
   if (loading || !isAdmin(profile?.role)) return <SplashScreen />;

@@ -3,13 +3,7 @@
 // Direct Messages inbox: your private 1-on-1 threads.
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import type { DmThread } from "@/lib/types";
@@ -20,23 +14,41 @@ export default function MessagesPage() {
   const { user } = useAuth();
   const identityUid = user?.uid ?? "";
   const [threads, setThreads] = useState<DmThread[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!identityUid) return;
+    // No orderBy here on purpose: combining a filter with a sort on another
+    // field would demand a composite Firestore index, and without it the whole
+    // listener fails silently and the inbox looks empty. Sorted below instead.
     const q = query(
       collection(db(), "dms"),
       where("participants", "array-contains", identityUid),
-      orderBy("updatedAt", "desc"),
     );
-    return onSnapshot(q, (snap) =>
-      setThreads(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as DmThread)),
+    return onSnapshot(
+      q,
+      (snap) => {
+        setThreads(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as DmThread)
+            .sort((a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0)),
+        );
+        setLoadError(false);
+      },
+      () => setLoadError(true),
     );
   }, [identityUid]);
 
   return (
     <AppShell title="💬 Direct Messages">
       <div className="mx-auto max-w-lg space-y-2 p-3">
-        {threads.length === 0 && (
+        {loadError && (
+          <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs font-medium text-red-500">
+            Could not load your conversations. Check your connection, and make
+            sure the latest firestore.rules have been published.
+          </p>
+        )}
+        {!loadError && threads.length === 0 && (
           <p className="pt-16 text-center text-sm opacity-50">
             No conversations yet. Tap any handle or avatar in a room to start a
             private chat.

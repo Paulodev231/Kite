@@ -46,7 +46,13 @@ and never assume a local terminal is available.
   (`rooms/{id}/acl/members` is admin-only; members read only their own
   `users/{uid}/memberships`), or other users' form submissions.
 - Standard members can never upload photos/videos anywhere (storage.rules).
-- Community room accepts emoji-reaction docs only (validated in rules).
+- **Noticeboard** (`broadcast/*`) is the single public channel: admins post,
+  everyone else may only write their own key in the post's `reactions` map
+  (validated in rules). Admins may also edit/pin posts and edit room messages.
+- **Never write a Firestore query that filters on one field and sorts by
+  another** — it needs a composite index, and without one the listener fails
+  silently (this caused DMs to look undelivered). Filter in the query, sort in
+  JavaScript.
 - Presence is anonymous: `presence/{uid}` holds only a timestamp; the
   counter adds `status/staff.onCallCount` (superadmin-managed).
 - DM thread ids are the two sorted uids joined by `_`, enforced in rules.

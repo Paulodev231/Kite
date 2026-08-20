@@ -34,10 +34,12 @@ export async function postBroadcastAs(
     authorUid: as.uid,
     authorHandle: as.handle,
     text,
+    reactions: {},
+    pinned: false,
     ...(media ? { mediaUrl: media.url, mediaType: media.kind, mediaName: media.name } : {}),
     createdAt: serverTimestamp(),
   });
-  logEvent(actorUid, "posted_as_handle", { handleUid: as.uid, surface: "broadcast" });
+  logEvent(actorUid, "posted_as_handle", { handleUid: as.uid, surface: "noticeboard" });
 }
 
 /** Post into a room as a handle, optionally quoting an existing message. */

@@ -20,7 +20,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
-import { deleteRoomMessage } from "@/lib/adminActions";
+import { deleteRoomMessage, editRoomMessage } from "@/lib/adminActions";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -32,6 +32,8 @@ export default function RoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [forms, setForms] = useState<RoomForm[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const elevated = isAdmin(profile?.role) || profile?.role === "staff";
 
@@ -109,19 +111,32 @@ export default function RoomPage() {
                   }`}
                 >
                   {canModerate && id && (
-                    <button
-                      type="button"
-                      aria-label="Delete message"
-                      onClick={() => {
-                        if (window.confirm("Delete this message for everyone?"))
-                          deleteRoomMessage(id, m.id);
-                      }}
-                      className={`app-chrome absolute -top-2 ${
-                        mine ? "-left-2" : "-right-2"
-                      } flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow`}
+                    <div
+                      className={`absolute -top-2 flex gap-1 ${mine ? "-left-2" : "-right-2"}`}
                     >
-                      ✕
-                    </button>
+                      <button
+                        type="button"
+                        aria-label="Edit message"
+                        onClick={() => {
+                          setDraft(m.text ?? "");
+                          setEditingId(m.id);
+                        }}
+                        className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[9px] text-white shadow"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Delete message"
+                        onClick={() => {
+                          if (window.confirm("Delete this message for everyone?"))
+                            deleteRoomMessage(id, m.id);
+                        }}
+                        className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   )}
                   {!mine && (
                     <div className="mb-1">
@@ -147,11 +162,43 @@ export default function RoomPage() {
                       </p>
                     </div>
                   )}
-                  {m.text && (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</p>
-                  )}
-                  {m.mediaUrl && (
-                    <MediaAttachment url={m.mediaUrl} type={m.mediaType} name={m.mediaName} />
+                  {editingId === m.id && id ? (
+                    <div className="space-y-1.5">
+                      <textarea
+                        rows={3}
+                        className="w-full rounded-xl border border-black/10 bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-brand dark:border-white/10"
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                      />
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          className="app-chrome flex-1 rounded-lg bg-background py-1 text-[11px] font-bold text-foreground"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await editRoomMessage(id, m.id, draft);
+                            setEditingId(null);
+                          }}
+                          className="app-chrome flex-1 rounded-lg bg-brand py-1 text-[11px] font-bold text-white"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {m.text && (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</p>
+                      )}
+                      {m.mediaUrl && (
+                        <MediaAttachment url={m.mediaUrl} type={m.mediaType} name={m.mediaName} />
+                      )}
+                    </>
                   )}
                   <p className={`mt-1 text-right text-[9px] ${mine ? "text-white/60" : "opacity-40"}`}>
                     {m.createdAt?.toDate().toLocaleTimeString([], {

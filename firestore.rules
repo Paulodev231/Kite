@@ -101,22 +101,27 @@ service cloud.firestore {
     }
 
     // ---------- Main Broadcast Channel: Admins post, everyone reads ----------
+    // ---------- Noticeboard: admins post, members react with one emoji ----------
     match /broadcast/{postId} {
+      // A member may change ONLY the `reactions` map, and within it ONLY their
+      // own entry — so nobody can react on someone else's behalf, edit the
+      // post text, or pin it.
+      function myReactionOnly() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+          && (('reactions' in resource.data)
+                ? request.resource.data.reactions.diff(resource.data.reactions)
+                    .affectedKeys().hasOnly([request.auth.uid])
+                : request.resource.data.reactions.keys().hasOnly([request.auth.uid]))
+          // Removing your reaction is fine; setting one must use the allowed list.
+          && (!(request.auth.uid in request.resource.data.reactions)
+              || request.resource.data.reactions[request.auth.uid]
+                   in ['👍', '🙏', '🔥', '💪', '🎉', '❤️', '👏', '✅']);
+      }
       allow read: if isActive();
       allow create: if (isAdmin() && request.resource.data.authorUid == request.auth.uid)
         || actingAsStaff(request.resource.data.authorUid);
-      allow update, delete: if isAdmin();
-    }
-
-    // ---------- General Community Room: EMOJI ONLY ----------
-    match /community/{reactionId} {
-      allow read: if isActive();
-      allow create: if isActive()
-        && request.resource.data.keys().hasOnly(['uid', 'emoji', 'createdAt'])
-        && (request.resource.data.uid == request.auth.uid
-            || actingAsStaff(request.resource.data.uid))
-        && request.resource.data.emoji in ['👍', '🙏', '🔥', '💪', '🎉', '❤️', '👏', '✅'];
-      allow update: if false;
+      // Admins edit/pin/delete; everyone else may only react.
+      allow update: if isAdmin() || (isActive() && myReactionOnly());
       allow delete: if isAdmin();
     }
 
@@ -139,7 +144,9 @@ service cloud.firestore {
             && (isElevated() || !('mediaUrl' in request.resource.data)))
           // SuperAdmin posting as one of their Managed Staff Handles:
           || actingAsStaff(request.resource.data.authorUid);
-        allow update: if false;
+        // Admins may correct a message (text only); nobody can rewrite authorship.
+        allow update: if isAdmin()
+          && request.resource.data.authorUid == resource.data.authorUid;
         allow delete: if isAdmin();
       }
 

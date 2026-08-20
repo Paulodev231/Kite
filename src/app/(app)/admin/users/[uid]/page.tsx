@@ -6,14 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -65,8 +58,13 @@ export default function AdminUserProfilePage() {
       () => {},
     );
     const unsubAlerts = onSnapshot(
-      query(collection(db(), "alerts"), where("targetUid", "==", uid), orderBy("createdAt", "desc")),
-      (snap) => setAlerts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MemberAlert)),
+      query(collection(db(), "alerts"), where("targetUid", "==", uid)),
+      (snap) =>
+        setAlerts(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as MemberAlert)
+            .sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)),
+        ),
       () => {},
     );
     const unsubRooms = onSnapshot(

@@ -7,7 +7,6 @@ import {
   collection,
   doc,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   updateDoc,
@@ -24,12 +23,14 @@ export default function MyAlerts() {
   useEffect(() => {
     if (!user) return;
     return onSnapshot(
-      query(
-        collection(db(), "alerts"),
-        where("targetUid", "==", user.uid),
-        orderBy("createdAt", "desc"),
-      ),
-      (snap) => setAlerts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MemberAlert)),
+      // Filter only (no orderBy) so no composite index is needed.
+      query(collection(db(), "alerts"), where("targetUid", "==", user.uid)),
+      (snap) =>
+        setAlerts(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as MemberAlert)
+            .sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)),
+        ),
       () => {},
     );
   }, [user]);

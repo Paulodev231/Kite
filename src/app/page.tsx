@@ -12,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     if (loading) return;
-    router.replace(!configured || !user ? "/login" : "/broadcast");
+    router.replace(!configured || !user ? "/login" : "/noticeboard");
   }, [loading, user, configured, router]);
 
   return <SplashScreen />;

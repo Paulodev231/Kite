@@ -19,7 +19,7 @@ type Tab = "dms" | "broadcast" | "rooms";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "dms", label: "DMs", icon: "📥" },
-  { id: "broadcast", label: "Broadcast", icon: "📢" },
+  { id: "broadcast", label: "Noticeboard", icon: "📣" },
   { id: "rooms", label: "Rooms", icon: "🗂️" },
 ];
 

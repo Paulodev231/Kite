@@ -12,8 +12,7 @@ import PresenceCounter from "@/components/PresenceCounter";
 import OfflineBanner from "@/components/OfflineBanner";
 
 const TABS = [
-  { href: "/broadcast", label: "Broadcast", icon: "📢" },
-  { href: "/community", label: "Community", icon: "🫶" },
+  { href: "/noticeboard", label: "Noticeboard", icon: "📣" },
   { href: "/rooms", label: "Rooms", icon: "🗂️" },
   { href: "/messages", label: "DMs", icon: "💬" },
   { href: "/profile", label: "Dashboard", icon: "📊" },
@@ -35,7 +34,7 @@ export default function AppShell({
   const badgeFor = (href: string) =>
     href === "/messages"
       ? dmUnread
-      : href === "/broadcast"
+      : href === "/noticeboard"
         ? broadcastUnread
         : href === "/profile"
           ? alertUnread

@@ -17,7 +17,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && user) router.replace("/broadcast");
+    if (!loading && user) router.replace("/noticeboard");
   }, [loading, user, router]);
 
   if (!configured) {
@@ -42,7 +42,7 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await signInWithEmailAndPassword(firebaseAuth(), email.trim(), password);
-      router.replace("/broadcast");
+      router.replace("/noticeboard");
     } catch {
       setError("Sign-in failed. Check the email and password given to you by your Admin.");
     } finally {

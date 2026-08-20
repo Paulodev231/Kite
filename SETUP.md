@@ -126,18 +126,9 @@ The app has no sign-up screen on purpose. Bootstrap yourself:
   Staff Handles** (no email or password), flip them **On-Call/Off-Call**
   there to boost the public "⚡ Active Now" counter, and operate them from
   **Admin Panel → 🎛️ Handle Console** — you never sign in as a handle.
-- **Broadcast:** the 📢 tab — only Admins see a composer; everyone else reads.
-- **Community:** the 🫶 tab — emoji reactions only, by design.
+- **Noticeboard:** the 📣 tab — only Admins post; everyone else replies with a
+  single emoji reaction per post. Admins can edit, pin and delete posts.
 - **DMs:** tap any handle/avatar anywhere → instant private chat.
-
-### One small index (first time you open DMs)
-The first time the DM inbox loads, Firestore may log a link in the browser
-console asking to create an index. Easiest path: in Firebase →
-**Firestore → Indexes → Add index**: collection `dms`, field
-`participants` (Array-contains) + `updatedAt` (Descending). Or paste the
-contents of `firestore.indexes.json` if you ever use the Firebase CLI.
-
----
 
 ## 🆙 Phase 2 upgrade (forms, master inbox, compliance logs)
 
@@ -349,6 +340,28 @@ Three tabs, and on each one you choose who the message goes out as:
 
 You stay signed in as yourself the entire time — the console just decides
 whose name each message carries. Members only ever see the handle.
+
+## 🆙 The Noticeboard (Broadcast + Community merged)
+
+⚠️ **Re-paste `firestore.rules`** → Publish.
+
+The separate Broadcast and Community tabs are now one channel: **📣 Noticeboard**.
+
+- You post announcements there (text, photos, videos, files).
+- Everyone else replies **only with an emoji** — one reaction each per post,
+  tapped again to remove it. Counts show under each post.
+- **✏️ Edit** any post after the fact; it quietly shows "edited".
+- **📌 Pin** important posts to the top; pinned posts are outlined and listed
+  first. Unpin the same way.
+- Admins can also edit and delete messages inside project rooms (the ✏️ and ✕
+  buttons on each message bubble).
+
+### DM delivery fix
+Direct messages were being saved correctly but not appearing in the
+recipient's list. The inbox query needed a composite Firestore index that had
+never been created, so the listener failed silently and the list showed empty.
+Every query in the app has been rewritten so **no index is ever required** —
+nothing for you to create in the Firebase console, now or in future.
 
 ## 🗺️ Possible next steps
 

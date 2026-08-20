@@ -69,6 +69,12 @@ export function fundingBadge(profile: {
   return { icon: "○", label: "Not funded", color: "#898781" };
 }
 
+/**
+ * A Noticeboard post. Admins (and Staff Handles, via the console) write these;
+ * everyone else may only respond with a single emoji reaction.
+ * `reactions` maps a uid to the one emoji that person chose, so each member
+ * gets exactly one reaction per post and can change or clear it.
+ */
 export interface BroadcastPost {
   id: string;
   authorUid: string;
@@ -77,17 +83,27 @@ export interface BroadcastPost {
   mediaUrl?: string;
   mediaType?: "image" | "video" | "file";
   mediaName?: string;
+  reactions?: Record<string, string>;
+  pinned?: boolean;
+  pinnedAt?: Timestamp;
+  editedAt?: Timestamp;
   createdAt?: Timestamp;
 }
 
-/** General Community Room is emoji-reactions only. */
-export const COMMUNITY_EMOJIS = ["👍", "🙏", "🔥", "💪", "🎉", "❤️", "👏", "✅"] as const;
+/** The only replies members can give on the Noticeboard. */
+export const REACTION_EMOJIS = ["👍", "🙏", "🔥", "💪", "🎉", "❤️", "👏", "✅"] as const;
 
-export interface CommunityReaction {
-  id: string;
-  uid: string;
-  emoji: string;
-  createdAt?: Timestamp;
+/** Tally of a post's reactions, most-used first. */
+export function tallyReactions(
+  reactions: Record<string, string> | undefined,
+): { emoji: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const emoji of Object.values(reactions ?? {})) {
+    counts.set(emoji, (counts.get(emoji) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([emoji, count]) => ({ emoji, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export interface Room {
