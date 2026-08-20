@@ -33,8 +33,14 @@ and never assume a local terminal is available.
 
 ## Security model (do not weaken)
 - Roles in `users/{uid}.role`: member | staff | admin | superadmin.
-- No self-registration. Accounts minted by admins via a secondary Firebase
-  app instance (`src/lib/adminActions.ts`).
+- No self-registration. Member/admin accounts minted by admins via a secondary
+  Firebase app instance (`src/lib/adminActions.ts`).
+- **Staff Handles have NO Auth account** — no email, no password, they never
+  sign in. They are `users/{autoId}` docs with `role: "staff"`. The SuperAdmin
+  switches into one via `ActingContext` and authors as it; rules permit this
+  through `actingAsStaff(uid)` (superadmin + target role == staff).
+  Anything that records an author must use `useActing().identityUid/Handle`,
+  never the raw auth uid.
 - Members must never see: the user directory, room participant lists
   (`rooms/{id}/acl/members` is admin-only; members read only their own
   `users/{uid}/memberships`), or other users' form submissions.

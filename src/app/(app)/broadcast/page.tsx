@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useActing } from "@/context/ActingContext";
 import { isAdmin, type BroadcastPost } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { logEvent } from "@/lib/log";
@@ -26,6 +27,7 @@ import UserBadge from "@/components/UserBadge";
 
 export default function BroadcastPage() {
   const { user, profile } = useAuth();
+  const { identityUid, identityHandle } = useActing();
   const [posts, setPosts] = useState<BroadcastPost[]>([]);
   const admin = isAdmin(profile?.role);
 
@@ -45,8 +47,8 @@ export default function BroadcastPage() {
     if (!user || !profile) return;
     const media = file ? await uploadFile("broadcast", file) : null;
     await addDoc(collection(db(), "broadcast"), {
-      authorUid: user.uid,
-      authorHandle: profile.handle,
+      authorUid: identityUid,
+      authorHandle: identityHandle,
       text,
       ...(media ? { mediaUrl: media.url, mediaType: media.kind, mediaName: media.name } : {}),
       createdAt: serverTimestamp(),

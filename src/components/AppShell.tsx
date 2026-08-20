@@ -10,6 +10,7 @@ import { useNotifications } from "@/context/NotificationContext";
 import { isAdmin, roleTag } from "@/lib/types";
 import PresenceCounter from "@/components/PresenceCounter";
 import OfflineBanner from "@/components/OfflineBanner";
+import ActingBanner from "@/components/ActingBanner";
 
 const TABS = [
   { href: "/broadcast", label: "Broadcast", icon: "📢" },
@@ -59,6 +60,7 @@ export default function AppShell({
         </div>
       </header>
 
+      <ActingBanner />
       <OfflineBanner />
 
       {/* Screen content */}

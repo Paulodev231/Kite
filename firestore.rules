@@ -34,6 +34,17 @@ service cloud.firestore {
     function inRoom(roomId) {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)/memberships/$(roomId));
     }
+    // True when `uid` is a Managed Staff Handle. Staff Handles have no login of
+    // their own — the SuperAdmin switches into them and acts as them, so these
+    // writes carry the handle's uid as the author while request.auth is the
+    // SuperAdmin. Only the SuperAdmin can ever do this.
+    function isStaffUid(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        && get(/databases/$(database)/documents/users/$(uid)).data.role == 'staff';
+    }
+    function actingAsStaff(uid) {
+      return isSuper() && isStaffUid(uid);
+    }
 
     // ---------- users: directory HIDDEN from members ----------
     match /users/{uid} {
@@ -92,7 +103,8 @@ service cloud.firestore {
     // ---------- Main Broadcast Channel: Admins post, everyone reads ----------
     match /broadcast/{postId} {
       allow read: if isActive();
-      allow create: if isAdmin() && request.resource.data.authorUid == request.auth.uid;
+      allow create: if (isAdmin() && request.resource.data.authorUid == request.auth.uid)
+        || actingAsStaff(request.resource.data.authorUid);
       allow update, delete: if isAdmin();
     }
 
@@ -101,7 +113,8 @@ service cloud.firestore {
       allow read: if isActive();
       allow create: if isActive()
         && request.resource.data.keys().hasOnly(['uid', 'emoji', 'createdAt'])
-        && request.resource.data.uid == request.auth.uid
+        && (request.resource.data.uid == request.auth.uid
+            || actingAsStaff(request.resource.data.uid))
         && request.resource.data.emoji in ['👍', '🙏', '🔥', '💪', '🎉', '❤️', '👏', '✅'];
       allow update: if false;
       allow delete: if isAdmin();
@@ -120,10 +133,12 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         allow read: if isElevated() || (isActive() && inRoom(roomId));
-        allow create: if (isElevated() || (isActive() && inRoom(roomId)))
-          && request.resource.data.authorUid == request.auth.uid
-          // Standard members may NOT attach media anywhere:
-          && (isElevated() || !('mediaUrl' in request.resource.data));
+        allow create: if ((isElevated() || (isActive() && inRoom(roomId)))
+            && request.resource.data.authorUid == request.auth.uid
+            // Standard members may NOT attach media anywhere:
+            && (isElevated() || !('mediaUrl' in request.resource.data)))
+          // SuperAdmin posting as one of their Managed Staff Handles:
+          || actingAsStaff(request.resource.data.authorUid);
         allow update: if false;
         allow delete: if isAdmin();
       }
@@ -159,16 +174,26 @@ service cloud.firestore {
       function isParticipant() {
         return isActive() && request.auth.uid in resource.data.participants;
       }
-      function validThread() {
+      function validThreadShape() {
         return request.resource.data.participants.size() == 2
-          && request.auth.uid in request.resource.data.participants
           && threadId == request.resource.data.participants[0]
                          + '_' + request.resource.data.participants[1];
+      }
+      function validThread() {
+        return validThreadShape()
+          && request.auth.uid in request.resource.data.participants;
+      }
+      // The SuperAdmin may open a thread on behalf of a Staff Handle.
+      function staffThread() {
+        return isSuper()
+          && (isStaffUid(request.resource.data.participants[0])
+              || isStaffUid(request.resource.data.participants[1]));
       }
       // SuperAdmin read powers the centralized Staff master inbox and
       // compliance oversight.
       allow read: if isParticipant() || isSuper();
-      allow create: if isActive() && validThread();
+      allow create: if isActive() && validThreadShape()
+        && (request.auth.uid in request.resource.data.participants || staffThread());
       // Participants update normally; SuperAdmin may update thread metadata
       // (last message, read markers) when triaging the master inbox —
       // but nobody can ever change WHO a thread belongs to.

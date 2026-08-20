@@ -93,6 +93,31 @@ export async function setUserFunding(
 }
 
 /**
+ * Creates a Managed Staff Handle — an operator identity with NO login of its
+ * own. There is no email and no password: the SuperAdmin switches into the
+ * handle from inside the app and posts, reacts and replies as it.
+ * To members it looks like any other user.
+ */
+export async function createStaffHandle(handle: string): Promise<string> {
+  const ref = doc(collection(db(), "users"));
+  await setDoc(ref, {
+    handle: handle.trim(),
+    role: "staff",
+    active: true,
+    onCall: false,
+    managed: true, // operated by the SuperAdmin, never signs in
+    createdAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), "staff_handle_created", { uid: ref.id });
+  return ref.id;
+}
+
+export async function renameStaffHandle(uid: string, handle: string) {
+  await updateDoc(doc(db(), "users", uid), { handle: handle.trim() });
+  logEvent(actorUid(), "staff_handle_renamed", { uid });
+}
+
+/**
  * Records (or corrects) the email shown in the admin directory for accounts
  * created before emails were stored — including the hand-made SuperAdmin.
  * This is a record only: it does NOT change the person's actual login, which

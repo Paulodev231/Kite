@@ -70,44 +70,51 @@ export default function FundingEditor({
         ))}
       </div>
 
-      {funded && (
-        <>
-          <div className="flex gap-2">
-            <select
-              className={`${inputCls} w-24 shrink-0`}
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              aria-label="Currency"
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <input
-              className={inputCls}
-              type="number"
-              inputMode="decimal"
-              min="0"
-              placeholder="Amount funded (e.g. 200000)"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          </div>
-          {Number(amount) > 0 && (
-            <p className="text-[11px] font-semibold opacity-60">
-              Will show as: 💰 Funded — {formatFunding(Number(amount), currency)}
-            </p>
-          )}
-          <input
-            className={inputCls}
-            placeholder="Note (optional, e.g. Tranche 1 of 3)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </>
+      {/* Amount is always visible — typing one switches the tag to Funded,
+          so the admin never has to hunt for the field. */}
+      <label className="block text-[11px] font-bold opacity-60">Amount funded</label>
+      <div className="flex gap-2">
+        <select
+          className={`${inputCls} w-24 shrink-0`}
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+          aria-label="Currency"
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <input
+          className={inputCls}
+          type="number"
+          inputMode="decimal"
+          min="0"
+          placeholder="e.g. 200000"
+          value={amount}
+          onChange={(e) => {
+            setAmount(e.target.value);
+            if (Number(e.target.value) > 0) setFunded(true);
+          }}
+        />
+      </div>
+      {Number(amount) > 0 && funded && (
+        <p className="text-[11px] font-semibold opacity-60">
+          Will show as: 💰 Funded — {formatFunding(Number(amount), currency)}
+        </p>
       )}
+      {!funded && (
+        <p className="text-[11px] font-medium opacity-50">
+          Marked “Not funded” — the amount above will be cleared when you save.
+        </p>
+      )}
+      <input
+        className={inputCls}
+        placeholder="Note (optional, e.g. Tranche 1 of 3)"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+      />
 
       {error && (
         <p className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] font-semibold text-red-500">

@@ -3,7 +3,7 @@
 // One-touch DM: tapping any handle/avatar anywhere in the app opens a
 // private 1-on-1 conversation with that user.
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useActing } from "@/context/ActingContext";
 
 export default function UserBadge({
   uid,
@@ -15,8 +15,8 @@ export default function UserBadge({
   subtle?: boolean;
 }) {
   const router = useRouter();
-  const { user } = useAuth();
-  const isSelf = user?.uid === uid;
+  const { identityUid } = useActing();
+  const isSelf = identityUid === uid;
 
   return (
     <button

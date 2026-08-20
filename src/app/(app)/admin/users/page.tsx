@@ -88,7 +88,6 @@ export default function AdminUsersPage() {
             onChange={(e) => setRole(e.target.value as Role)}
           >
             <option value="member">Member (Project Manager)</option>
-            {superadmin && <option value="staff">Staff Handle (managed)</option>}
             {superadmin && <option value="admin">Admin</option>}
           </select>
           <button
@@ -100,6 +99,13 @@ export default function AdminUsersPage() {
           </button>
           {notice && (
             <p className="break-words rounded-xl bg-brand-soft px-3 py-2 text-xs">{notice}</p>
+          )}
+          {superadmin && (
+            <p className="text-[11px] leading-relaxed opacity-50">
+              Creating a <b>Staff Handle</b>? They need no email or password —
+              make them in <b>Admin Panel → Staff Handles</b> and switch into
+              them from there.
+            </p>
           )}
         </form>
 

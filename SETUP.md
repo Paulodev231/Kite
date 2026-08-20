@@ -323,6 +323,28 @@ it → Save. Note this is a record for your reference; it does not change their
 actual sign-in address, which you'd change in Firebase Console →
 Authentication → Users.
 
+## 🆙 Staff Handles: no credentials, switch in place
+
+⚠️ **Re-paste `firestore.rules`** → Publish.
+
+Staff Handles no longer have emails, passwords, or separate sign-ins.
+
+1. **Create one:** Admin Panel → **Staff Handles** → type a name (e.g.
+   `Support_Desk`) → **Create handle**. That's it.
+2. **Use it:** tap **🎭 Switch into &lt;name&gt;**. An amber banner appears at the
+   top of every screen showing which handle you're using.
+3. While it's active, everything you do goes out as that handle — broadcast
+   posts, room messages, emoji reactions, and DMs. The **DMs tab shows that
+   handle's conversations**, so you receive and reply as them.
+4. Tap **Switch back** in the banner (or on the Staff Handles screen) to return
+   to yourself. Your SuperAdmin session never ends.
+
+You can also **rename** or **delete** a handle from the same screen, and the
+On-Call toggle still feeds the public "⚡ Active Now" counter.
+
+*(Any Staff Handle you made earlier with an email and password still works —
+it just also has a login you don't need. New ones need nothing.)*
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

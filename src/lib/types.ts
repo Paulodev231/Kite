@@ -29,6 +29,8 @@ export interface UserProfile {
   role: Role;
   active: boolean; // deactivated accounts cannot use the app
   onCall?: boolean; // staff handles only: counted in the presence indicator
+  /** Staff handles: operated by the SuperAdmin, no login of their own. */
+  managed?: boolean;
   createdAt?: Timestamp;
 
   // ----- Funding status (set by Admins only; the member sees it read-only) -----

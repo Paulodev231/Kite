@@ -11,29 +11,29 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/context/AuthContext";
+import { useActing } from "@/context/ActingContext";
 import type { DmThread } from "@/lib/types";
 import { getSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
 
 export default function MessagesPage() {
-  const { user } = useAuth();
+  const { identityUid, acting } = useActing();
   const [threads, setThreads] = useState<DmThread[]>([]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!identityUid) return;
     const q = query(
       collection(db(), "dms"),
-      where("participants", "array-contains", user.uid),
+      where("participants", "array-contains", identityUid),
       orderBy("updatedAt", "desc"),
     );
     return onSnapshot(q, (snap) =>
       setThreads(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as DmThread)),
     );
-  }, [user]);
+  }, [identityUid]);
 
   return (
-    <AppShell title="💬 Direct Messages">
+    <AppShell title={acting ? `💬 ${acting.handle}'s DMs` : "💬 Direct Messages"}>
       <div className="mx-auto max-w-lg space-y-2 p-3">
         {threads.length === 0 && (
           <p className="pt-16 text-center text-sm opacity-50">
@@ -42,11 +42,11 @@ export default function MessagesPage() {
           </p>
         )}
         {threads.map((t) => {
-          const peerUid = t.participants.find((p) => p !== user?.uid) ?? "";
+          const peerUid = t.participants.find((p) => p !== identityUid) ?? "";
           const peerHandle = t.handles?.[peerUid] ?? "Member";
           const unread =
             Boolean(t.lastSenderUid) &&
-            t.lastSenderUid !== user?.uid &&
+            t.lastSenderUid !== identityUid &&
             (t.updatedAt?.toMillis() ?? 0) > getSeen(seenKeys.dmThread(t.id));
           return (
             <Link
@@ -63,7 +63,7 @@ export default function MessagesPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold">{peerHandle}</p>
                 <p className={`truncate text-xs ${unread ? "font-bold" : "opacity-50"}`}>
-                  {t.lastSenderUid === user?.uid ? "You: " : ""}
+                  {t.lastSenderUid === identityUid ? "You: " : ""}
                   {t.lastText ?? ""}
                 </p>
               </div>
