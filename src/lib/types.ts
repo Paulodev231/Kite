@@ -126,6 +126,9 @@ export interface Room {
   id: string;
   name: string;
   topic?: string;
+  /** Staff Handles that are On-Call AND have been added to this room.
+   *  Recomputed by adminActions whenever membership or on-call changes. */
+  onCallStaffCount?: number;
   createdBy: string;
   createdAt?: Timestamp;
 }

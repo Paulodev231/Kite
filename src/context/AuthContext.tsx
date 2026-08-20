@@ -9,9 +9,11 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   arrayUnion,
@@ -116,12 +118,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }, [user, profile, adminUids]);
 
-  // Anonymous presence heartbeat: presence/{uid} holds only a timestamp.
+  // Anonymous presence heartbeat: presence/{uid} holds a timestamp and, while
+  // a room is open, that room's id — so each room can show its own live count
+  // instead of the platform-wide one.
+  const pathname = usePathname();
+  const roomId = pathname?.startsWith("/rooms/") ? pathname.split("/")[2] : "";
+  // Held in a ref so changing rooms only rewrites the doc — it must never tear
+  // down and recreate the heartbeat, which could race and leave you invisible.
+  const roomIdRef = useRef(roomId);
+
   useEffect(() => {
     if (!user) return;
     const ref = doc(db(), "presence", user.uid);
     const beat = () =>
-      setDoc(ref, { lastActive: serverTimestamp() }).catch(() => {});
+      setDoc(ref, {
+        lastActive: serverTimestamp(),
+        roomId: roomIdRef.current ?? "",
+      }).catch(() => {});
     beat();
     const timer = setInterval(beat, HEARTBEAT_MS);
     return () => {
@@ -129,6 +142,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteDoc(ref).catch(() => {});
     };
   }, [user]);
+
+  // Moving between rooms updates the same presence doc straight away, so the
+  // room counter reacts immediately instead of waiting for the next heartbeat.
+  useEffect(() => {
+    roomIdRef.current = roomId;
+    if (!user) return;
+    setDoc(
+      doc(db(), "presence", user.uid),
+      { lastActive: serverTimestamp(), roomId: roomId ?? "" },
+      { merge: true },
+    ).catch(() => {});
+  }, [user, roomId]);
 
   const logout = useCallback(async () => {
     if (user) {

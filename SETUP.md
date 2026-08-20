@@ -397,6 +397,29 @@ No Firebase step — Vercel's automatic redeploy is all that's needed.
   with a reason and left in the box so you can fix and retry; everything else
   is created.
 
+## 🆙 Room-specific "Active Now"
+
+⚠️ **Re-paste `firestore.rules`** → Publish.
+
+The header counter used to show the same platform-wide number everywhere.
+Now it's scoped:
+
+- **Outside a room** (Noticeboard, DMs, Dashboard) it reads
+  **"⚡ Active Now: N"** — everyone active anywhere, plus every On-Call Staff
+  Handle.
+- **Inside a room** it reads **"⚡ In room: N"** — only people currently
+  viewing that room, plus On-Call Staff Handles **added to that room**.
+
+**A handle only counts in a room when all three are true:** it is active (not
+banned), it is toggled **On-Call**, and it has been **added to that room**.
+
+**Add handles to a room:** Admin Panel → **Private Rooms** → tap the room →
+the access panel now has a **Staff Handles in this room** section under the
+member list, each showing its On-Call state. Tick the ones that belong there.
+
+The count is recalculated from scratch whenever you change room membership,
+toggle On-Call, ban or delete a handle — so it can't drift out of step.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

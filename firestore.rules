@@ -84,12 +84,14 @@ service cloud.firestore {
     }
 
     // ---------- anonymous presence heartbeats ----------
-    // Docs contain ONLY a timestamp (doc id = uid). Since member profiles
-    // are unreadable to other members, no identity is exposed.
+    // Docs contain a timestamp and, optionally, the id of the room being
+    // viewed — nothing else (doc id = uid). Since member profiles are
+    // unreadable to other members, no identity is exposed; the roomId only
+    // lets the app show a per-room "Active Now" count.
     match /presence/{uid} {
       allow read: if isActive();
       allow create, update: if isActive() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['lastActive']);
+        && request.resource.data.keys().hasOnly(['lastActive', 'roomId']);
       // Admins may clean up the presence doc of a deleted account.
       allow delete: if (isActive() && request.auth.uid == uid) || isAdmin();
     }

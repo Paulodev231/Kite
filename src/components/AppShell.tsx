@@ -31,6 +31,8 @@ export default function AppShell({
   const { profile, logout } = useAuth();
   const { dmUnread, broadcastUnread, alertUnread } = useNotifications();
   const admin = isAdmin(profile?.role);
+  // /rooms/<id> → that room's own live count in the header.
+  const roomId = pathname.startsWith("/rooms/") ? pathname.split("/")[2] : undefined;
   const badgeFor = (href: string) =>
     href === "/messages"
       ? dmUnread
@@ -54,7 +56,8 @@ export default function AppShell({
             ☰
           </button>
           <h1 className="flex-1 truncate text-base font-bold">{title}</h1>
-          <PresenceCounter />
+          {/* Inside a room the counter is scoped to that room */}
+          <PresenceCounter roomId={roomId} />
         </div>
       </header>
 

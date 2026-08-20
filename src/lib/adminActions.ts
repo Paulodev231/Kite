@@ -9,6 +9,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   increment,
   serverTimestamp,
@@ -35,6 +36,38 @@ async function syncAdminRoster(uid: string, isAdminRole: boolean) {
     { uids: isAdminRole ? arrayUnion(uid) : arrayRemove(uid) },
     { merge: true },
   ).catch(() => {});
+}
+
+/**
+ * Recounts, exactly, how many Staff Handles are BOTH On-Call AND added to a
+ * given room, and stores it on the room. A room's "Active Now" uses this, so
+ * its number reflects that room rather than the whole platform.
+ *
+ * Recomputed from scratch (never incremented) so the figure cannot drift out
+ * of step with reality.
+ */
+export async function recountRoomOnCall(roomId: string) {
+  try {
+    const aclSnap = await getDoc(doc(db(), "rooms", roomId, "acl", "members"));
+    const uids: string[] = aclSnap.data()?.uids ?? [];
+    let count = 0;
+    for (const uid of uids) {
+      const userSnap = await getDoc(doc(db(), "users", uid));
+      const u = userSnap.data();
+      if (u?.role === "staff" && u?.active !== false && u?.onCall === true) count += 1;
+    }
+    await updateDoc(doc(db(), "rooms", roomId), { onCallStaffCount: count });
+  } catch {
+    // Never let a counter refresh break the action that triggered it.
+  }
+}
+
+/** Recounts every room a given user belongs to. */
+async function recountRoomsFor(uid: string) {
+  try {
+    const memberships = await getDocs(collection(db(), "users", uid, "memberships"));
+    for (const m of memberships.docs) await recountRoomOnCall(m.id);
+  } catch {}
 }
 
 const firebaseConfig = {
@@ -190,6 +223,8 @@ export async function setUserRole(uid: string, role: Role) {
 
 export async function setAccountActive(uid: string, active: boolean) {
   await updateDoc(doc(db(), "users", uid), { active });
+  // A banned handle stops counting as active in its rooms.
+  await recountRoomsFor(uid);
   logEvent(actorUid(), active ? "account_activated" : "account_deactivated", { uid });
 }
 
@@ -205,6 +240,7 @@ export async function setStaffOnCall(uid: string, onCall: boolean, wasOnCall: bo
     { merge: true },
   );
   await batch.commit();
+  await recountRoomsFor(uid);
   logEvent(actorUid(), onCall ? "staff_oncall_on" : "staff_oncall_off", { staffUid: uid });
 }
 
@@ -238,6 +274,7 @@ export async function setRoomMembership(
     batch.delete(membershipRef);
   }
   await batch.commit();
+  await recountRoomOnCall(roomId);
   logEvent(actorUid(), present ? "room_member_added" : "room_member_removed", {
     roomId,
     memberUid,
@@ -291,6 +328,7 @@ export async function deleteRoomMessage(roomId: string, messageId: string) {
  */
 export async function deleteUserAccount(uid: string) {
   const memberships = await getDocs(collection(db(), "users", uid, "memberships"));
+  const roomIds = memberships.docs.map((m) => m.id);
   const batch = writeBatch(db());
   memberships.forEach((m) => {
     batch.delete(m.ref);
@@ -300,5 +338,6 @@ export async function deleteUserAccount(uid: string) {
   batch.delete(doc(db(), "users", uid));
   await batch.commit();
   await syncAdminRoster(uid, false);
+  for (const roomId of roomIds) await recountRoomOnCall(roomId);
   logEvent(actorUid(), "account_deleted", { uid });
 }

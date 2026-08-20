@@ -57,8 +57,12 @@ and never assume a local terminal is available.
   another** — it needs a composite index, and without one the listener fails
   silently (this caused DMs to look undelivered). Filter in the query, sort in
   JavaScript.
-- Presence is anonymous: `presence/{uid}` holds only a timestamp; the
-  counter adds `status/staff.onCallCount` (superadmin-managed).
+- Presence is anonymous: `presence/{uid}` holds a timestamp plus the id of the
+  room being viewed (nothing else). Outside a room the counter adds
+  `status/staff.onCallCount`; inside a room it counts only presence docs with
+  that `roomId` plus `rooms/{id}.onCallStaffCount` — handles that are active,
+  On-Call AND in that room's ACL. `recountRoomOnCall` recomputes that figure
+  from scratch (never increments) on membership/on-call/ban/delete.
 - DM thread ids are the two sorted uids joined by `_`, enforced in rules.
 - Members cannot read other profiles, so `status/admins` (uids only, world-
   readable to signed-in users) publishes who is an admin; `AdminTag` renders

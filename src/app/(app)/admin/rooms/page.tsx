@@ -116,9 +116,12 @@ export default function AdminRoomsPage() {
 
         {selected && (
           <div className="space-y-1 rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="mb-2 text-sm font-bold">
+            <p className="text-sm font-bold">
               Access panel · {selected.name}{" "}
               <span className="font-normal opacity-50">({memberUids.length} inside)</span>
+            </p>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wide opacity-40">
+              Members
             </p>
             {users
               .filter((u) => u.role === "member")
@@ -144,8 +147,49 @@ export default function AdminRoomsPage() {
                   </label>
                 );
               })}
-            <p className="pt-1 text-[10px] opacity-40">
-              Admins & Staff Handles automatically have access to every room.
+            {/* Staff Handles: adding one here is what makes it count as
+                active in this room's header, and only while it is On-Call. */}
+            <p className="mb-1 mt-3 border-t border-black/5 pt-3 text-[10px] font-bold uppercase tracking-wide opacity-40 dark:border-white/10">
+              Staff Handles in this room
+            </p>
+            {users.filter((u) => u.role === "staff").length === 0 && (
+              <p className="py-1 text-[11px] opacity-50">
+                No Staff Handles yet — create some in Admin Panel → Staff Handles.
+              </p>
+            )}
+            {users
+              .filter((u) => u.role === "staff")
+              .map((u) => {
+                const inside = memberUids.includes(u.uid);
+                return (
+                  <label
+                    key={u.uid}
+                    className="app-chrome flex items-center gap-3 rounded-xl px-2 py-2.5 active:bg-brand-soft"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={inside}
+                      onChange={() =>
+                        setRoomMembership(selected.id, selected.name, u.uid, !inside)
+                      }
+                      className="h-5 w-5 accent-[var(--brand)]"
+                    />
+                    <span className="flex-1 text-sm font-semibold">🎧 {u.handle}</span>
+                    <span
+                      className={`text-[10px] font-bold ${
+                        u.onCall ? "text-emerald-600" : "opacity-40"
+                      }`}
+                    >
+                      {u.onCall ? "On-Call" : "Off-Call"}
+                    </span>
+                  </label>
+                );
+              })}
+
+            <p className="pt-2 text-[10px] leading-relaxed opacity-40">
+              Admins and Staff Handles can reach every room. Ticking a handle here
+              is separate: it makes that handle count in this room&apos;s
+              “⚡ In room” number — and only while it is On-Call.
             </p>
           </div>
         )}
