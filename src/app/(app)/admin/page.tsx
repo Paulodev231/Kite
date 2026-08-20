@@ -63,6 +63,13 @@ export default function AdminHome() {
       badge: 0,
     },
     {
+      href: "/admin/reports",
+      icon: "📑",
+      title: "Room Reports",
+      desc: "Per-room delivery, funding and form response rates — exportable to a spreadsheet",
+      badge: 0,
+    },
+    {
       href: "/admin/users",
       icon: "👥",
       title: "Members & Accounts",

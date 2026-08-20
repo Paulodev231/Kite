@@ -28,6 +28,7 @@ import {
 } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { deleteRoomMessage } from "@/lib/adminActions";
+import { dueLabel, dueState, DUE_META } from "@/lib/dates";
 import AppShell from "@/components/AppShell";
 import Composer from "@/components/Composer";
 import MediaAttachment from "@/components/MediaAttachment";
@@ -114,6 +115,18 @@ export default function RoomPage() {
                           {meta.label}
                           {m.dueDate ? ` · due ${m.dueDate}` : ""}
                         </span>
+                        {(() => {
+                          const dm = DUE_META[dueState(m.dueDate, m.status === "completed")];
+                          if (!dm || !m.dueDate) return null;
+                          return (
+                            <span
+                              className="block text-[10px] font-bold"
+                              style={{ color: dm.color }}
+                            >
+                              {dm.icon} {dueLabel(m.dueDate)}
+                            </span>
+                          );
+                        })()}
                         {m.status === "blocked" && m.hindrance && (
                           <span className="block text-[10px] font-medium text-red-500">
                             ⛔ {m.hindrance}

@@ -213,10 +213,31 @@ Then:
 - **Members see progress too:** each room shows a collapsible
   “🎯 Project milestones” panel for that room only.
 
+## 🆙 Phase 4 upgrade (due dates, exports & room reports)
+
+**No Firebase step this time** — no new collections, so Vercel's automatic
+redeploy is all that's needed. New features:
+
+- **⏰ Due-date reminders:** milestones with a due date now show
+  “⏰ due in 3 days” or “🔴 5 days overdue” in the Milestones screen, on the
+  Dashboard and inside the room panel members see.
+- **🚩 Needs attention:** the Dashboard leads with a working list of
+  everything overdue, blocked, or due within 7 days — most urgent first.
+- **⬇️ Spreadsheet exports:** tap **CSV** to download
+  – all milestones (Admin Panel → Milestones),
+  – a form's responses (Admin Panel → Forms & Signatures → Responses),
+  – a full room report (Admin Panel → Room Reports).
+  The files open in Excel, Google Sheets or Numbers. Signature images can't
+  fit in a spreadsheet cell, so they export as “Signature captured ✍️” —
+  view the actual signatures in the Responses screen.
+- **📑 Room Reports:** Admin Panel → **Room Reports** → pick a room for its
+  members count, completion, overdue count, funding, milestone-by-status
+  breakdown, and **how many members have responded to each form**.
+
 ## 🗺️ Possible next steps
 
-Milestone due-date reminders, exporting submissions / milestones to a
-spreadsheet, and richer per-room reporting. Ask and it can be built.
+Ask any time for: recurring/repeating milestones, member-visible progress
+summaries, or an archive view for completed projects.
 
 Questions? Open this repo in Claude Code and ask — everything above can be
 adjusted for you.

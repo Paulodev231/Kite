@@ -26,6 +26,7 @@ import {
   type Room,
   type RoomForm,
 } from "@/lib/types";
+import { downloadCsv, todayStamp, toCsv } from "@/lib/csv";
 import AppShell from "@/components/AppShell";
 
 const inputCls =
@@ -128,6 +129,25 @@ export default function AdminFormsPage() {
 
   async function toggleOpen(form: RoomForm) {
     await updateDoc(doc(db(), "rooms", roomId, "forms", form.id), { open: !form.open });
+  }
+
+  /** One row per submission, one column per question. Signature images can't
+   *  live in a spreadsheet cell, so they are marked as captured instead. */
+  function exportSubmissions(form: RoomForm) {
+    const csv = toCsv(
+      ["Member", "Submitted at", ...form.fields.map((f) => f.label)],
+      submissions.map((sub) => [
+        sub.handle,
+        sub.submittedAt?.toDate().toLocaleString() ?? "",
+        ...form.fields.map((f) => {
+          const v = sub.answers?.[f.id];
+          if (f.type === "signature") return v ? "Signature captured ✍️" : "";
+          return v ?? "";
+        }),
+      ]),
+    );
+    const safeTitle = form.title.replace(/[^\w-]+/g, "_").slice(0, 40);
+    downloadCsv(`kite-${safeTitle}-${todayStamp()}`, csv);
   }
 
   return (
@@ -280,9 +300,20 @@ export default function AdminFormsPage() {
 
             {viewing?.id === form.id && (
               <div className="mt-3 space-y-2 border-t border-black/5 pt-3 dark:border-white/10">
-                <p className="text-xs font-semibold opacity-50">
-                  {submissions.length} submission{submissions.length === 1 ? "" : "s"} — visible to Admins only
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="flex-1 text-xs font-semibold opacity-50">
+                    {submissions.length} submission{submissions.length === 1 ? "" : "s"} — visible to Admins only
+                  </p>
+                  {submissions.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => exportSubmissions(form)}
+                      className="app-chrome shrink-0 rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand active:scale-95"
+                    >
+                      ⬇️ CSV
+                    </button>
+                  )}
+                </div>
                 {submissions.map((sub) => (
                   <details key={sub.id} className="rounded-xl bg-background p-3">
                     <summary className="app-chrome cursor-pointer text-sm font-bold">

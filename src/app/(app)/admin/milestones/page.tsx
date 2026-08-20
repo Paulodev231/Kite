@@ -24,6 +24,8 @@ import {
   type MilestoneStatus,
   type Room,
 } from "@/lib/types";
+import { dueLabel, dueState, DUE_META } from "@/lib/dates";
+import { downloadCsv, todayStamp, toCsv } from "@/lib/csv";
 import AppShell from "@/components/AppShell";
 
 const inputCls =
@@ -100,17 +102,55 @@ export default function AdminMilestonesPage() {
     await updateDoc(doc(db(), "milestones", m.id), { spentAmount: Number(input) || 0 });
   }
 
+  function exportCsv() {
+    const csv = toCsv(
+      [
+        "Milestone",
+        "Room",
+        "Status",
+        "Due date",
+        "Due state",
+        "Funding committed",
+        "Funding released",
+        "Hindrance",
+      ],
+      milestones.map((m) => [
+        m.title,
+        m.roomName,
+        MILESTONE_STATUS[m.status]?.label ?? m.status,
+        m.dueDate ?? "",
+        m.dueDate ? dueLabel(m.dueDate) : "",
+        m.fundedAmount ?? 0,
+        m.spentAmount ?? 0,
+        m.hindrance ?? "",
+      ]),
+    );
+    downloadCsv(`kite-milestones-${todayStamp()}`, csv);
+  }
+
   return (
     <AppShell title="🎯 Milestones">
       <div className="mx-auto max-w-lg space-y-3 p-3">
         {!open && (
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="app-chrome w-full rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-md active:scale-[0.98]"
-          >
-            ➕ Record a milestone
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="app-chrome flex-1 rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-md active:scale-[0.98]"
+            >
+              ➕ Record a milestone
+            </button>
+            {milestones.length > 0 && (
+              <button
+                type="button"
+                onClick={exportCsv}
+                aria-label="Export milestones to spreadsheet"
+                className="app-chrome rounded-2xl bg-surface px-4 py-3 text-sm font-bold shadow-sm active:scale-[0.98]"
+              >
+                ⬇️ CSV
+              </button>
+            )}
+          </div>
         )}
 
         {open && (
@@ -197,6 +237,20 @@ export default function AdminMilestonesPage() {
                 🔐 {m.roomName}
                 {m.dueDate ? ` · due ${m.dueDate}` : ""}
               </p>
+              {(() => {
+                // Due-date warning: icon + words, never colour alone.
+                const state = dueState(m.dueDate, m.status === "completed");
+                const meta = DUE_META[state];
+                if (!meta || !m.dueDate) return null;
+                return (
+                  <p
+                    className="text-[11px] font-bold"
+                    style={{ color: meta.color }}
+                  >
+                    {meta.icon} {dueLabel(m.dueDate)}
+                  </p>
+                );
+              })()}
 
               {/* Status: icon + label always, never colour alone */}
               <div className="flex flex-wrap gap-1.5">

@@ -34,6 +34,9 @@ Support** platform that installs and behaves like a native mobile app (PWA).
 | 📴 Offline reading & queued sending (Firestore on-device cache) | ✅ Phase 3b |
 | 🎯 Milestones, hindrance logging, committed vs released funding | ✅ Phase 3b |
 | 📊 Admin dashboard: completion, blockers, funding, per-room roll-up | ✅ Phase 3b |
+| ⏰ Due-date reminders + 🚩 "Needs attention" working list | ✅ Phase 4 |
+| ⬇️ CSV export: milestones, form responses, full room reports | ✅ Phase 4 |
+| 📑 Per-room reports incl. form response rates | ✅ Phase 4 |
 
 ## Project map
 
