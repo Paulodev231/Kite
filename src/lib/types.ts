@@ -180,11 +180,19 @@ export const MILESTONE_STATUS_ORDER: MilestoneStatus[] = [
   "completed",
 ];
 
+/**
+ * A milestone belongs to ONE member — every project manager runs their own
+ * project. Rooms are only a grouping of people whose projects are similar in
+ * scope, so `roomId` is context, never ownership. Members see only their own
+ * milestones; Admins and Staff Handles see everyone's.
+ */
 export interface Milestone {
   id: string;
   title: string;
-  roomId: string;
-  roomName: string;
+  ownerUid: string; // the member whose project this is
+  ownerHandle: string; // handle snapshot for display
+  roomId?: string; // optional grouping context
+  roomName?: string;
   status: MilestoneStatus;
   fundedAmount: number; // money committed to this milestone
   spentAmount: number; // money released/spent so far

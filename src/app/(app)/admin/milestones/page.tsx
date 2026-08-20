@@ -1,7 +1,8 @@
 "use client";
 
-// Admin-only: record project milestones, log operational hindrances and
-// track the funding committed and released against each one.
+// Admin-only. Every milestone belongs to ONE member — each project manager
+// runs their own project. A room is optional grouping context for people
+// whose projects are similar in scope, never ownership.
 import { useEffect, useState } from "react";
 import {
   addDoc,
@@ -17,15 +18,16 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { logEvent } from "@/lib/log";
+import { dueLabel, dueState, DUE_META } from "@/lib/dates";
+import { downloadCsv, todayStamp, toCsv } from "@/lib/csv";
 import {
   MILESTONE_STATUS,
   MILESTONE_STATUS_ORDER,
   type Milestone,
   type MilestoneStatus,
   type Room,
+  type UserProfile,
 } from "@/lib/types";
-import { dueLabel, dueState, DUE_META } from "@/lib/dates";
-import { downloadCsv, todayStamp, toCsv } from "@/lib/csv";
 import AppShell from "@/components/AppShell";
 
 const inputCls =
@@ -34,18 +36,29 @@ const inputCls =
 export default function AdminMilestonesPage() {
   const { user } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [people, setPeople] = useState<UserProfile[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+  // New-milestone form
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [ownerUid, setOwnerUid] = useState("");
   const [roomId, setRoomId] = useState("");
   const [funded, setFunded] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Filter
+  const [filterOwner, setFilterOwner] = useState("");
+
   useEffect(() => {
     const unsubRooms = onSnapshot(
       query(collection(db(), "rooms"), orderBy("createdAt", "desc")),
       (snap) => setRooms(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Room)),
+    );
+    const unsubUsers = onSnapshot(
+      query(collection(db(), "users"), orderBy("createdAt", "desc")),
+      (snap) => setPeople(snap.docs.map((d) => ({ uid: d.id, ...d.data() }) as UserProfile)),
     );
     const unsubMs = onSnapshot(
       query(collection(db(), "milestones"), orderBy("createdAt", "desc")),
@@ -53,19 +66,26 @@ export default function AdminMilestonesPage() {
     );
     return () => {
       unsubRooms();
+      unsubUsers();
       unsubMs();
     };
   }, []);
 
+  // Anyone who runs a project: members and staff handles, not admins.
+  const owners = people.filter((p) => p.role === "member" || p.role === "staff");
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !title.trim() || !roomId) return;
+    if (!user || !title.trim() || !ownerUid) return;
     setBusy(true);
     try {
       const room = rooms.find((r) => r.id === roomId);
+      const owner = people.find((p) => p.uid === ownerUid);
       await addDoc(collection(db(), "milestones"), {
         title: title.trim(),
-        roomId,
+        ownerUid,
+        ownerHandle: owner?.handle ?? "",
+        roomId: roomId || "",
         roomName: room?.name ?? "",
         status: "planned" as MilestoneStatus,
         fundedAmount: Number(funded) || 0,
@@ -74,7 +94,7 @@ export default function AdminMilestonesPage() {
         createdBy: user.uid,
         createdAt: serverTimestamp(),
       });
-      logEvent(user.uid, "milestone_created", { roomId });
+      logEvent(user.uid, "milestone_created", { ownerUid, roomId: roomId || "none" });
       setTitle("");
       setFunded("");
       setDueDate("");
@@ -102,11 +122,27 @@ export default function AdminMilestonesPage() {
     await updateDoc(doc(db(), "milestones", m.id), { spentAmount: Number(input) || 0 });
   }
 
+  /** Assign or move a milestone to a different member. */
+  async function reassign(m: Milestone, uid: string) {
+    const owner = people.find((p) => p.uid === uid);
+    if (!owner) return;
+    await updateDoc(doc(db(), "milestones", m.id), {
+      ownerUid: uid,
+      ownerHandle: owner.handle,
+    });
+    if (user) logEvent(user.uid, "milestone_reassigned", { milestoneId: m.id, ownerUid: uid });
+  }
+
+  const visible = filterOwner
+    ? milestones.filter((m) => m.ownerUid === filterOwner)
+    : milestones;
+
   function exportCsv() {
     const csv = toCsv(
       [
+        "Member",
         "Milestone",
-        "Room",
+        "Room (grouping)",
         "Status",
         "Due date",
         "Due state",
@@ -114,9 +150,10 @@ export default function AdminMilestonesPage() {
         "Funding released",
         "Hindrance",
       ],
-      milestones.map((m) => [
+      visible.map((m) => [
+        m.ownerHandle || "Unassigned",
         m.title,
-        m.roomName,
+        m.roomName ?? "",
         MILESTONE_STATUS[m.status]?.label ?? m.status,
         m.dueDate ?? "",
         m.dueDate ? dueLabel(m.dueDate) : "",
@@ -140,7 +177,7 @@ export default function AdminMilestonesPage() {
             >
               ➕ Record a milestone
             </button>
-            {milestones.length > 0 && (
+            {visible.length > 0 && (
               <button
                 type="button"
                 onClick={exportCsv}
@@ -156,6 +193,19 @@ export default function AdminMilestonesPage() {
         {open && (
           <form onSubmit={create} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
             <p className="text-sm font-bold">New milestone</p>
+            <select
+              className={inputCls}
+              required
+              value={ownerUid}
+              onChange={(e) => setOwnerUid(e.target.value)}
+            >
+              <option value="">Whose project is this? (required)</option>
+              {owners.map((p) => (
+                <option key={p.uid} value={p.uid}>
+                  {p.handle}
+                </option>
+              ))}
+            </select>
             <input
               className={inputCls}
               placeholder="Milestone (e.g. Borehole drilling completed)"
@@ -163,13 +213,8 @@ export default function AdminMilestonesPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-            <select
-              className={inputCls}
-              required
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-            >
-              <option value="">Which project room?</option>
+            <select className={inputCls} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
+              <option value="">Group under a room (optional)</option>
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -200,7 +245,7 @@ export default function AdminMilestonesPage() {
               </button>
               <button
                 type="submit"
-                disabled={busy || !title.trim() || !roomId}
+                disabled={busy || !title.trim() || !ownerUid}
                 className="app-chrome flex-1 rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
               >
                 {busy ? "Saving…" : "Save"}
@@ -209,13 +254,32 @@ export default function AdminMilestonesPage() {
           </form>
         )}
 
-        {milestones.length === 0 && (
+        {milestones.length > 0 && (
+          <select
+            className={`${inputCls} bg-surface`}
+            value={filterOwner}
+            onChange={(e) => setFilterOwner(e.target.value)}
+          >
+            <option value="">All members ({milestones.length})</option>
+            {owners.map((p) => {
+              const n = milestones.filter((m) => m.ownerUid === p.uid).length;
+              return (
+                <option key={p.uid} value={p.uid}>
+                  {p.handle} ({n})
+                </option>
+              );
+            })}
+          </select>
+        )}
+
+        {visible.length === 0 && (
           <p className="pt-10 text-center text-sm opacity-50">
-            No milestones yet. Record one to start tracking delivery and funding.
+            No milestones yet. Record one against a member to start tracking their
+            project delivery and funding.
           </p>
         )}
 
-        {milestones.map((m) => {
+        {visible.map((m) => {
           const meta = MILESTONE_STATUS[m.status] ?? MILESTONE_STATUS.planned;
           return (
             <div key={m.id} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
@@ -233,26 +297,40 @@ export default function AdminMilestonesPage() {
                   🗑️
                 </button>
               </div>
+
+              {/* Owner — the member whose project this is */}
+              {m.ownerUid ? (
+                <p className="text-[11px] font-semibold text-brand">👤 {m.ownerHandle}</p>
+              ) : (
+                <select
+                  className={`${inputCls} border-amber-500`}
+                  value=""
+                  onChange={(e) => reassign(m, e.target.value)}
+                >
+                  <option value="">⚠️ Unassigned — choose the member…</option>
+                  {owners.map((p) => (
+                    <option key={p.uid} value={p.uid}>
+                      {p.handle}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <p className="text-[11px] opacity-50">
-                🔐 {m.roomName}
+                {m.roomName ? `🔐 ${m.roomName}` : "No room grouping"}
                 {m.dueDate ? ` · due ${m.dueDate}` : ""}
               </p>
               {(() => {
-                // Due-date warning: icon + words, never colour alone.
                 const state = dueState(m.dueDate, m.status === "completed");
-                const meta = DUE_META[state];
-                if (!meta || !m.dueDate) return null;
+                const dm = DUE_META[state];
+                if (!dm || !m.dueDate) return null;
                 return (
-                  <p
-                    className="text-[11px] font-bold"
-                    style={{ color: meta.color }}
-                  >
-                    {meta.icon} {dueLabel(m.dueDate)}
+                  <p className="text-[11px] font-bold" style={{ color: dm.color }}>
+                    {dm.icon} {dueLabel(m.dueDate)}
                   </p>
                 );
               })()}
 
-              {/* Status: icon + label always, never colour alone */}
               <div className="flex flex-wrap gap-1.5">
                 {MILESTONE_STATUS_ORDER.map((s) => {
                   const sm = MILESTONE_STATUS[s];

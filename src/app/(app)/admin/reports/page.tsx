@@ -97,6 +97,25 @@ export default function AdminReportsPage() {
     (m) => dueState(m.dueDate, m.status === "completed") === "overdue",
   ).length;
 
+  // Members grouped inside this room — each runs their own project.
+  const byMember = [...new Set(milestones.map((m) => m.ownerUid))]
+    .map((uid) => {
+      const list = milestones.filter((m) => m.ownerUid === uid);
+      return {
+        uid,
+        name: list[0]?.ownerHandle || "Unassigned",
+        total: list.length,
+        done: list.filter((m) => m.status === "completed").length,
+        blocked: list.filter((m) => m.status === "blocked").length,
+        overdue: list.filter(
+          (m) => dueState(m.dueDate, m.status === "completed") === "overdue",
+        ).length,
+        funded: list.reduce((s, m) => s + (m.fundedAmount ?? 0), 0),
+        spent: list.reduce((s, m) => s + (m.spentAmount ?? 0), 0),
+      };
+    })
+    .sort((a, b) => b.blocked - a.blocked || b.total - a.total);
+
   function exportReport() {
     if (!room) return;
     const csv = toCsv(
@@ -109,9 +128,15 @@ export default function AdminReportsPage() {
         ["Summary", "Milestones overdue", "", overdue],
         ["Summary", "Funding committed", "", funded],
         ["Summary", "Funding released", "", spent],
+        ...byMember.map((p) => [
+          "Member",
+          p.name,
+          `${p.done} of ${p.total} delivered · ${p.blocked} blocked · ${p.overdue} overdue`,
+          `${p.spent} of ${p.funded} released`,
+        ]),
         ...milestones.map((m) => [
           "Milestone",
-          m.title,
+          `${m.ownerHandle || "Unassigned"} — ${m.title}`,
           `${MILESTONE_STATUS[m.status]?.label ?? m.status}${
             m.dueDate ? ` · ${dueLabel(m.dueDate)}` : ""
           }${m.hindrance ? ` · Blocked: ${m.hindrance}` : ""}`,
@@ -168,6 +193,42 @@ export default function AdminReportsPage() {
               <StatTile label="Released" value={formatMoney(spent)} icon="💰" />
             </div>
 
+            {/* Each member's own project inside this room */}
+            {byMember.length > 0 && (
+              <div className="rounded-2xl bg-surface p-4 shadow-sm">
+                <p className="text-sm font-bold">Members in this room</p>
+                <p className="mb-1 text-[11px] opacity-50">
+                  Each member runs their own project · blockers first
+                </p>
+                {byMember.map((p) => (
+                  <div
+                    key={p.uid || "unassigned"}
+                    className="flex items-center gap-2 border-t border-black/5 py-2.5 text-xs dark:border-white/10"
+                  >
+                    <span className="min-w-0 flex-1 truncate font-semibold">
+                      👤 {p.name}
+                      <span className="block text-[10px] font-normal opacity-50">
+                        {formatMoney(p.spent)} of {formatMoney(p.funded)} released
+                      </span>
+                    </span>
+                    {p.blocked > 0 && (
+                      <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 font-bold text-red-500">
+                        ⛔ {p.blocked}
+                      </span>
+                    )}
+                    {p.overdue > 0 && (
+                      <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 font-bold text-red-500">
+                        🔴 {p.overdue}
+                      </span>
+                    )}
+                    <span className="shrink-0 tabular-nums opacity-60">
+                      {p.done}/{p.total}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {total > 0 && <StatusBars counts={counts} title="Milestones in this room" />}
             {funded > 0 && <FundingMeter funded={funded} spent={spent} />}
 
@@ -221,6 +282,9 @@ export default function AdminReportsPage() {
                       <span aria-hidden>{meta.icon}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold">{m.title}</p>
+                        <p className="truncate text-[10px] font-semibold text-brand">
+                          👤 {m.ownerHandle || "Unassigned"}
+                        </p>
                         <p className="text-[10px] opacity-50">
                           {meta.label}
                           {m.dueDate ? ` · due ${m.dueDate}` : ""}

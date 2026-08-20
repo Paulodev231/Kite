@@ -197,10 +197,12 @@ service cloud.firestore {
     }
 
     // ---------- Milestones & funded outcomes ----------
-    // Members see the milestones of rooms they belong to (so they can track
-    // their own project); only Admins create and update them.
+    // Each milestone belongs to ONE member. A member reads ONLY their own —
+    // never another member's progress, blockers or funding, even when they
+    // share a room. Admins and Staff Handles see all; only Admins write.
     match /milestones/{milestoneId} {
-      allow read: if isElevated() || (isActive() && inRoom(resource.data.roomId));
+      allow read: if isElevated()
+        || (isActive() && resource.data.ownerUid == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }
 

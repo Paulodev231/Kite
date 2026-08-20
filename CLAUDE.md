@@ -12,6 +12,18 @@ and never assume a local terminal is available.
 - All Firebase pages are client components; `src/lib/firebase.ts` guards
   missing env vars so `next build` passes without configuration.
 
+## Domain model (important)
+- **Milestones are per-MEMBER, not per-room.** Every project manager runs
+  their own individual project. `milestones/{id}.ownerUid` is the owner;
+  `roomId` is optional grouping context only.
+- **Rooms group people whose projects are similar in scope** — they are not
+  the unit of work and confer no ownership.
+- A member reads only milestones where `ownerUid == their uid`, never a
+  roommate's progress, blockers or funding. Client queries must be scoped
+  accordingly (Firestore rules are not filters — an unscoped query fails).
+- Per-member funding tags (`users/{uid}.funded/fundedAmount`) are separate
+  from per-milestone funding (`fundedAmount`/`spentAmount`).
+
 ## Security model (do not weaken)
 - Roles in `users/{uid}.role`: member | staff | admin | superadmin.
 - No self-registration. Accounts minted by admins via a secondary Firebase

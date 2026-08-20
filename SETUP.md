@@ -250,6 +250,32 @@ redeploy is all that's needed. New features:
   funded and the total per currency.
 - Every funding change is recorded in **Compliance Logs**.
 
+## 🆙 Milestones are per-member (important correction)
+
+⚠️ **This one needs a rules re-paste:** Firebase Console → Firestore Database
+→ Rules → paste `firestore.rules` → **Publish**. It stops members seeing each
+other's project data.
+
+Milestones belong to **one member each** — every project manager runs their
+own project. Rooms just group people whose projects are similar in scope.
+
+- **Recording one:** Admin Panel → Milestones → **“Whose project is this?”**
+  is now required; the room is optional grouping.
+- **Filter by member** with the dropdown above the list, and export just that
+  member's milestones to CSV.
+- **Members see only their own:** a “🎯 My project milestones” card on their
+  **Profile** tab, and inside a room the panel is titled **My milestones** and
+  contains only theirs. They can never see a roommate's progress, blockers or
+  funding — enforced by the security rules, not just hidden in the app.
+- **Dashboard** now leads its breakdown with **By member**, with **By project
+  room** kept underneath (showing how many members each room groups).
+- **Room Reports** gained a **Members in this room** section: per-member
+  delivered/blocked/overdue counts and funding released.
+
+**If you recorded milestones before this change** they will show
+**“⚠️ Unassigned — choose the member…”** in Admin Panel → Milestones. Pick the
+right member from that dropdown and they're fixed.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

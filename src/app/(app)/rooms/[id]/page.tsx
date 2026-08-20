@@ -63,19 +63,31 @@ export default function RoomPage() {
       (snap) => setForms(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomForm)),
       () => {},
     );
-    // This room's milestones, so the team can see where the project stands.
-    const unsubMilestones = onSnapshot(
-      query(collection(db(), "milestones"), where("roomId", "==", id)),
-      (snap) => setMilestones(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Milestone)),
-      () => {},
-    );
+    // Milestones are per-member, not per-room. A member may only read their
+    // OWN, so the query is scoped to them; admins/staff see the whole room.
+    const milestoneQuery = elevated
+      ? query(collection(db(), "milestones"), where("roomId", "==", id))
+      : user
+        ? query(
+            collection(db(), "milestones"),
+            where("roomId", "==", id),
+            where("ownerUid", "==", user.uid),
+          )
+        : null;
+    const unsubMilestones = milestoneQuery
+      ? onSnapshot(
+          milestoneQuery,
+          (snap) => setMilestones(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Milestone)),
+          () => {},
+        )
+      : () => {};
     return () => {
       unsubRoom();
       unsubMsgs();
       unsubForms();
       unsubMilestones();
     };
-  }, [id]);
+  }, [id, elevated, user]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -100,8 +112,9 @@ export default function RoomPage() {
           <div className="p-3 pb-0">
             <details className="rounded-2xl bg-surface p-3 shadow-sm">
               <summary className="app-chrome cursor-pointer text-xs font-bold">
-                🎯 Project milestones ({milestones.filter((m) => m.status === "completed").length}/
-                {milestones.length} done)
+                🎯 {elevated ? "Milestones in this room" : "My milestones"} (
+                {milestones.filter((m) => m.status === "completed").length}/{milestones.length}{" "}
+                done)
               </summary>
               <div className="mt-2 space-y-1.5">
                 {milestones.map((m) => {
@@ -111,6 +124,12 @@ export default function RoomPage() {
                       <span aria-hidden>{meta.icon}</span>
                       <span className="min-w-0 flex-1">
                         <span className="font-semibold">{m.title}</span>
+                        {/* Admins see whose project it is; members only ever see their own */}
+                        {elevated && m.ownerHandle && (
+                          <span className="block text-[10px] font-semibold text-brand">
+                            👤 {m.ownerHandle}
+                          </span>
+                        )}
                         <span className="block text-[10px] opacity-50">
                           {meta.label}
                           {m.dueDate ? ` · due ${m.dueDate}` : ""}

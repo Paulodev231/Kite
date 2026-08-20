@@ -7,6 +7,7 @@ import { formatFunding, isAdmin, roleTag } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import AccountSettings from "@/components/AccountSettings";
 import NotificationSettings from "@/components/NotificationSettings";
+import MyMilestones from "@/components/MyMilestones";
 
 export default function ProfilePage() {
   const { user, profile, logout } = useAuth();
@@ -59,6 +60,8 @@ export default function ProfilePage() {
             </p>
           </div>
         )}
+
+        <MyMilestones />
 
         <NotificationSettings />
 

@@ -57,14 +57,30 @@ export default function AdminDashboardPage() {
     .filter((x): x is { m: Milestone; kind: keyof typeof rank } => x !== null)
     .sort((a, b) => rank[a.kind] - rank[b.kind]);
 
-  // Per-room roll-up, worst-first so blocked projects surface immediately.
-  const rooms = [...new Set(milestones.map((m) => m.roomId))]
+  // Per-member roll-up: milestones are individual, so this is the primary
+  // breakdown. Worst-first so struggling projects surface immediately.
+  const byMember = [...new Set(milestones.map((m) => m.ownerUid))]
+    .map((uid) => {
+      const list = milestones.filter((m) => m.ownerUid === uid);
+      return {
+        uid,
+        name: list[0]?.ownerHandle || "Unassigned",
+        total: list.length,
+        done: list.filter((m) => m.status === "completed").length,
+        blocked: list.filter((m) => m.status === "blocked").length,
+      };
+    })
+    .sort((a, b) => b.blocked - a.blocked || b.total - a.total);
+
+  // Per-room roll-up: rooms group people whose projects are similar in scope.
+  const rooms = [...new Set(milestones.map((m) => m.roomId).filter(Boolean))]
     .map((roomId) => {
       const list = milestones.filter((m) => m.roomId === roomId);
       return {
-        roomId,
+        roomId: roomId as string,
         name: list[0]?.roomName || "Room",
         total: list.length,
+        members: new Set(list.map((m) => m.ownerUid)).size,
         done: list.filter((m) => m.status === "completed").length,
         blocked: list.filter((m) => m.status === "blocked").length,
       };
@@ -124,7 +140,10 @@ export default function AdminDashboardPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-semibold">{m.title}</p>
-                    <p className="truncate text-[10px] opacity-50">🔐 {m.roomName}</p>
+                    <p className="truncate text-[10px] opacity-50">
+                      👤 {m.ownerHandle || "Unassigned"}
+                      {m.roomName ? ` · 🔐 ${m.roomName}` : ""}
+                    </p>
                     {kind === "blocked" && m.hindrance && (
                       <p className="text-[10px] font-medium text-red-500">⛔ {m.hindrance}</p>
                     )}
@@ -145,10 +164,39 @@ export default function AdminDashboardPage() {
 
         <FundingMeter funded={funded} spent={spent} />
 
-        {/* Per-room table — more than a few classes, so a table beats more colours */}
+        {/* Per-member table — milestones are individual, so this is the primary view */}
+        <div className="rounded-2xl bg-surface p-4 shadow-sm">
+          <p className="text-sm font-bold">By member</p>
+          <p className="mb-2 text-[11px] opacity-50">
+            Each member runs their own project · members with blockers first
+          </p>
+          {byMember.length === 0 && (
+            <p className="py-4 text-center text-xs opacity-50">No milestones recorded yet.</p>
+          )}
+          {byMember.map((p) => (
+            <div
+              key={p.uid || "unassigned"}
+              className="flex items-center gap-2 border-t border-black/5 py-2.5 text-xs dark:border-white/10"
+            >
+              <span className="min-w-0 flex-1 truncate font-semibold">👤 {p.name}</span>
+              {p.blocked > 0 && (
+                <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 font-bold text-red-500">
+                  ⛔ {p.blocked}
+                </span>
+              )}
+              <span className="shrink-0 tabular-nums opacity-60">
+                {p.done}/{p.total} done
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Per-room table — rooms group people with similar project scope */}
         <div className="rounded-2xl bg-surface p-4 shadow-sm">
           <p className="text-sm font-bold">By project room</p>
-          <p className="mb-2 text-[11px] opacity-50">Rooms with blockers listed first</p>
+          <p className="mb-2 text-[11px] opacity-50">
+            Rooms group members with similar project scope · blockers first
+          </p>
           {rooms.length === 0 && (
             <p className="py-4 text-center text-xs opacity-50">No milestones recorded yet.</p>
           )}
@@ -157,7 +205,12 @@ export default function AdminDashboardPage() {
               key={r.roomId}
               className="flex items-center gap-2 border-t border-black/5 py-2.5 text-xs dark:border-white/10"
             >
-              <span className="min-w-0 flex-1 truncate font-semibold">🔐 {r.name}</span>
+              <span className="min-w-0 flex-1 truncate font-semibold">
+                🔐 {r.name}
+                <span className="block text-[10px] font-normal opacity-50">
+                  {r.members} member{r.members === 1 ? "" : "s"}
+                </span>
+              </span>
               {r.blocked > 0 && (
                 <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 font-bold text-red-500">
                   ⛔ {r.blocked}
