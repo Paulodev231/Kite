@@ -4,6 +4,7 @@
 // invite-only account creation. SuperAdmins can also mint Admins and Staff
 // Handles (bulk-friendly: the form stays filled-in ready for the next one).
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -138,14 +139,22 @@ export default function AdminUsersPage() {
           {users.map((u) => (
             <div key={u.uid} className="rounded-2xl bg-surface p-3 shadow-sm">
               <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+              <Link
+                href={`/admin/users/${u.uid}`}
+                className="app-chrome flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white active:scale-95"
+              >
                 {u.handle?.slice(0, 1).toUpperCase()}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">{u.handle}</p>
+              </Link>
+              <Link href={`/admin/users/${u.uid}`} className="min-w-0 flex-1 active:opacity-70">
+                <p className="truncate text-sm font-bold">
+                  {u.handle} <span className="text-[10px] font-normal opacity-30">›</span>
+                </p>
+                <p className="truncate text-[10px] opacity-50">
+                  {u.email || "no email recorded"}
+                </p>
                 <p className="text-[10px] capitalize opacity-50">
                   {u.role}
-                  {u.active === false ? " · deactivated" : ""}
+                  {u.active === false ? " · banned" : ""}
                 </p>
                 {u.role === "member" &&
                   (() => {
@@ -162,7 +171,7 @@ export default function AdminUsersPage() {
                       </p>
                     );
                   })()}
-              </div>
+              </Link>
               {u.uid !== profile?.uid && u.role !== "superadmin" && (
                 <div className="flex shrink-0 gap-1.5">
                   <button

@@ -44,21 +44,25 @@ service cloud.firestore {
       allow create: if isAdmin()
         && request.resource.data.role in ['member', 'staff', 'admin']
         && (request.resource.data.role == 'member' || isSuper());
-      // Self-service: you may change YOUR OWN handle — nothing else (the
-      // field-diff check blocks any attempt to touch role/active/onCall).
-      // Role changes & staff on-call: SuperAdmin. Activate/deactivate: Admins.
-      // Nobody can touch a SuperAdmin account.
-      allow update: if (isActive() && request.auth.uid == uid
+      // Three ways a user document can change:
+      //  1. SuperAdmin — unrestricted, including other SuperAdmins and self.
+      //  2. Standard Admin — any member/staff/admin record, but may not touch
+      //     a SuperAdmin account or hand out roles (that stays with SuperAdmin).
+      //  3. Anyone — their OWN handle and nothing else (the field-diff check
+      //     blocks any attempt to touch role/active/onCall/funding).
+      allow update: if isSuper()
+        || (isAdmin()
+          && resource.data.role != 'superadmin'
+          && request.resource.data.role == resource.data.role)
+        || (isActive() && request.auth.uid == uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['handle'])
           && request.resource.data.handle is string
           && request.resource.data.handle.size() >= 2
-          && request.resource.data.handle.size() <= 24)
-        || (isAdmin()
-          && resource.data.role != 'superadmin'
-          && (request.resource.data.role == resource.data.role || isSuper()));
-      // Delete (permanent removal): Admins may delete members;
-      // only the SuperAdmin may delete staff/admin accounts.
-      allow delete: if isSuper() || (isAdmin() && resource.data.role == 'member');
+          && request.resource.data.handle.size() <= 24);
+      // Delete (permanent removal): SuperAdmin unrestricted; standard Admins
+      // may delete members and staff handles, never an Admin or SuperAdmin.
+      allow delete: if isSuper()
+        || (isAdmin() && resource.data.role in ['member', 'staff']);
 
       // Membership records let a member list their own rooms WITHOUT ever
       // seeing who else is in them. Written exclusively by Admins.

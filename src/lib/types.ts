@@ -23,6 +23,9 @@ export function roleTag(role: Role | null | undefined): string | null {
 export interface UserProfile {
   uid: string;
   handle: string; // public display handle, e.g. "PM_Ade"
+  /** Sign-in email, recorded here so Admins can see it. Firebase Auth is the
+   *  real source of truth — changing this field does not change their login. */
+  email?: string;
   role: Role;
   active: boolean; // deactivated accounts cannot use the app
   onCall?: boolean; // staff handles only: counted in the presence indicator

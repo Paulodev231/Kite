@@ -295,6 +295,34 @@ Rules → Publish) — this adds the new `alerts` collection.
   run by you — no milestones, no funding tags, no alerts, no project
   dashboard. Only real members appear in those pickers.
 
+## 🆙 Admin: full user profiles & unrestricted access
+
+⚠️ **Re-paste `firestore.rules`** → Publish.
+
+- **Tap any person** in Admin Panel → Members & Accounts to open their full
+  profile: email, role, User ID, date created, on-call state, funding, their
+  individual project milestones with countdowns, every alert you've sent them
+  (and whether it was read), and the rooms they belong to.
+- **💬 Send direct message** button right at the top of that profile.
+- **Change their role** (SuperAdmin only), ban/unban, or delete — all from the
+  same screen.
+- **The SuperAdmin now has no restrictions**: you can edit any account
+  including other Admins and SuperAdmins, hand out any role, and delete
+  anything. Standard Admins can do everything except touch a SuperAdmin
+  account or hand out roles — that stays with you. Say the word if you want
+  standard Admins unrestricted too.
+
+### About emails
+Emails live in Firebase **Authentication**, which the free tier can't list from
+inside the app. So Kite now **records the email on the account when you create
+it** — every new account shows its email automatically.
+
+Accounts made *before* this change (including your hand-made SuperAdmin) show
+**“no email recorded”**. Open their profile → **➕ Record their email** → type
+it → Save. Note this is a record for your reference; it does not change their
+actual sign-in address, which you'd change in Firebase Console →
+Authentication → Users.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress

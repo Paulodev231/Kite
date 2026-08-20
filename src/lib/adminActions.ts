@@ -51,6 +51,9 @@ export async function createManagedAccount(
     const uid = cred.user.uid;
     await setDoc(doc(db(), "users", uid), {
       handle,
+      // Recorded so Admins can see it in the directory — Firebase Auth remains
+      // the source of truth for the actual login.
+      email,
       role,
       active: true,
       ...(role === "staff" ? { onCall: false } : {}),
@@ -87,6 +90,23 @@ export async function setUserFunding(
     uid,
     amount: String(funded ? amount : 0),
   });
+}
+
+/**
+ * Records (or corrects) the email shown in the admin directory for accounts
+ * created before emails were stored — including the hand-made SuperAdmin.
+ * This is a record only: it does NOT change the person's actual login, which
+ * lives in Firebase Auth.
+ */
+export async function setUserEmailRecord(uid: string, email: string) {
+  await updateDoc(doc(db(), "users", uid), { email: email.trim() });
+  logEvent(actorUid(), "email_recorded", { uid });
+}
+
+/** SuperAdmin: change someone's role. */
+export async function setUserRole(uid: string, role: Role) {
+  await updateDoc(doc(db(), "users", uid), { role });
+  logEvent(actorUid(), "role_changed", { uid, role });
 }
 
 export async function setAccountActive(uid: string, active: boolean) {
