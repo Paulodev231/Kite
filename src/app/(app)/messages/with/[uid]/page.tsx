@@ -17,7 +17,6 @@ import {
 } from "firebase/firestore";
 import { db, dmThreadId } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { useActing } from "@/context/ActingContext";
 import { isAdmin, type DmMessage, type DmThread } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { logEvent } from "@/lib/log";
@@ -30,14 +29,11 @@ function DmScreen() {
   const { uid: peerUid } = useParams<{ uid: string }>();
   const searchParams = useSearchParams();
   const { user, profile } = useAuth();
-  const { identityUid, identityHandle, acting } = useActing();
   const [thread, setThread] = useState<DmThread | null>(null);
   const [messages, setMessages] = useState<DmMessage[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Thread is between the acting identity (you, or the handle you switched
-  // into) and the person you are talking to.
-  const threadId = identityUid && peerUid ? dmThreadId(identityUid, peerUid) : null;
+  const threadId = user && peerUid ? dmThreadId(user.uid, peerUid) : null;
   const peerHandle =
     thread?.handles?.[peerUid] ?? searchParams.get("handle") ?? "Member";
   const elevated = isAdmin(profile?.role) || profile?.role === "staff";
@@ -71,25 +67,25 @@ function DmScreen() {
   }, [threadId, messages]);
 
   async function send(text: string, file: File | null) {
-    if (!identityUid || !threadId || !peerUid) return;
+    if (!user || !profile || !threadId || !peerUid) return;
     const attached = file ? await uploadFile(`dms/${threadId}`, file) : null;
     // Compliance metadata: log when a brand-new conversation starts.
-    if (!thread && user) logEvent(user.uid, "dm_thread_started", { threadId });
+    if (!thread) logEvent(user.uid, "dm_thread_started", { threadId });
     // Create/update the thread summary first so security rules and the inbox
     // list both have a thread document to work with.
     await setDoc(
       doc(db(), "dms", threadId),
       {
-        participants: [identityUid, peerUid].sort(),
-        handles: { [identityUid]: identityHandle, [peerUid]: peerHandle },
+        participants: [user.uid, peerUid].sort(),
+        handles: { [user.uid]: profile.handle, [peerUid]: peerHandle },
         lastText: text || `📎 ${attached?.name ?? "Attachment"}`,
-        lastSenderUid: identityUid,
+        lastSenderUid: user.uid,
         updatedAt: serverTimestamp(),
       },
       { merge: true },
     );
     await addDoc(collection(db(), "dms", threadId, "messages"), {
-      senderUid: identityUid,
+      senderUid: user.uid,
       text,
       ...(attached ? { fileUrl: attached.url, fileName: attached.name } : {}),
       createdAt: serverTimestamp(),
@@ -102,10 +98,9 @@ function DmScreen() {
         <div className="flex-1 space-y-2 p-3">
           <p className="py-2 text-center text-[10px] opacity-40">
             🔒 Private conversation
-            {acting ? ` · you are replying as ${acting.handle}` : ""}
           </p>
           {messages.map((m) => {
-            const mine = m.senderUid === identityUid;
+            const mine = m.senderUid === user?.uid;
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div

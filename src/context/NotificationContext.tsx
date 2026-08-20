@@ -19,7 +19,6 @@ import {
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { useActing } from "@/context/ActingContext";
 import { getSeen, seenKeys } from "@/lib/seen";
 import type { BroadcastPost, DmThread, MemberAlert } from "@/lib/types";
 
@@ -51,7 +50,6 @@ function notify(title: string, body: string, tag: string) {
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { identityUid } = useActing();
   const [threads, setThreads] = useState<DmThread[]>([]);
   const [posts, setPosts] = useState<BroadcastPost[]>([]);
   const [alerts, setAlerts] = useState<MemberAlert[]>([]);
@@ -82,7 +80,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const unsubDms = onSnapshot(
       query(
         collection(db(), "dms"),
-        where("participants", "array-contains", identityUid || user.uid),
+        where("participants", "array-contains", user.uid),
         orderBy("updatedAt", "desc"),
         limit(50),
       ),
@@ -92,9 +90,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           for (const change of snap.docChanges()) {
             if (change.type === "removed") continue;
             const t = { id: change.doc.id, ...change.doc.data() } as DmThread;
-            const me = identityUid || user.uid;
-            if (t.lastSenderUid && t.lastSenderUid !== me) {
-              const peer = t.participants.find((p) => p !== me) ?? "";
+            if (t.lastSenderUid && t.lastSenderUid !== user.uid) {
+              const peer = t.participants.find((p) => p !== user.uid) ?? "";
               notify(t.handles?.[peer] ?? "New message", t.lastText ?? "", `dm-${t.id}`);
             }
           }
@@ -146,7 +143,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       unsubBroadcast();
       unsubAlerts();
     };
-  }, [user, identityUid]);
+  }, [user]);
 
   const enableNotifications = useCallback(async () => {
     if (typeof window === "undefined" || !("Notification" in window)) return false;
@@ -158,10 +155,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Badge maths (seenTick forces a recount after "mark as read").
   void seenTick;
-  const dmMe = identityUid || user?.uid;
   const dmUnread = user
     ? threads.filter((t) => {
-        if (!t.lastSenderUid || t.lastSenderUid === dmMe) return false;
+        if (!t.lastSenderUid || t.lastSenderUid === user.uid) return false;
         return (t.updatedAt?.toMillis() ?? 0) > getSeen(seenKeys.dmThread(t.id));
       }).length
     : 0;

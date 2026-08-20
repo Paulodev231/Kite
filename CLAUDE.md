@@ -36,11 +36,12 @@ and never assume a local terminal is available.
 - No self-registration. Member/admin accounts minted by admins via a secondary
   Firebase app instance (`src/lib/adminActions.ts`).
 - **Staff Handles have NO Auth account** — no email, no password, they never
-  sign in. They are `users/{autoId}` docs with `role: "staff"`. The SuperAdmin
-  switches into one via `ActingContext` and authors as it; rules permit this
-  through `actingAsStaff(uid)` (superadmin + target role == staff).
-  Anything that records an author must use `useActing().identityUid/Handle`,
-  never the raw auth uid.
+  sign in. They are `users/{autoId}` docs with `role: "staff"`.
+- **There is no "acting as" mode.** The normal app always authors as the
+  signed-in user. Handles are operated ONLY from the Handle Console
+  (`/admin/console`) via `src/lib/handleActions.ts`, which passes the handle
+  explicitly as the author. Rules permit this through `actingAsStaff(uid)`
+  (superadmin + target role == staff).
 - Members must never see: the user directory, room participant lists
   (`rooms/{id}/acl/members` is admin-only; members read only their own
   `users/{uid}/memberships`), or other users' form submissions.

@@ -98,11 +98,20 @@ export interface Room {
   createdAt?: Timestamp;
 }
 
+/** A short snapshot of the message being replied to, stored inline so the
+ *  quote still renders if the original is later deleted. */
+export interface QuotedMessage {
+  id: string;
+  handle: string;
+  text: string;
+}
+
 export interface RoomMessage {
   id: string;
   authorUid: string;
   authorHandle: string;
   text: string;
+  replyTo?: QuotedMessage;
   mediaUrl?: string;
   mediaType?: "image" | "video" | "file";
   mediaName?: string;

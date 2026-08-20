@@ -100,10 +100,10 @@ export default function AdminHome() {
     ...(superadmin
       ? [
           {
-            href: "/admin/inbox",
-            icon: "📥",
-            title: "Master Inbox",
-            desc: "Every DM to your managed Staff Handles — triage and reply as the handle",
+            href: "/admin/console",
+            icon: "🎛️",
+            title: "Handle Console",
+            desc: "Operate every Staff Handle from here — post, reply to DMs and quote-reply in rooms",
             badge: inboxUnread,
           },
           {

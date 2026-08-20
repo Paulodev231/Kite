@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import { ActingProvider } from "@/context/ActingContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
@@ -38,9 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          <ActingProvider>
-            <NotificationProvider>{children}</NotificationProvider>
-          </ActingProvider>
+          <NotificationProvider>{children}</NotificationProvider>
         </AuthProvider>
         <ServiceWorkerRegistrar />
       </body>

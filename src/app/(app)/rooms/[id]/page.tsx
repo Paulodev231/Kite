@@ -18,7 +18,6 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { useActing } from "@/context/ActingContext";
 import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { deleteRoomMessage } from "@/lib/adminActions";
@@ -30,7 +29,6 @@ import UserBadge from "@/components/UserBadge";
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
-  const { identityUid, identityHandle } = useActing();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [forms, setForms] = useState<RoomForm[]>([]);
@@ -71,8 +69,8 @@ export default function RoomPage() {
     if (!user || !profile || !id) return;
     const media = file && elevated ? await uploadFile(`rooms/${id}`, file) : null;
     await addDoc(collection(db(), "rooms", id, "messages"), {
-      authorUid: identityUid,
-      authorHandle: identityHandle,
+      authorUid: user.uid,
+      authorHandle: profile.handle,
       text,
       ...(media ? { mediaUrl: media.url, mediaType: media.kind, mediaName: media.name } : {}),
       createdAt: serverTimestamp(),
@@ -101,7 +99,7 @@ export default function RoomPage() {
         )}
         <div className="flex-1 space-y-2 p-3">
           {messages.map((m) => {
-            const mine = m.authorUid === identityUid;
+            const mine = m.authorUid === user?.uid;
             const canModerate = isAdmin(profile?.role);
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
@@ -128,6 +126,25 @@ export default function RoomPage() {
                   {!mine && (
                     <div className="mb-1">
                       <UserBadge uid={m.authorUid} handle={m.authorHandle} />
+                    </div>
+                  )}
+                  {/* Quoted message this reply is answering */}
+                  {m.replyTo && (
+                    <div
+                      className={`mb-1.5 border-l-2 pl-2 ${
+                        mine ? "border-white/50" : "border-brand/40"
+                      }`}
+                    >
+                      <p
+                        className={`text-[10px] font-bold ${
+                          mine ? "text-white/80" : "text-brand"
+                        }`}
+                      >
+                        {m.replyTo.handle}
+                      </p>
+                      <p className={`text-[10px] ${mine ? "text-white/70" : "opacity-60"}`}>
+                        {m.replyTo.text}
+                      </p>
                     </div>
                   )}
                   {m.text && (

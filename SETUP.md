@@ -323,27 +323,32 @@ it → Save. Note this is a record for your reference; it does not change their
 actual sign-in address, which you'd change in Firebase Console →
 Authentication → Users.
 
-## 🆙 Staff Handles: no credentials, switch in place
+## 🆙 The Handle Console
 
 ⚠️ **Re-paste `firestore.rules`** → Publish.
 
-Staff Handles no longer have emails, passwords, or separate sign-ins.
+Staff Handles have **no email, no password and no sign-in**, and you never
+leave your SuperAdmin session to use them.
 
-1. **Create one:** Admin Panel → **Staff Handles** → type a name (e.g.
-   `Support_Desk`) → **Create handle**. That's it.
-2. **Use it:** tap **🎭 Switch into &lt;name&gt;**. An amber banner appears at the
-   top of every screen showing which handle you're using.
-3. While it's active, everything you do goes out as that handle — broadcast
-   posts, room messages, emoji reactions, and DMs. The **DMs tab shows that
-   handle's conversations**, so you receive and reply as them.
-4. Tap **Switch back** in the banner (or on the Staff Handles screen) to return
-   to yourself. Your SuperAdmin session never ends.
+**Create a handle:** Admin Panel → **Staff Handles** → type a name (e.g.
+`Support_Desk`) → **Create handle**. That's the whole form.
 
-You can also **rename** or **delete** a handle from the same screen, and the
-On-Call toggle still feeds the public "⚡ Active Now" counter.
+**Operate every handle in one place:** Admin Panel → **🎛️ Handle Console**.
+Three tabs, and on each one you choose who the message goes out as:
 
-*(Any Staff Handle you made earlier with an email and password still works —
-it just also has a login you don't need. New ones need nothing.)*
+- **📥 DMs** — every conversation any member has with any handle, in one list
+  with 🔴 unread dots. Tap a thread to open it inline and reply — the reply
+  goes out as the handle that member wrote to. There's also
+  *"Start a new conversation as a handle"* to message someone first.
+- **📢 Broadcast** — write an announcement, tap **Speaking as** to choose
+  yourself or any handle, attach media, post. Recent posts are listed with a
+  delete button.
+- **🗂️ Rooms** — pick any room, read it, tap **↩︎ Quote** on any message to
+  quote it, choose the handle, and send. The quoted text shows above your
+  reply for everyone in the room.
+
+You stay signed in as yourself the entire time — the console just decides
+whose name each message carries. Members only ever see the handle.
 
 ## 🗺️ Possible next steps
 

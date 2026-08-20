@@ -11,13 +11,14 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useActing } from "@/context/ActingContext";
+import { useAuth } from "@/context/AuthContext";
 import type { DmThread } from "@/lib/types";
 import { getSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
 
 export default function MessagesPage() {
-  const { identityUid, acting } = useActing();
+  const { user } = useAuth();
+  const identityUid = user?.uid ?? "";
   const [threads, setThreads] = useState<DmThread[]>([]);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function MessagesPage() {
   }, [identityUid]);
 
   return (
-    <AppShell title={acting ? `💬 ${acting.handle}'s DMs` : "💬 Direct Messages"}>
+    <AppShell title="💬 Direct Messages">
       <div className="mx-auto max-w-lg space-y-2 p-3">
         {threads.length === 0 && (
           <p className="pt-16 text-center text-sm opacity-50">

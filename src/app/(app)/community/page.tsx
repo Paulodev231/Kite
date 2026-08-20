@@ -14,13 +14,11 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { useActing } from "@/context/ActingContext";
 import { COMMUNITY_EMOJIS, type CommunityReaction } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 
 export default function CommunityPage() {
   const { user } = useAuth();
-  const { identityUid } = useActing();
   const [reactions, setReactions] = useState<CommunityReaction[]>([]);
   const [sending, setSending] = useState<string | null>(null);
 
@@ -36,7 +34,7 @@ export default function CommunityPage() {
     setSending(emoji);
     try {
       await addDoc(collection(db(), "community"), {
-        uid: identityUid,
+        uid: user.uid,
         emoji,
         createdAt: serverTimestamp(),
       });

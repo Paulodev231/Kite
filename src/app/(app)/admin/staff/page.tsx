@@ -2,13 +2,15 @@
 
 // SuperAdmin only: Managed Staff Handles.
 //
-// A handle has NO email, NO password and never signs in. You create it with a
-// name, then SWITCH INTO it from here — while still signed in as yourself —
-// and post, react, reply and DM as that handle. Members just see a normal user.
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+// A handle has NO email, NO password and never signs in. Create it here with
+// just a name, then operate it from the 🎛️ Handle Console. Members see it as
+// an ordinary user.
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { useActing } from "@/context/ActingContext";
+import type { UserProfile } from "@/lib/types";
 import {
   createStaffHandle,
   deleteUserAccount,
@@ -20,11 +22,20 @@ import SplashScreen from "@/components/SplashScreen";
 
 export default function AdminStaffPage() {
   const { profile, loading } = useAuth();
-  const { handles, acting, switchTo } = useActing();
-  const router = useRouter();
+  const [handles, setHandles] = useState<UserProfile[]>([]);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const superadmin = profile?.role === "superadmin";
+
+  useEffect(() => {
+    if (!superadmin) return;
+    return onSnapshot(
+      query(collection(db(), "users"), where("role", "==", "staff")),
+      (snap) => setHandles(snap.docs.map((d) => ({ uid: d.id, ...d.data() }) as UserProfile)),
+      () => {},
+    );
+  }, [superadmin]);
 
   if (loading) return <SplashScreen />;
   if (profile?.role !== "superadmin") {
@@ -46,7 +57,7 @@ export default function AdminStaffPage() {
     setNotice(null);
     try {
       await createStaffHandle(name.trim());
-      setNotice(`✅ Handle “${name.trim()}” created. Tap “Switch into” to start using it.`);
+      setNotice(`✅ Handle “${name.trim()}” created. Use it from the Handle Console.`);
       setName("");
     } catch {
       setNotice("❌ Could not create the handle.");
@@ -65,7 +76,7 @@ export default function AdminStaffPage() {
           <p className="text-sm font-bold">➕ Create a Staff Handle</p>
           <p className="text-[11px] leading-relaxed opacity-50">
             No email or password needed — a handle never signs in. You operate it
-            yourself by switching into it below.
+            from the 🎛️ Handle Console.
           </p>
           <input
             className={inputCls}
@@ -103,7 +114,6 @@ export default function AdminStaffPage() {
         )}
 
         {handles.map((s) => {
-          const isActive = acting?.uid === s.uid;
           return (
             <div key={s.uid} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
               <div className="flex items-center gap-3">
@@ -116,7 +126,6 @@ export default function AdminStaffPage() {
                   <p className="truncate text-sm font-bold">{s.handle}</p>
                   <p className="text-[10px] opacity-50">
                     {s.onCall ? "On-Call · shown as active" : "Off-Call · offline"}
-                    {isActive ? " · you are using this handle" : ""}
                   </p>
                 </div>
                 <button
@@ -136,26 +145,12 @@ export default function AdminStaffPage() {
               </div>
 
               <div className="flex gap-2">
-                {isActive ? (
-                  <button
-                    type="button"
-                    onClick={() => switchTo(null)}
-                    className="app-chrome flex-1 rounded-xl bg-amber-500/15 py-2.5 text-xs font-bold text-amber-600 active:scale-[0.98]"
-                  >
-                    ↩︎ Switch back to myself
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchTo(s.uid);
-                      router.push("/messages");
-                    }}
-                    className="app-chrome flex-1 rounded-xl bg-brand py-2.5 text-xs font-bold text-white active:scale-[0.98]"
-                  >
-                    🎭 Switch into {s.handle}
-                  </button>
-                )}
+                <Link
+                  href="/admin/console"
+                  className="app-chrome flex-1 rounded-xl bg-brand py-2.5 text-center text-xs font-bold text-white active:scale-[0.98]"
+                >
+                  🎛️ Use in Console
+                </Link>
                 <button
                   type="button"
                   onClick={async () => {
@@ -171,7 +166,6 @@ export default function AdminStaffPage() {
                   onClick={async () => {
                     if (!window.confirm(`Delete the handle “${s.handle}”? This cannot be undone.`))
                       return;
-                    if (acting?.uid === s.uid) switchTo(null);
                     await deleteUserAccount(s.uid);
                   }}
                   className="app-chrome rounded-xl bg-red-500/10 px-3 py-2.5 text-xs font-bold text-red-500 active:scale-[0.98]"
@@ -183,11 +177,16 @@ export default function AdminStaffPage() {
           );
         })}
 
+        <Link
+          href="/admin/console"
+          className="app-chrome block rounded-2xl bg-surface py-3 text-center text-sm font-bold shadow-sm active:scale-[0.98]"
+        >
+          🎛️ Open the Handle Console
+        </Link>
         <p className="px-2 text-[10px] leading-relaxed opacity-40">
-          While a handle is active, everything you post, react to or send goes out
-          under that handle&apos;s name, and its DMs appear in your Messages tab. A
-          banner at the top of every screen shows which handle you are using, and
-          one tap returns you to yourself.
+          Everything a handle says is written from the Handle Console: post
+          announcements, reply to its DMs and quote-reply inside rooms — all while
+          you stay signed in as yourself.
         </p>
       </div>
     </AppShell>
