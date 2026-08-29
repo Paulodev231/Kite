@@ -44,6 +44,10 @@ const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   funding_cleared: { icon: "○", label: "Member funding removed" },
   milestone_reassigned: { icon: "🔄", label: "Milestone reassigned" },
   alert_sent: { icon: "🔔", label: "Alert sent to member" },
+  funding_code_issued: { icon: "🔑", label: "Funding code issued" },
+  funding_code_revoked: { icon: "🗝️", label: "Funding code revoked" },
+  dashboard_message_set: { icon: "📌", label: "Dashboard note set" },
+  dashboard_message_cleared: { icon: "📌", label: "Dashboard note cleared" },
 };
 
 export default function AdminLogsPage() {

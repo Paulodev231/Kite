@@ -26,6 +26,7 @@ import {
 } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import FundingEditor from "@/components/FundingEditor";
+import AdminMemberTools from "@/components/AdminMemberTools";
 import SplashScreen from "@/components/SplashScreen";
 
 interface Membership {
@@ -226,6 +227,9 @@ export default function AdminUserProfilePage() {
             )}
           </div>
         )}
+
+        {/* Confirmation code + private dashboard note */}
+        {isMember && <AdminMemberTools person={person} />}
 
         {/* Their individual project */}
         {isMember && (

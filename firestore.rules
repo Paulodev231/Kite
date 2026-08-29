@@ -69,11 +69,30 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['handle'])
           && request.resource.data.handle is string
           && request.resource.data.handle.size() >= 2
-          && request.resource.data.handle.size() <= 24);
+          && request.resource.data.handle.size() <= 24)
+        // Redeeming a confirmation code an Admin issued to YOU. The amount and
+        // currency are read back from the code document, so a member cannot
+        // invent funding or inflate the figure — only mirror what was issued.
+        || (isActive() && request.auth.uid == uid && codeRedemption(uid));
       // Delete (permanent removal): SuperAdmin unrestricted; standard Admins
       // may delete members and staff handles, never an Admin or SuperAdmin.
       allow delete: if isSuper()
         || (isAdmin() && resource.data.role in ['member', 'staff']);
+
+      function codeDoc() {
+        return get(/databases/$(database)/documents/fundingCodes/$(request.resource.data.fundingCode)).data;
+      }
+      function codeRedemption(uid) {
+        return request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['funded', 'fundedAmount', 'fundedCurrency',
+                           'fundedNote', 'fundedAt', 'fundingCode'])
+          && request.resource.data.funded == true
+          && request.resource.data.fundingCode is string
+          && exists(/databases/$(database)/documents/fundingCodes/$(request.resource.data.fundingCode))
+          && codeDoc().targetUid == uid
+          && codeDoc().amount == request.resource.data.fundedAmount
+          && codeDoc().currency == request.resource.data.fundedCurrency;
+      }
 
       // Membership records let a member list their own rooms WITHOUT ever
       // seeing who else is in them. Written exclusively by Admins.
@@ -109,6 +128,22 @@ service cloud.firestore {
     match /status/admins {
       allow read: if isActive();
       allow write: if isAdmin();
+    }
+
+    // ---------- Funding confirmation codes ----------
+    // The document id IS the code. Listing is Admin-only, so codes cannot be
+    // discovered by browsing — a member can fetch one only by typing the exact
+    // code, and only if it was issued to them. They may mark it used and
+    // nothing else.
+    match /fundingCodes/{code} {
+      allow get: if isAdmin()
+        || (isActive() && resource.data.targetUid == request.auth.uid);
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (isActive() && resource.data.targetUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['used', 'usedAt']));
     }
 
     // ---------- Noticeboard: admins post, members react with one emoji ----------

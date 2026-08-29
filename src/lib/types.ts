@@ -37,12 +37,39 @@ export interface UserProfile {
   managed?: boolean;
   createdAt?: Timestamp;
 
-  // ----- Funding status (set by Admins only; the member sees it read-only) -----
+  // ----- Funding status -----
+  // Set by an Admin, or by the member redeeming a confirmation code the Admin
+  // issued them. The rules verify a redeemed amount against the code itself,
+  // so a member can never award themselves funding.
   funded?: boolean;
   fundedAmount?: number;
   fundedCurrency?: string; // symbol, e.g. "$" or "₦"
   fundedNote?: string; // optional context, e.g. "Tranche 1 of 3"
   fundedAt?: Timestamp;
+  /** The confirmation code redeemed, if funding was confirmed that way. */
+  fundingCode?: string;
+
+  /** A private note an Admin pins to this member's dashboard. */
+  dashboardMessage?: string;
+  dashboardMessageAt?: Timestamp;
+}
+
+/**
+ * A one-per-member confirmation code. The document id IS the code, so it can
+ * be looked up only by someone who already knows it — the rules forbid
+ * listing the collection, so codes cannot be discovered by browsing.
+ */
+export interface FundingCode {
+  id: string; // the code itself
+  targetUid: string;
+  targetHandle: string;
+  amount: number;
+  currency: string;
+  note?: string;
+  used?: boolean;
+  usedAt?: Timestamp;
+  createdBy: string;
+  createdAt?: Timestamp;
 }
 
 /** Currency symbols offered when tagging a member's funding. */

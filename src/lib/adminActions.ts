@@ -221,6 +221,63 @@ export async function setUserRole(uid: string, role: Role) {
   logEvent(actorUid(), "role_changed", { uid, role });
 }
 
+/**
+ * Issues a funding confirmation code to one member. The code is the document
+ * id, so it can only be fetched by someone who already knows it. Hand it to
+ * the member privately; entering it on their dashboard turns their funding
+ * green with exactly the amount recorded here — the rules verify the figure
+ * against this document, so it cannot be inflated.
+ */
+export async function issueFundingCode(
+  code: string,
+  targetUid: string,
+  targetHandle: string,
+  amount: number,
+  currency: string,
+  note: string,
+) {
+  const clean = code.trim().toUpperCase();
+  await setDoc(doc(db(), "fundingCodes", clean), {
+    targetUid,
+    targetHandle,
+    amount,
+    currency,
+    note: note.trim(),
+    used: false,
+    createdBy: actorUid(),
+    createdAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), "funding_code_issued", { targetUid, amount: String(amount) });
+  return clean;
+}
+
+export async function deleteFundingCode(code: string) {
+  await deleteDoc(doc(db(), "fundingCodes", code));
+  logEvent(actorUid(), "funding_code_revoked", { code });
+}
+
+/** A short, unambiguous code — no letters or digits that look alike. */
+export function suggestFundingCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 8; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+    if (i === 3) out += "-";
+  }
+  return out;
+}
+
+/** Pins a private note to one member's dashboard (Admins only). */
+export async function setDashboardMessage(uid: string, message: string) {
+  await updateDoc(doc(db(), "users", uid), {
+    dashboardMessage: message.trim(),
+    dashboardMessageAt: serverTimestamp(),
+  });
+  logEvent(actorUid(), message.trim() ? "dashboard_message_set" : "dashboard_message_cleared", {
+    uid,
+  });
+}
+
 export async function setAccountActive(uid: string, active: boolean) {
   await updateDoc(doc(db(), "users", uid), { active });
   // A banned handle stops counting as active in its rooms.

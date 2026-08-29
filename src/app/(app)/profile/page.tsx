@@ -10,12 +10,14 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { formatFunding, isAdmin, roleTag } from "@/lib/types";
+import { isAdmin, roleTag } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import AccountSettings from "@/components/AccountSettings";
 import NotificationSettings from "@/components/NotificationSettings";
 import MyAlerts from "@/components/MyAlerts";
 import MyMilestones from "@/components/MyMilestones";
+import FundingPanel from "@/components/FundingPanel";
+import DashboardMessage from "@/components/DashboardMessage";
 
 export default function DashboardPage() {
   const { user, profile, logout } = useAuth();
@@ -41,38 +43,11 @@ export default function DashboardPage() {
 
         {runsAProject && (
           <>
+            <DashboardMessage />
             <MyAlerts />
             <MyMilestones />
 
-            {/* Funding status — set by Admins, read-only here */}
-            <div className="rounded-3xl bg-surface p-4 shadow-sm">
-              <p className="text-sm font-bold">💰 Funding status</p>
-              {profile?.funded ? (
-                <>
-                  <p
-                    className="mt-1 text-2xl font-extrabold tabular-nums"
-                    style={{ color: "#0ca30c" }}
-                  >
-                    {formatFunding(profile.fundedAmount, profile.fundedCurrency)}
-                  </p>
-                  <p className="text-xs font-semibold text-emerald-600">✅ Funded</p>
-                  {profile.fundedNote && (
-                    <p className="mt-1 text-[11px] opacity-60">{profile.fundedNote}</p>
-                  )}
-                  {profile.fundedAt && (
-                    <p className="mt-1 text-[10px] opacity-40">
-                      Updated {profile.fundedAt.toDate().toLocaleDateString()}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="mt-1 text-sm font-semibold opacity-60">○ Not funded</p>
-              )}
-              <p className="mt-2 text-[10px] leading-relaxed opacity-40">
-                Your funding status is set by an administrator. Contact them if
-                something looks wrong.
-              </p>
-            </div>
+            <FundingPanel />
           </>
         )}
 

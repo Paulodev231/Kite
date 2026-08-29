@@ -23,6 +23,12 @@ and never assume a local terminal is available.
   accordingly (Firestore rules are not filters — an unscoped query fails).
 - Per-member funding tags (`users/{uid}.funded/fundedAmount`) are separate
   from per-milestone funding (`fundedAmount`/`spentAmount`).
+- Funding can also be self-confirmed by redeeming a code: `fundingCodes/{CODE}`
+  (doc id IS the code; list is admin-only so codes can't be enumerated). The
+  member-update rule `codeRedemption()` reads the amount/currency back from the
+  code doc, so a member can only mirror what was issued, never invent it.
+- `users/{uid}.dashboardMessage` is an admin-written note pinned to that
+  member's own dashboard.
 - **Milestones are NEVER shown in rooms.** Members see their own milestones,
   countdowns and admin alerts on their own dashboard (the Profile tab).
 - **Project features are for `role === "member"` only.** Staff Handles are

@@ -420,6 +420,32 @@ member list, each showing its On-Call state. Tick the ones that belong there.
 The count is recalculated from scratch whenever you change room membership,
 toggle On-Call, ban or delete a handle — so it can't drift out of step.
 
+## 🆙 Confirmation codes & dashboard notes
+
+⚠️ **Re-paste `firestore.rules`** → Publish.
+
+**On the member's dashboard** the funding card is now a big status button:
+**green ✅ FUNDED** with the amount, or **red ⛔ NOT FUNDED**. Underneath, when
+they are not yet funded, there is a **Confirmation code** box.
+
+**To issue a code:** Admin Panel → Members & Accounts → tap the member →
+**🔑 Issue a confirmation code**. Tap **Suggest** for a random one (or type your
+own), set the amount and currency, add an optional note, then **Issue code**.
+Send the code to them privately. When they enter it, their button turns green
+with exactly that amount.
+
+**Why this is safe:** the amount lives in the code, not in what the member
+types, and the security rules re-check it — so nobody can invent funding or
+inflate a figure. Codes cannot be browsed or guessed from a list either: the
+app can only look one up if you already know it exactly. You can **revoke** a
+code you have just issued.
+
+You can still set funding directly with **💰 Set funding status** — the code is
+for when you want the member to confirm receipt themselves.
+
+**📌 Dashboard notes:** on the same screen, write a note that pins to the top
+of that member's dashboard. Only they see it. Clear the box and save to remove it.
+
 ## 🗺️ Possible next steps
 
 Ask any time for: recurring/repeating milestones, member-visible progress
