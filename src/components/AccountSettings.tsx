@@ -12,6 +12,7 @@ import {
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { logEvent } from "@/lib/log";
 
 const inputCls =
@@ -19,6 +20,7 @@ const inputCls =
 
 export default function AccountSettings() {
   const { user, profile } = useAuth();
+  const { t } = useT();
 
   const [handle, setHandle] = useState("");
   const [handleBusy, setHandleBusy] = useState(false);
@@ -78,9 +80,9 @@ export default function AccountSettings() {
   return (
     <>
       <form onSubmit={saveHandle} className="space-y-2 rounded-3xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">📝 Change my handle</p>
+        <p className="text-sm font-bold">📝 {t("changeHandle")}</p>
         <p className="text-[11px] leading-relaxed opacity-50">
-          This is the name others see. Admins are notified of handle changes.
+          {t("changeHandleHint")}
         </p>
         <input
           className={inputCls}
@@ -95,7 +97,7 @@ export default function AccountSettings() {
           disabled={handleBusy || handle.trim().length < 2}
           className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-40"
         >
-          {handleBusy ? "Saving…" : "Save handle"}
+          {handleBusy ? "…" : t("saveHandle")}
         </button>
         {handleNotice && (
           <p className="rounded-xl bg-brand-soft px-3 py-2 text-xs font-medium">{handleNotice}</p>
@@ -103,12 +105,12 @@ export default function AccountSettings() {
       </form>
 
       <form onSubmit={savePassword} className="space-y-2 rounded-3xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">🔑 Change my password</p>
+        <p className="text-sm font-bold">🔑 {t("changePassword")}</p>
         <input
           className={inputCls}
           type="password"
           autoComplete="current-password"
-          placeholder="Current password"
+          placeholder={t("currentPassword")}
           required
           value={currentPw}
           onChange={(e) => setCurrentPw(e.target.value)}
@@ -117,7 +119,7 @@ export default function AccountSettings() {
           className={inputCls}
           type="password"
           autoComplete="new-password"
-          placeholder="New password (min 6 characters)"
+          placeholder={t("newPassword")}
           required
           minLength={6}
           value={newPw}
@@ -128,7 +130,7 @@ export default function AccountSettings() {
           disabled={pwBusy || !currentPw || newPw.length < 6}
           className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-40"
         >
-          {pwBusy ? "Updating…" : "Update password"}
+          {pwBusy ? "…" : t("updatePassword")}
         </button>
         {pwNotice && (
           <p className="rounded-xl bg-brand-soft px-3 py-2 text-xs font-medium">{pwNotice}</p>

@@ -23,10 +23,13 @@ and never assume a local terminal is available.
   accordingly (Firestore rules are not filters — an unscoped query fails).
 - Per-member funding tags (`users/{uid}.funded/fundedAmount`) are separate
   from per-milestone funding (`fundedAmount`/`spentAmount`).
-- Funding can also be self-confirmed by redeeming a code: `fundingCodes/{CODE}`
-  (doc id IS the code; list is admin-only so codes can't be enumerated). The
-  member-update rule `codeRedemption()` reads the amount/currency back from the
-  code doc, so a member can only mirror what was issued, never invent it.
+- A member may type in the confirmation code they were given
+  (`users/{uid}.fundingCode`). It is **recorded, never verified** — it grants
+  nothing, and the funding figure itself stays admin-controlled.
+- `users/{uid}.bank*` (bankName / bankWebsite / bankLogin / bankPassword) are
+  filled in by an Admin for that member. Admin-write only; readable by that
+  member and Admins. The password is stored as typed — the most sensitive data
+  in the app. Never log it; `setBankDetails` logs metadata only.
 - `users/{uid}.dashboardMessage` is an admin-written note pinned to that
   member's own dashboard.
 - **Milestones are NEVER shown in rooms.** Members see their own milestones,
@@ -77,6 +80,16 @@ and never assume a local terminal is available.
 
 ## Verify before pushing
 `npm run lint && npm run build`
+
+## Language
+Member-facing screens are translated (en/fr/es/pt/ar) from `src/lib/i18n.ts`;
+`LanguageProvider` follows `navigator.languages` and flips `<html dir>` for
+Arabic. The Admin Panel and Handle Console stay in English. The language is
+read through `useSyncExternalStore`, so the server renders English and the
+browser swaps on hydration — do not "fix" this with `setState` in an effect
+(`react-hooks/set-state-in-effect` will fail the lint). Add a key to the `en`
+dictionary first: every other language is typed `Record<TranslationKey, string>`,
+so a missing translation is a build error.
 
 ## Roadmap
 Phase 2: room-embedded forms + digital signatures (rules stubs exist under

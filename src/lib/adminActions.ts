@@ -222,49 +222,24 @@ export async function setUserRole(uid: string, role: Role) {
 }
 
 /**
- * Issues a funding confirmation code to one member. The code is the document
- * id, so it can only be fetched by someone who already knows it. Hand it to
- * the member privately; entering it on their dashboard turns their funding
- * green with exactly the amount recorded here — the rules verify the figure
- * against this document, so it cannot be inflated.
+ * Saves the bank details an Admin fills in for a member. They appear on that
+ * member's dashboard and are readable only by them and by Admins.
+ * The password is stored as typed — this is the most sensitive data in the
+ * app, so keep admin accounts locked down.
  */
-export async function issueFundingCode(
-  code: string,
-  targetUid: string,
-  targetHandle: string,
-  amount: number,
-  currency: string,
-  note: string,
+export async function setBankDetails(
+  uid: string,
+  bank: { name: string; website: string; login: string; password: string },
 ) {
-  const clean = code.trim().toUpperCase();
-  await setDoc(doc(db(), "fundingCodes", clean), {
-    targetUid,
-    targetHandle,
-    amount,
-    currency,
-    note: note.trim(),
-    used: false,
-    createdBy: actorUid(),
-    createdAt: serverTimestamp(),
+  await updateDoc(doc(db(), "users", uid), {
+    bankName: bank.name.trim(),
+    bankWebsite: bank.website.trim(),
+    bankLogin: bank.login.trim(),
+    bankPassword: bank.password,
+    bankUpdatedAt: serverTimestamp(),
   });
-  logEvent(actorUid(), "funding_code_issued", { targetUid, amount: String(amount) });
-  return clean;
-}
-
-export async function deleteFundingCode(code: string) {
-  await deleteDoc(doc(db(), "fundingCodes", code));
-  logEvent(actorUid(), "funding_code_revoked", { code });
-}
-
-/** A short, unambiguous code — no letters or digits that look alike. */
-export function suggestFundingCode(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 8; i++) {
-    out += alphabet[Math.floor(Math.random() * alphabet.length)];
-    if (i === 3) out += "-";
-  }
-  return out;
+  // Metadata only — the log never records the credentials themselves.
+  logEvent(actorUid(), "bank_details_updated", { uid });
 }
 
 /** Pins a private note to one member's dashboard (Admins only). */

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import type { DmThread } from "@/lib/types";
 import { getSeen, seenKeys } from "@/lib/seen";
 import AppShell from "@/components/AppShell";
@@ -13,6 +14,7 @@ import AdminTag from "@/components/AdminTag";
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const { t: tr } = useT();
   const identityUid = user?.uid ?? "";
   const [threads, setThreads] = useState<DmThread[]>([]);
   const [loadError, setLoadError] = useState(false);
@@ -41,18 +43,16 @@ export default function MessagesPage() {
   }, [identityUid]);
 
   return (
-    <AppShell title="💬 Direct Messages">
+    <AppShell title={`💬 ${tr("directMessages")}`}>
       <div className="mx-auto max-w-lg space-y-2 p-3">
         {loadError && (
           <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs font-medium text-red-500">
-            Could not load your conversations. Check your connection, and make
-            sure the latest firestore.rules have been published.
+            {tr("dmLoadError")}
           </p>
         )}
         {!loadError && threads.length === 0 && (
           <p className="pt-16 text-center text-sm opacity-50">
-            No conversations yet. Tap any handle or avatar in a room to start a
-            private chat.
+            {tr("dmsEmpty")}
           </p>
         )}
         {threads.map((t) => {

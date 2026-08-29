@@ -424,27 +424,56 @@ toggle On-Call, ban or delete a handle — so it can't drift out of step.
 
 ⚠️ **Re-paste `firestore.rules`** → Publish.
 
-**On the member's dashboard** the funding card is now a big status button:
-**green ✅ FUNDED** with the amount, or **red ⛔ NOT FUNDED**. Underneath, when
-they are not yet funded, there is a **Confirmation code** box.
+**On the member's dashboard** the funding card shows a small chip: **green
+✅ Funded** with the amount, or **red ⛔ Not funded**. Underneath there is a
+**Confirmation code** box.
 
-**To issue a code:** Admin Panel → Members & Accounts → tap the member →
-**🔑 Issue a confirmation code**. Tap **Suggest** for a random one (or type your
-own), set the amount and currency, add an optional note, then **Issue code**.
-Send the code to them privately. When they enter it, their button turns green
-with exactly that amount.
+**The code is just a record.** The member types in whatever code you gave them
+and it is saved on their profile so you can see they entered it. It does not
+change their funding by itself — you always set the real figure with
+**💰 Set funding status** on their profile.
 
-**Why this is safe:** the amount lives in the code, not in what the member
-types, and the security rules re-check it — so nobody can invent funding or
-inflate a figure. Codes cannot be browsed or guessed from a list either: the
-app can only look one up if you already know it exactly. You can **revoke** a
-code you have just issued.
+**📌 Dashboard notes:** Admin Panel → Members & Accounts → tap the member →
+**📌 Note on their dashboard**. Write a note that pins to the top of that
+member's dashboard. Only they see it. Clear the box and save to remove it.
 
-You can still set funding directly with **💰 Set funding status** — the code is
-for when you want the member to confirm receipt themselves.
+## 🆙 Bank details for each member
 
-**📌 Dashboard notes:** on the same screen, write a note that pins to the top
-of that member's dashboard. Only they see it. Clear the box and save to remove it.
+⚠️ **Re-paste `firestore.rules`** → Publish (same paste as above).
+
+Admin Panel → **Members & Accounts** → tap the member → **🏦 Bank details**.
+Fill in, by hand:
+
+- **Bank name**
+- **Bank website** (you can type `www.bank.com` — it becomes a tappable link)
+- **Login**
+- **Password** (tap **Show** to check what you typed)
+
+Tap **Save bank details**. They appear on that member's own dashboard, under
+their funding card. The website becomes a link they can tap, and the password
+is hidden behind a **Show** button so nobody reading over their shoulder sees
+it. Leave any box empty and that line simply doesn't show.
+
+**Who can see them:** only that member and Admins. Nobody else — not their
+roommates, not Staff Handles.
+
+⚠️ **Please read this once.** These passwords are stored in your database
+exactly as you type them. Anyone who gets into your admin account or your
+Firebase project can read every member's banking login. Treat this as the most
+sensitive thing in the app: use a strong password on your own admin account,
+and never share your Firebase login.
+
+## 🆙 Automatic language
+
+The app now translates itself to the language of the phone it is opened on:
+**English, French, Spanish, Portuguese and Arabic**. Arabic also flips the
+whole layout right-to-left. Nothing to switch on — it just happens.
+
+A member can override it: **Dashboard → 🌍 Language** → tap a flag, or
+**✨ Automatic** to go back to following their phone.
+
+The Admin Panel and Handle Console stay in English, since you and your admins
+run those.
 
 ## 🗺️ Possible next steps
 

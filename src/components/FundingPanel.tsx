@@ -1,111 +1,92 @@
 "use client";
 
-// The member's own funding panel: a big status button that reads GREEN when
-// funded and RED when not, plus a box to enter the confirmation code an Admin
-// issued them. Colour never carries the meaning alone — the icon and the words
-// say it too.
+// The member's own funding status: a compact chip that reads green when
+// funded and red when not, plus a small box to type in the confirmation code
+// they were given. The code is simply recorded — the funding figure itself is
+// always set by an Admin.
 import { useState } from "react";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { redeemFundingCode } from "@/lib/memberActions";
+import { useT } from "@/context/LanguageContext";
 import { formatFunding } from "@/lib/types";
 
 export default function FundingPanel() {
   const { user, profile } = useAuth();
+  const { t } = useT();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [justConfirmed, setJustConfirmed] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const funded = Boolean(profile?.funded);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || busy) return;
+    if (!user || !code.trim() || busy) return;
     setBusy(true);
-    setError(null);
-    const result = await redeemFundingCode(user.uid, code);
-    if (result.ok) {
+    try {
+      await updateDoc(doc(db(), "users", user.uid), {
+        fundingCode: code.trim(),
+        fundingCodeAt: serverTimestamp(),
+      });
+      setSaved(true);
       setCode("");
-      setJustConfirmed(true);
-    } else {
-      setError(result.reason);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      // Nothing here grants funding, so a failure is harmless — keep quiet.
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (
     <div className="space-y-3 rounded-3xl bg-surface p-4 shadow-sm">
-      <p className="text-sm font-bold">💰 Funding status</p>
-
-      {/* The status button: green when funded, red when not */}
-      <div
-        className="flex flex-col items-center gap-1 rounded-2xl px-4 py-5 text-white shadow-sm"
-        style={{ backgroundColor: funded ? "#0ca30c" : "#d03b3b" }}
-        role="status"
-      >
-        <span className="text-2xl" aria-hidden>
-          {funded ? "✅" : "⛔"}
+      <div className="flex items-center gap-2">
+        <p className="flex-1 text-sm font-bold">💰 {t("fundingStatus")}</p>
+        {/* Compact status chip: colour plus icon and words */}
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold text-white"
+          style={{ backgroundColor: funded ? "#0ca30c" : "#d03b3b" }}
+        >
+          {funded ? `✅ ${t("funded")}` : `⛔ ${t("notFunded")}`}
         </span>
-        <span className="text-sm font-extrabold uppercase tracking-wide">
-          {funded ? "Funded" : "Not funded"}
-        </span>
-        {funded && (
-          <span className="text-2xl font-extrabold tabular-nums">
-            {formatFunding(profile?.fundedAmount, profile?.fundedCurrency)}
-          </span>
-        )}
-        {funded && profile?.fundedNote && (
-          <span className="text-[11px] opacity-90">{profile.fundedNote}</span>
-        )}
-        {funded && profile?.fundedAt && (
-          <span className="text-[10px] opacity-75">
-            Confirmed {profile.fundedAt.toDate().toLocaleDateString()}
-          </span>
-        )}
       </div>
 
-      {justConfirmed && (
-        <p className="rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600">
-          🎉 Confirmed. Your funding is now recorded.
+      {funded && (
+        <p className="text-2xl font-extrabold tabular-nums" style={{ color: "#0ca30c" }}>
+          {formatFunding(profile?.fundedAmount, profile?.fundedCurrency)}
+          {profile?.fundedNote && (
+            <span className="block text-[11px] font-medium opacity-60">
+              {profile.fundedNote}
+            </span>
+          )}
         </p>
       )}
 
-      {/* Code entry — hidden once funding is confirmed */}
-      {!funded && (
-        <form onSubmit={submit} className="space-y-2">
-          <label className="block text-[11px] font-bold opacity-60">
-            Confirmation code
-          </label>
-          <p className="text-[11px] leading-relaxed opacity-50">
-            Enter the code your administrator gave you to confirm your funding.
-          </p>
+      <form onSubmit={submit} className="space-y-1.5">
+        <label className="block text-[11px] font-bold opacity-60">
+          {t("confirmationCode")}
+        </label>
+        <p className="text-[11px] opacity-50">{t("confirmationCodeHint")}</p>
+        <div className="flex gap-2">
           <input
-            className="w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-center text-base font-bold uppercase tracking-widest outline-none focus:border-brand dark:border-white/10"
-            placeholder="ABCD-1234"
-            autoCapitalize="characters"
+            className="min-w-0 flex-1 rounded-xl border border-black/10 bg-background px-3 py-2 text-sm outline-none focus:border-brand dark:border-white/10"
+            placeholder={profile?.fundingCode ? profile.fundingCode : "———"}
             autoComplete="off"
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) => setCode(e.target.value)}
           />
-          {error && (
-            <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs font-medium text-red-500">
-              {error}
-            </p>
-          )}
           <button
             type="submit"
             disabled={busy || !code.trim()}
-            className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-40"
+            className="app-chrome shrink-0 rounded-xl bg-brand px-4 text-xs font-bold text-white active:scale-[0.98] disabled:opacity-40"
           >
-            {busy ? "Checking…" : "Confirm funding"}
+            {saved ? `✅ ${t("saved")}` : t("confirm")}
           </button>
-        </form>
-      )}
+        </div>
+      </form>
 
-      <p className="text-[10px] leading-relaxed opacity-40">
-        Funding is issued by your administrator. If something here looks wrong,
-        message them — do not share your code with anyone else.
-      </p>
+      <p className="text-[10px] leading-relaxed opacity-40">{t("fundingFootnote")}</p>
     </div>
   );
 }

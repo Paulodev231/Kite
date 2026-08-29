@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { db, dmThreadId } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { isAdmin, type DmMessage, type DmThread } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { logEvent } from "@/lib/log";
@@ -30,6 +31,7 @@ function DmScreen() {
   const { uid: peerUid } = useParams<{ uid: string }>();
   const searchParams = useSearchParams();
   const { user, profile } = useAuth();
+  const { t } = useT();
   const [thread, setThread] = useState<DmThread | null>(null);
   const [messages, setMessages] = useState<DmMessage[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -98,7 +100,7 @@ function DmScreen() {
       <div className="mx-auto flex min-h-full max-w-lg flex-col">
         <div className="flex-1 space-y-2 p-3">
           <p className="flex items-center justify-center gap-1.5 py-2 text-center text-[10px] opacity-60">
-            🔒 Private conversation with {peerHandle}
+            🔒 {t("privateConversation")} {peerHandle}
             <AdminTag uid={peerUid} />
           </p>
           {messages.map((m) => {

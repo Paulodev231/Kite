@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import {
   isAdmin,
   REACTION_EMOJIS,
@@ -36,6 +37,7 @@ import UserBadge from "@/components/UserBadge";
 
 export default function NoticeboardPage() {
   const { user, profile } = useAuth();
+  const { t } = useT();
   const [posts, setPosts] = useState<BroadcastPost[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -83,13 +85,12 @@ export default function NoticeboardPage() {
   });
 
   return (
-    <AppShell title="📣 Noticeboard">
+    <AppShell title={`📣 ${t("noticeboard")}`}>
       <div className="mx-auto flex min-h-full max-w-lg flex-col">
         <div className="flex-1 space-y-3 p-3">
           {ordered.length === 0 && (
             <p className="pt-16 text-center text-sm opacity-50">
-              Announcements will appear here. React with an emoji to let the team
-              know you have seen them.
+              {t("noticeboardEmpty")}
             </p>
           )}
 
@@ -105,7 +106,7 @@ export default function NoticeboardPage() {
               >
                 {p.pinned && (
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-brand">
-                    📌 Pinned
+                    📌 {t("pinned")}
                   </p>
                 )}
 
@@ -113,7 +114,7 @@ export default function NoticeboardPage() {
                   <UserBadge uid={p.authorUid} handle={p.authorHandle} />
                   <span className="text-[10px] opacity-40">
                     {p.createdAt?.toDate().toLocaleString() ?? ""}
-                    {p.editedAt ? " · edited" : ""}
+                    {p.editedAt ? ` · ${t("edited")}` : ""}
                   </span>
                 </div>
 
@@ -232,7 +233,7 @@ export default function NoticeboardPage() {
           <Composer placeholder="Post an announcement…" allowMedia onSend={post} />
         ) : (
           <p className="app-chrome border-t border-black/5 bg-surface px-4 py-3 text-center text-[11px] font-medium opacity-50 dark:border-white/10">
-            🔒 Only Admins post here — tap an emoji to respond
+            {t("readOnlyNotice")}
           </p>
         )}
       </div>

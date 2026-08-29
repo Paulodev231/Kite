@@ -7,11 +7,13 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { daysUntil, dueLabel, dueState, DUE_META } from "@/lib/dates";
 import { MILESTONE_STATUS, type Milestone } from "@/lib/types";
 
 export default function MyMilestones() {
   const { user } = useAuth();
+  const { t } = useT();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
 
   useEffect(() => {
@@ -30,9 +32,9 @@ export default function MyMilestones() {
 
   return (
     <div className="rounded-3xl bg-surface p-4 shadow-sm">
-      <p className="text-sm font-bold">🎯 My project milestones</p>
+      <p className="text-sm font-bold">🎯 {t("myMilestones")}</p>
       <p className="text-[11px] opacity-50">
-        {done} of {milestones.length} delivered
+        {done} / {milestones.length} {t("delivered")}
       </p>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/10">
         <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} />
@@ -55,7 +57,7 @@ export default function MyMilestones() {
                   >
                     {dm ? `${dm.icon} ` : "🗓️ "}
                     {daysUntil(m.dueDate) >= 0
-                      ? `${daysUntil(m.dueDate)} day${daysUntil(m.dueDate) === 1 ? "" : "s"} to go`
+                      ? `${daysUntil(m.dueDate)} ${t("daysToGo")}`
                       : dueLabel(m.dueDate)}
                   </p>
                 )}
@@ -73,8 +75,7 @@ export default function MyMilestones() {
       </div>
 
       <p className="mt-3 text-[10px] leading-relaxed opacity-40">
-        Milestones are recorded by your administrator. Message them in a room or
-        by direct message if something needs updating.
+        {t("milestonesFootnote")}
       </p>
     </div>
   );

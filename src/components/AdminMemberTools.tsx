@@ -1,69 +1,47 @@
 "use client";
 
-// Admin controls that sit on one member's profile: issue a funding
-// confirmation code, and pin a private note to their dashboard.
+// Admin controls that sit on one member's profile: fill in their bank
+// details, and pin a private note to their dashboard.
 import { useState } from "react";
-import {
-  deleteFundingCode,
-  issueFundingCode,
-  setDashboardMessage,
-  suggestFundingCode,
-} from "@/lib/adminActions";
-import {
-  CURRENCIES,
-  DEFAULT_CURRENCY,
-  formatFunding,
-  type UserProfile,
-} from "@/lib/types";
+import { setBankDetails, setDashboardMessage } from "@/lib/adminActions";
+import type { UserProfile } from "@/lib/types";
 
 const baseInput =
   "rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
 const inputCls = `w-full ${baseInput}`;
 
 export default function AdminMemberTools({ person }: { person: UserProfile }) {
-  // ----- Confirmation code -----
-  const [code, setCode] = useState("");
-  const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState(person.fundedCurrency || DEFAULT_CURRENCY);
-  const [note, setNote] = useState("");
-  const [codeBusy, setCodeBusy] = useState(false);
-  const [issued, setIssued] = useState<string | null>(null);
-  const [codeError, setCodeError] = useState<string | null>(null);
+  // ----- Bank details -----
+  const [bankName, setBankName] = useState(person.bankName ?? "");
+  const [bankWebsite, setBankWebsite] = useState(person.bankWebsite ?? "");
+  const [bankLogin, setBankLogin] = useState(person.bankLogin ?? "");
+  const [bankPassword, setBankPassword] = useState(person.bankPassword ?? "");
+  const [showPassword, setShowPassword] = useState(false);
+  const [bankBusy, setBankBusy] = useState(false);
+  const [bankSaved, setBankSaved] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
 
   // ----- Dashboard message -----
   const [message, setMessage] = useState(person.dashboardMessage ?? "");
   const [msgBusy, setMsgBusy] = useState(false);
   const [msgSaved, setMsgSaved] = useState(false);
 
-  async function issue() {
-    const value = Number(amount);
-    if (!code.trim()) {
-      setCodeError("Enter a code, or tap Suggest.");
-      return;
-    }
-    if (!Number.isFinite(value) || value <= 0) {
-      setCodeError("Enter the amount this code confirms.");
-      return;
-    }
-    setCodeBusy(true);
-    setCodeError(null);
+  async function saveBank() {
+    setBankBusy(true);
+    setBankError(null);
     try {
-      const saved = await issueFundingCode(
-        code,
-        person.uid,
-        person.handle,
-        value,
-        currency,
-        note,
-      );
-      setIssued(saved);
-      setCode("");
-      setAmount("");
-      setNote("");
+      await setBankDetails(person.uid, {
+        name: bankName,
+        website: bankWebsite,
+        login: bankLogin,
+        password: bankPassword,
+      });
+      setBankSaved(true);
+      setTimeout(() => setBankSaved(false), 2500);
     } catch {
-      setCodeError("Could not issue that code. Try a different one.");
+      setBankError("Could not save. Check your connection and try again.");
     } finally {
-      setCodeBusy(false);
+      setBankBusy(false);
     }
   }
 
@@ -80,105 +58,83 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
 
   return (
     <>
-      {/* Funding confirmation code */}
+      {/* Bank details */}
       <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">🔑 Issue a confirmation code</p>
+        <p className="text-sm font-bold">🏦 Bank details</p>
         <p className="text-[11px] leading-relaxed opacity-50">
-          Give this code to {person.handle} privately. Entering it on their
-          dashboard turns their funding green with exactly the amount below —
-          they cannot change the figure.
+          You type these in for {person.handle}. Only they and Admins can see
+          them. Leave a box empty to hide that line on their dashboard.
         </p>
 
+        <label className="block text-[11px] font-bold opacity-60">Bank name</label>
+        <input
+          className={inputCls}
+          placeholder="e.g. First National Bank"
+          autoComplete="off"
+          value={bankName}
+          onChange={(e) => setBankName(e.target.value)}
+        />
+
+        <label className="block text-[11px] font-bold opacity-60">Bank website</label>
+        <input
+          className={inputCls}
+          placeholder="e.g. www.fnb.com"
+          inputMode="url"
+          autoCapitalize="none"
+          autoComplete="off"
+          value={bankWebsite}
+          onChange={(e) => setBankWebsite(e.target.value)}
+        />
+
+        <label className="block text-[11px] font-bold opacity-60">Login</label>
+        <input
+          className={inputCls}
+          placeholder="Username or account number"
+          autoCapitalize="none"
+          autoComplete="off"
+          value={bankLogin}
+          onChange={(e) => setBankLogin(e.target.value)}
+        />
+
+        <label className="block text-[11px] font-bold opacity-60">Password</label>
         <div className="flex gap-2">
           <input
-            className={`min-w-0 flex-1 ${baseInput} text-center font-bold uppercase tracking-widest`}
-            placeholder="ABCD-1234"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            className={`min-w-0 flex-1 ${baseInput}`}
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            autoCapitalize="none"
+            autoComplete="off"
+            value={bankPassword}
+            onChange={(e) => setBankPassword(e.target.value)}
           />
           <button
             type="button"
-            onClick={() => setCode(suggestFundingCode())}
+            onClick={() => setShowPassword((s) => !s)}
             className="app-chrome shrink-0 rounded-xl bg-background px-3 text-xs font-bold active:scale-[0.98]"
           >
-            Suggest
+            {showPassword ? "Hide" : "Show"}
           </button>
         </div>
 
-        <label className="block text-[11px] font-bold opacity-60">Amount it confirms</label>
-        <div className="flex gap-2">
-          <select
-            className={`w-20 shrink-0 ${baseInput}`}
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            aria-label="Currency"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <input
-            className={`min-w-0 flex-1 ${baseInput}`}
-            type="number"
-            inputMode="decimal"
-            min="0"
-            placeholder="e.g. 200000"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-        {Number(amount) > 0 && (
-          <p className="text-[11px] font-semibold opacity-60">
-            Confirms: 💰 {formatFunding(Number(amount), currency)}
-          </p>
-        )}
-
-        <input
-          className={inputCls}
-          placeholder="Note (optional, e.g. Tranche 1 of 3)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-
-        {codeError && (
+        {bankError && (
           <p className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] font-semibold text-red-500">
-            {codeError}
+            {bankError}
           </p>
         )}
 
         <button
           type="button"
-          onClick={issue}
-          disabled={codeBusy}
+          onClick={saveBank}
+          disabled={bankBusy}
           className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
         >
-          {codeBusy ? "Issuing…" : "Issue code"}
+          {bankBusy ? "Saving…" : bankSaved ? "✅ Saved" : "Save bank details"}
         </button>
 
-        {issued && (
-          <div className="rounded-xl bg-emerald-500/10 p-3">
-            <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-              ✅ Code issued — send it to {person.handle}:
-            </p>
-            <p className="mt-1 select-all text-center text-lg font-extrabold tracking-widest">
-              {issued}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm(`Revoke the code ${issued}?`)) {
-                  deleteFundingCode(issued);
-                  setIssued(null);
-                }
-              }}
-              className="app-chrome mt-1 w-full text-[11px] font-bold text-red-500"
-            >
-              Revoke this code
-            </button>
-          </div>
-        )}
+        <p className="text-[10px] leading-relaxed opacity-40">
+          These are stored as you type them. Treat this as the most sensitive
+          information in the app — anyone with your admin account can read it.
+        </p>
       </div>
 
       {/* Private dashboard note */}

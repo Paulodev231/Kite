@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useT } from "@/context/LanguageContext";
 
 const FRESH_MS = 2.5 * 60_000; // heartbeat is every 60s; allow some slack
 
@@ -18,6 +19,7 @@ export default function PresenceCounter({ roomId }: { roomId?: string }) {
   const [livePeople, setLivePeople] = useState(0);
   const [onCallStaff, setOnCallStaff] = useState(0);
   const [, forceTick] = useState(0);
+  const { t } = useT();
 
   useEffect(() => {
     const unsubPresence = onSnapshot(
@@ -68,7 +70,7 @@ export default function PresenceCounter({ roomId }: { roomId?: string }) {
       title={roomId ? "Active in this room" : "Active on the platform"}
     >
       <span aria-hidden>⚡</span>
-      {roomId ? "In room: " : "Active Now: "}
+      {roomId ? `${t("inRoom")}: ` : `${t("activeNow")}: `}
       {total}
     </span>
   );

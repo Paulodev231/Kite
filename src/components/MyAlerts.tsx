@@ -14,10 +14,12 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import type { MemberAlert } from "@/lib/types";
 
 export default function MyAlerts() {
   const { user } = useAuth();
+  const { t } = useT();
   const [alerts, setAlerts] = useState<MemberAlert[]>([]);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function MyAlerts() {
 
   return (
     <div className="rounded-3xl bg-surface p-4 shadow-sm">
-      <p className="text-sm font-bold">🔔 Alerts from your administrator</p>
+      <p className="text-sm font-bold">🔔 {t("alertsTitle")}</p>
       <div className="mt-2 space-y-2">
         {alerts.map((a) => (
           <div

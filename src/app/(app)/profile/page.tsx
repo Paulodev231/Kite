@@ -10,6 +10,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { isAdmin, roleTag } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import AccountSettings from "@/components/AccountSettings";
@@ -18,15 +19,18 @@ import MyAlerts from "@/components/MyAlerts";
 import MyMilestones from "@/components/MyMilestones";
 import FundingPanel from "@/components/FundingPanel";
 import DashboardMessage from "@/components/DashboardMessage";
+import BankDetails from "@/components/BankDetails";
+import LanguagePicker from "@/components/LanguagePicker";
 
 export default function DashboardPage() {
   const { user, profile, logout } = useAuth();
+  const { t } = useT();
   const router = useRouter();
   // Only real members have a project to track.
   const runsAProject = profile?.role === "member";
 
   return (
-    <AppShell title={runsAProject ? "📊 My Dashboard" : "👤 My Profile"}>
+    <AppShell title={runsAProject ? `📊 ${t("myDashboard")}` : `👤 ${t("myProfile")}`}>
       <div className="mx-auto max-w-lg space-y-4 p-4">
         <div className="flex flex-col items-center gap-2 rounded-3xl bg-surface p-6 shadow-sm">
           <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-brand text-3xl font-bold text-white">
@@ -48,8 +52,11 @@ export default function DashboardPage() {
             <MyMilestones />
 
             <FundingPanel />
+            <BankDetails />
           </>
         )}
+
+        <LanguagePicker />
 
         <NotificationSettings />
 
@@ -61,7 +68,7 @@ export default function DashboardPage() {
               href="/admin"
               className="app-chrome flex items-center gap-3 border-b border-black/5 px-5 py-4 text-sm font-semibold active:bg-brand-soft dark:border-white/10"
             >
-              🛡️ Admin Panel <span className="ml-auto opacity-30">›</span>
+              🛡️ {t("adminPanel")} <span className="ml-auto opacity-30">›</span>
             </Link>
           )}
           <button
@@ -72,7 +79,7 @@ export default function DashboardPage() {
             }}
             className="app-chrome flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-semibold text-red-500 active:bg-red-500/10"
           >
-            🚪 Sign out
+            🚪 {t("signOut")}
           </button>
         </div>
 

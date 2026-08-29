@@ -46,30 +46,21 @@ export interface UserProfile {
   fundedCurrency?: string; // symbol, e.g. "$" or "₦"
   fundedNote?: string; // optional context, e.g. "Tranche 1 of 3"
   fundedAt?: Timestamp;
-  /** The confirmation code redeemed, if funding was confirmed that way. */
+  /** Whatever confirmation code the member typed in (recorded, not checked). */
   fundingCode?: string;
+  fundingCodeAt?: Timestamp;
+
+  /** Bank details an Admin fills in for this member. Visible only to them
+   *  and to Admins. The password is stored as typed — treat with care. */
+  bankName?: string;
+  bankWebsite?: string;
+  bankLogin?: string;
+  bankPassword?: string;
+  bankUpdatedAt?: Timestamp;
 
   /** A private note an Admin pins to this member's dashboard. */
   dashboardMessage?: string;
   dashboardMessageAt?: Timestamp;
-}
-
-/**
- * A one-per-member confirmation code. The document id IS the code, so it can
- * be looked up only by someone who already knows it — the rules forbid
- * listing the collection, so codes cannot be discovered by browsing.
- */
-export interface FundingCode {
-  id: string; // the code itself
-  targetUid: string;
-  targetHandle: string;
-  amount: number;
-  currency: string;
-  note?: string;
-  used?: boolean;
-  usedAt?: Timestamp;
-  createdBy: string;
-  createdAt?: Timestamp;
 }
 
 /** Currency symbols offered when tagging a member's funding. */

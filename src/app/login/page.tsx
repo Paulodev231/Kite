@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { user, loading, configured } = useAuth();
+  const { t } = useT();
   const router = useRouter();
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(firebaseAuth(), email.trim(), password);
       router.replace("/noticeboard");
     } catch {
-      setError("Sign-in failed. Check the email and password given to you by your Admin.");
+      setError(t("signInFailed"));
     } finally {
       setBusy(false);
     }
@@ -59,7 +61,7 @@ export default function LoginPage() {
           </span>
           <h1 className="text-2xl font-extrabold">Kite</h1>
           <p className="text-center text-xs font-medium opacity-60">
-            Private workspace · Access by invitation only
+            {t("signInTitle")}
           </p>
         </div>
 
@@ -69,7 +71,7 @@ export default function LoginPage() {
             required
             autoComplete="email"
             inputMode="email"
-            placeholder="Email address"
+            placeholder={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-2xl border border-black/10 bg-surface px-4 py-3.5 text-base outline-none focus:border-brand dark:border-white/10"
@@ -78,7 +80,7 @@ export default function LoginPage() {
             type="password"
             required
             autoComplete="current-password"
-            placeholder="Password"
+            placeholder={t("password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-2xl border border-black/10 bg-surface px-4 py-3.5 text-base outline-none focus:border-brand dark:border-white/10"
@@ -93,13 +95,12 @@ export default function LoginPage() {
             disabled={busy}
             className="app-chrome w-full rounded-2xl bg-brand py-3.5 text-base font-bold text-white shadow-md active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Signing in…" : "Sign In"}
+            {busy ? t("signingIn") : t("signIn")}
           </button>
         </form>
 
         <p className="mt-6 text-center text-[11px] leading-relaxed opacity-50">
-          No account? Access to this platform is provisioned by your
-          administrator. Contact them for credentials.
+          {t("noAccount")}
         </p>
       </div>
     </div>

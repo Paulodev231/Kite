@@ -8,6 +8,7 @@ import Link from "next/link";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { isAdmin } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 
@@ -19,6 +20,7 @@ interface RoomListing {
 
 export default function RoomsPage() {
   const { user, profile } = useAuth();
+  const { t } = useT();
   const [rooms, setRooms] = useState<RoomListing[]>([]);
   const elevated = isAdmin(profile?.role) || profile?.role === "staff";
 
@@ -38,13 +40,11 @@ export default function RoomsPage() {
   }, [user, profile, elevated]);
 
   return (
-    <AppShell title="🗂️ Project Rooms">
+    <AppShell title={`🗂️ ${t("rooms")}`}>
       <div className="mx-auto max-w-lg space-y-2 p-3">
         {rooms.length === 0 && (
           <p className="pt-16 text-center text-sm opacity-50">
-            You haven’t been added to any project rooms yet.
-            <br />
-            Your Admin controls room access.
+            {t("roomsEmpty")}
           </p>
         )}
         {rooms.map((room) => (

@@ -6,17 +6,18 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { isAdmin, roleTag } from "@/lib/types";
 import PresenceCounter from "@/components/PresenceCounter";
 import OfflineBanner from "@/components/OfflineBanner";
 
 const TABS = [
-  { href: "/noticeboard", label: "Noticeboard", icon: "📣" },
-  { href: "/rooms", label: "Rooms", icon: "🗂️" },
-  { href: "/messages", label: "DMs", icon: "💬" },
-  { href: "/profile", label: "Dashboard", icon: "📊" },
-];
+  { href: "/noticeboard", key: "navNoticeboard", icon: "📣" },
+  { href: "/rooms", key: "navRooms", icon: "🗂️" },
+  { href: "/messages", key: "navDms", icon: "💬" },
+  { href: "/profile", key: "navDashboard", icon: "📊" },
+] as const;
 
 export default function AppShell({
   title,
@@ -29,6 +30,7 @@ export default function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { profile, logout } = useAuth();
+  const { t } = useT();
   const { dmUnread, broadcastUnread, alertUnread } = useNotifications();
   const admin = isAdmin(profile?.role);
   // /rooms/<id> → that room's own live count in the header.
@@ -88,7 +90,7 @@ export default function AppShell({
                     </span>
                   )}
                 </span>
-                {tab.label}
+                {t(tab.key)}
               </Link>
             );
           })}
@@ -124,7 +126,7 @@ export default function AppShell({
                   onClick={() => setDrawerOpen(false)}
                   className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold active:bg-brand-soft"
                 >
-                  <span>{tab.icon}</span> {tab.label}
+                  <span>{tab.icon}</span> {t(tab.key)}
                 </Link>
               ))}
               {admin && (
@@ -133,7 +135,7 @@ export default function AppShell({
                   onClick={() => setDrawerOpen(false)}
                   className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-brand active:bg-brand-soft"
                 >
-                  <span>🛡️</span> Admin Panel
+                  <span>🛡️</span> {t("adminPanel")}
                 </Link>
               )}
               <button
@@ -144,7 +146,7 @@ export default function AppShell({
                 }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-500 active:bg-red-500/10"
               >
-                <span>🚪</span> Sign out
+                <span>🚪</span> {t("signOut")}
               </button>
             </div>
           </div>
