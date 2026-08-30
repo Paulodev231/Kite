@@ -131,7 +131,7 @@ function DmScreen() {
           <div ref={bottomRef} />
         </div>
         <Composer
-          placeholder={`Message ${peerHandle}…`}
+          placeholder={t("messagePlaceholder", { name: peerHandle })}
           allowMedia={elevated}
           allowDocs
           onSend={send}

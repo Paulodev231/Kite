@@ -3,6 +3,7 @@
 // Admin-only panel for tagging a member's funding status and amount.
 import { useState } from "react";
 import { setUserFunding } from "@/lib/adminActions";
+import { useT } from "@/context/LanguageContext";
 import {
   CURRENCIES,
   DEFAULT_CURRENCY,
@@ -17,6 +18,7 @@ export default function FundingEditor({
   user: UserProfile;
   onDone: () => void;
 }) {
+  const { t } = useT();
   const [funded, setFunded] = useState(Boolean(user.funded));
   const [amount, setAmount] = useState(String(user.fundedAmount ?? ""));
   const [currency, setCurrency] = useState(user.fundedCurrency || DEFAULT_CURRENCY);
@@ -27,7 +29,7 @@ export default function FundingEditor({
   async function save() {
     const value = Number(amount);
     if (funded && (!Number.isFinite(value) || value <= 0)) {
-      setError("Enter the amount funded (numbers only, e.g. 200000).");
+      setError(t("fundEditorAmountError"));
       return;
     }
     setBusy(true);
@@ -36,7 +38,7 @@ export default function FundingEditor({
       await setUserFunding(user.uid, funded, funded ? value : 0, currency, note.trim());
       onDone();
     } catch {
-      setError("Could not save. Try again.");
+      setError(t("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -51,13 +53,13 @@ export default function FundingEditor({
 
   return (
     <div className="mt-2 space-y-2 rounded-xl bg-background p-3">
-      <p className="text-xs font-bold">💰 Funding status for {user.handle}</p>
+      <p className="text-xs font-bold">{t("fundEditorTitle", { handle: user.handle })}</p>
 
       {/* Funded / Not funded — words on the control, never colour alone */}
       <div className="flex gap-2">
         {[
-          { value: true, label: "💰 Funded" },
-          { value: false, label: "○ Not funded" },
+          { value: true, label: t("fundEditorFunded") },
+          { value: false, label: t("fundEditorNotFunded") },
         ].map((opt) => (
           <button
             key={String(opt.value)}
@@ -76,13 +78,13 @@ export default function FundingEditor({
 
       {/* Amount is always visible — typing one switches the tag to Funded,
           so the admin never has to hunt for the field. */}
-      <label className="block text-[11px] font-bold opacity-60">Amount funded</label>
+      <label className="block text-[11px] font-bold opacity-60">{t("fundEditorAmount")}</label>
       <div className="flex gap-2">
         <select
           className={`w-20 shrink-0 ${baseInput}`}
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
-          aria-label="Currency"
+          aria-label={t("currency")}
         >
           {CURRENCIES.map((c) => (
             <option key={c} value={c}>
@@ -95,7 +97,7 @@ export default function FundingEditor({
           type="number"
           inputMode="decimal"
           min="0"
-          placeholder="e.g. 200000"
+          placeholder={t("amountExample")}
           value={amount}
           onChange={(e) => {
             setAmount(e.target.value);
@@ -105,17 +107,17 @@ export default function FundingEditor({
       </div>
       {Number(amount) > 0 && funded && (
         <p className="text-[11px] font-semibold opacity-60">
-          Will show as: 💰 Funded — {formatFunding(Number(amount), currency)}
+          {t("fundEditorPreview", { amount: formatFunding(Number(amount), currency) })}
         </p>
       )}
       {!funded && (
         <p className="text-[11px] font-medium opacity-50">
-          Marked “Not funded” — the amount above will be cleared when you save.
+          {t("fundEditorCleared")}
         </p>
       )}
       <input
         className={inputCls}
-        placeholder="Note (optional, e.g. Tranche 1 of 3)"
+        placeholder={t("notePlaceholder")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
@@ -132,7 +134,7 @@ export default function FundingEditor({
           onClick={onDone}
           className="app-chrome flex-1 rounded-xl bg-surface py-2 text-xs font-bold active:scale-[0.98]"
         >
-          Cancel
+          {t("cancel")}
         </button>
         <button
           type="button"
@@ -140,7 +142,7 @@ export default function FundingEditor({
           disabled={busy}
           className="app-chrome flex-1 rounded-xl bg-brand py-2 text-xs font-bold text-white active:scale-[0.98] disabled:opacity-50"
         >
-          {busy ? "Saving…" : "Save funding"}
+          {busy ? t("saving") : t("fundEditorSave")}
         </button>
       </div>
     </div>

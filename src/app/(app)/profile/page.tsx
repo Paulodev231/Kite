@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
-import { isAdmin, roleTag } from "@/lib/types";
+import { hasRoleTag, isAdmin } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import AccountSettings from "@/components/AccountSettings";
 import NotificationSettings from "@/components/NotificationSettings";
@@ -37,9 +37,9 @@ export default function DashboardPage() {
             {(profile?.handle ?? "?").slice(0, 1).toUpperCase()}
           </span>
           <p className="text-lg font-extrabold">{profile?.handle}</p>
-          {roleTag(profile?.role) && (
+          {hasRoleTag(profile?.role) && (
             <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
-              {roleTag(profile?.role)}
+              {t("adminTag")}
             </span>
           )}
           <p className="text-xs opacity-50">{user?.email}</p>
@@ -84,9 +84,9 @@ export default function DashboardPage() {
         </div>
 
         <p className="text-center text-[10px] leading-relaxed opacity-40">
-          Kite · Closed enterprise workspace
+          {t("profileFooter")}
           <br />
-          Your directory visibility is protected. Other members cannot look you up.
+          {t("profileFooterPrivacy")}
         </p>
       </div>
     </AppShell>

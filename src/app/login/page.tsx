@@ -28,11 +28,9 @@ export default function LoginPage() {
         <span className="text-5xl" aria-hidden>
           🛠️
         </span>
-        <h1 className="text-lg font-bold">Almost there — Firebase isn’t connected yet</h1>
+        <h1 className="text-lg font-bold">{t("setupTitle")}</h1>
         <p className="max-w-sm text-sm opacity-70">
-          Add your Firebase keys as environment variables (see{" "}
-          <code className="rounded bg-brand-soft px-1 font-mono text-brand">SETUP.md</code>{" "}
-          in the repository, Step 3), then redeploy.
+          {t("setupBody")}
         </p>
       </div>
     );

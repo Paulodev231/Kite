@@ -8,6 +8,8 @@ import Link from "next/link";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
+import { ROLE_KEYS } from "@/lib/i18n";
 import { createManagedAccount, deleteUserAccount, setAccountActive } from "@/lib/adminActions";
 import { formatFunding, fundingBadge, type Role, type UserProfile } from "@/lib/types";
 import AppShell from "@/components/AppShell";
@@ -15,6 +17,7 @@ import FundingEditor from "@/components/FundingEditor";
 
 export default function AdminUsersPage() {
   const { profile } = useAuth();
+  const { t } = useT();
   const superadmin = profile?.role === "superadmin";
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [handle, setHandle] = useState("");
@@ -38,14 +41,12 @@ export default function AdminUsersPage() {
     setBusy(true);
     try {
       await createManagedAccount(email.trim(), password, handle.trim(), role);
-      setNotice(
-        `✅ Account created. Share these credentials privately: ${email.trim()} / ${password}`,
-      );
+      setNotice(t("usrCreated", { email: email.trim(), password }));
       setHandle("");
       setEmail("");
       setPassword("");
     } catch (err) {
-      setNotice(`❌ ${err instanceof Error ? err.message : "Could not create account."}`);
+      setNotice(`❌ ${err instanceof Error ? err.message : t("usrCreateFailed")}`);
     } finally {
       setBusy(false);
     }
@@ -55,13 +56,13 @@ export default function AdminUsersPage() {
     "w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
 
   return (
-    <AppShell title="👥 Members & Accounts">
+    <AppShell title={`👥 ${t("admUsers")}`}>
       <div className="mx-auto max-w-lg space-y-4 p-3">
         <form onSubmit={handleCreate} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">➕ Create account (invite-only)</p>
+          <p className="text-sm font-bold">{t("usrCreateTitle")}</p>
           <input
             className={inputCls}
-            placeholder="Handle (e.g. PM_Ade)"
+            placeholder={t("usrHandlePlaceholder")}
             required
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
@@ -69,14 +70,14 @@ export default function AdminUsersPage() {
           <input
             className={inputCls}
             type="email"
-            placeholder="Email"
+            placeholder={t("email")}
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           <input
             className={inputCls}
-            placeholder="Temporary password (min 6 chars)"
+            placeholder={t("usrTempPassword")}
             required
             minLength={6}
             value={password}
@@ -87,24 +88,22 @@ export default function AdminUsersPage() {
             value={role}
             onChange={(e) => setRole(e.target.value as Role)}
           >
-            <option value="member">Member (Project Manager)</option>
-            {superadmin && <option value="admin">Admin</option>}
+            <option value="member">{t("usrRoleMember")}</option>
+            {superadmin && <option value="admin">{t("usrRoleAdmin")}</option>}
           </select>
           <button
             type="submit"
             disabled={busy}
             className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Creating…" : "Create Account"}
+            {busy ? t("usrCreating") : t("usrCreate")}
           </button>
           {notice && (
             <p className="break-words rounded-xl bg-brand-soft px-3 py-2 text-xs">{notice}</p>
           )}
           {superadmin && (
             <p className="text-[11px] leading-relaxed opacity-50">
-              Creating a <b>Staff Handle</b>? They need no email or password —
-              make them in <b>Admin Panel → Staff Handles</b> and switch into
-              them from there.
+              {t("usrStaffHint")}
             </p>
           )}
         </form>
@@ -121,9 +120,12 @@ export default function AdminUsersPage() {
             }, {});
             return (
               <div className="rounded-2xl bg-surface p-4 shadow-sm">
-                <p className="text-sm font-bold">💰 Funded members</p>
+                <p className="text-sm font-bold">{t("usrFundedMembers")}</p>
                 <p className="text-[11px] opacity-50">
-                  {fundedUsers.length} of {users.length} tagged as funded
+                  {t("usrFundedCount", {
+                    funded: fundedUsers.length,
+                    total: users.length,
+                  })}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {Object.entries(byCurrency).map(([cur, sum]) => (
@@ -131,7 +133,7 @@ export default function AdminUsersPage() {
                       key={cur}
                       className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold tabular-nums text-brand"
                     >
-                      {formatFunding(sum, cur)} total
+                      {t("usrTotalSuffix", { amount: formatFunding(sum, cur) })}
                     </span>
                   ))}
                 </div>
@@ -140,7 +142,7 @@ export default function AdminUsersPage() {
           })()}
 
           <p className="px-2 text-xs font-semibold uppercase tracking-wide opacity-40">
-            Directory ({users.length}) — visible to Admins only
+            {t("usrDirectory", { n: users.length })}
           </p>
           {users.map((u) => (
             <div key={u.uid} className="rounded-2xl bg-surface p-3 shadow-sm">
@@ -156,11 +158,11 @@ export default function AdminUsersPage() {
                   {u.handle} <span className="text-[10px] font-normal opacity-30">›</span>
                 </p>
                 <p className="truncate text-[10px] opacity-50">
-                  {u.email || "no email recorded"}
+                  {u.email || t("usrNoEmail")}
                 </p>
-                <p className="text-[10px] capitalize opacity-50">
-                  {u.role}
-                  {u.active === false ? " · banned" : ""}
+                <p className="text-[10px] opacity-50">
+                  {t(ROLE_KEYS[u.role])}
+                  {u.active === false ? ` · ${t("usrBanned")}` : ""}
                 </p>
                 {u.role === "member" &&
                   (() => {
@@ -171,7 +173,12 @@ export default function AdminUsersPage() {
                         style={{ color: u.funded ? badge.color : undefined }}
                       >
                         <span className={u.funded ? "" : "opacity-50"}>
-                          {badge.icon} {badge.label}
+                          {badge.icon}{" "}
+                          {u.funded
+                            ? t("fundedWithAmount", {
+                                amount: formatFunding(u.fundedAmount, u.fundedCurrency),
+                              })
+                            : t("notFunded")}
                           {u.funded && u.fundedNote ? ` · ${u.fundedNote}` : ""}
                         </span>
                       </p>
@@ -189,30 +196,26 @@ export default function AdminUsersPage() {
                         : "bg-amber-500/15 text-amber-600"
                     }`}
                   >
-                    {u.active === false ? "Unban" : "Ban"}
+                    {u.active === false ? t("usrUnban") : t("usrBan")}
                   </button>
                   {(superadmin || u.role === "member") && (
                     <button
                       type="button"
                       onClick={async () => {
                         if (
-                          !window.confirm(
-                            `Permanently delete ${u.handle}? They lose all room access immediately. This cannot be undone.`,
-                          )
+                          !window.confirm(t("usrDeleteConfirm", { handle: u.handle }))
                         )
                           return;
                         try {
                           await deleteUserAccount(u.uid);
-                          window.alert(
-                            `${u.handle} deleted. To reuse their email later, also remove them in Firebase Console → Authentication → Users.`,
-                          );
+                          window.alert(t("usrDeleted", { handle: u.handle }));
                         } catch {
-                          window.alert("Could not delete that account.");
+                          window.alert(t("usrDeleteFailed"));
                         }
                       }}
                       className="app-chrome rounded-full bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-500"
                     >
-                      Delete
+                      {t("delete")}
                     </button>
                   )}
                 </div>
@@ -231,7 +234,7 @@ export default function AdminUsersPage() {
                       onClick={() => setFundingFor(u.uid)}
                       className="app-chrome mt-2 w-full rounded-xl bg-background py-2 text-[11px] font-bold active:scale-[0.99]"
                     >
-                      💰 {u.funded ? "Edit funding" : "Set funding status"}
+                      {u.funded ? t("usrEditFunding") : t("usrSetFunding")}
                     </button>
                   )}
                 </>

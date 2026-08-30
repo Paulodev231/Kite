@@ -3,6 +3,7 @@
 // "Speaking as" selector, used across the Handle Console. Always visible so
 // the SuperAdmin can never post under the wrong identity by accident.
 import type { UserProfile } from "@/lib/types";
+import { useT } from "@/context/LanguageContext";
 
 export default function HandlePicker({
   handles,
@@ -17,10 +18,12 @@ export default function HandlePicker({
   selfLabel: string;
   allowSelf?: boolean;
 }) {
+  const { t } = useT();
+
   return (
     <div className="rounded-xl bg-brand-soft p-2">
       <p className="mb-1 px-1 text-[10px] font-bold uppercase tracking-wide text-brand">
-        Speaking as
+        {t("cnSpeakingAs")}
       </p>
       <div className="flex flex-wrap gap-1.5">
         {allowSelf && (
@@ -50,7 +53,7 @@ export default function HandlePicker({
       </div>
       {handles.length === 0 && (
         <p className="px-1 pt-1 text-[10px] opacity-60">
-          No Staff Handles yet — create one in Admin Panel → Staff Handles.
+          {t("cnNoHandlesShort")}
         </p>
       )}
     </div>

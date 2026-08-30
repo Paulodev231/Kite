@@ -161,7 +161,8 @@ export async function createStaffHandle(handle: string): Promise<string> {
 
 export interface BulkHandleResult {
   created: string[];
-  skipped: { name: string; reason: string }[];
+  /** `reason` is a code the screen translates: length | exists | failed. */
+  skipped: { name: string; reason: "length" | "exists" | "failed" }[];
 }
 
 /**
@@ -180,11 +181,11 @@ export async function createStaffHandles(
     const name = raw.trim();
     if (!name) continue;
     if (name.length < 2 || name.length > 24) {
-      result.skipped.push({ name, reason: "must be 2–24 characters" });
+      result.skipped.push({ name, reason: "length" });
       continue;
     }
     if (taken.has(name.toLowerCase())) {
-      result.skipped.push({ name, reason: "that handle already exists" });
+      result.skipped.push({ name, reason: "exists" });
       continue;
     }
     try {
@@ -192,7 +193,7 @@ export async function createStaffHandles(
       taken.add(name.toLowerCase());
       result.created.push(name);
     } catch {
-      result.skipped.push({ name, reason: "could not be created" });
+      result.skipped.push({ name, reason: "failed" });
     }
   }
   return result;

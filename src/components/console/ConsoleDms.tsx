@@ -14,6 +14,7 @@ import {
 import { db } from "@/lib/firebase";
 import { markThreadTriaged, sendDmAs } from "@/lib/handleActions";
 import type { DmMessage, DmThread, UserProfile } from "@/lib/types";
+import { useT } from "@/context/LanguageContext";
 
 function isUnread(t: DmThread, staffUid: string): boolean {
   if (!t.lastSenderUid || t.lastSenderUid === staffUid) return false;
@@ -30,6 +31,7 @@ export default function ConsoleDms({
   members: UserProfile[];
   actorUid: string;
 }) {
+  const { t } = useT();
   const [threads, setThreads] = useState<DmThread[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [messages, setMessages] = useState<DmMessage[]>([]);
@@ -124,11 +126,11 @@ export default function ConsoleDms({
       {/* Start a new conversation as a handle */}
       <details className="rounded-2xl bg-surface p-4 shadow-sm">
         <summary className="app-chrome cursor-pointer text-sm font-bold">
-          ✍️ Start a new conversation as a handle
+          {t("cnStartConversation")}
         </summary>
         <div className="mt-2 space-y-2">
           <select className={inputCls} value={newAs} onChange={(e) => setNewAs(e.target.value)}>
-            <option value="">Send as which handle?</option>
+            <option value="">{t("cnSendAsWhich")}</option>
             {handles.map((h) => (
               <option key={h.uid} value={h.uid}>
                 🎧 {h.handle}
@@ -136,7 +138,7 @@ export default function ConsoleDms({
             ))}
           </select>
           <select className={inputCls} value={newTo} onChange={(e) => setNewTo(e.target.value)}>
-            <option value="">To which member?</option>
+            <option value="">{t("cnToWhichMember")}</option>
             {members.map((m) => (
               <option key={m.uid} value={m.uid}>
                 {m.handle}
@@ -146,7 +148,7 @@ export default function ConsoleDms({
           <textarea
             className={inputCls}
             rows={3}
-            placeholder="Message…"
+            placeholder={t("cnMessagePlaceholder")}
             value={openId ? "" : draft}
             onChange={(e) => setDraft(e.target.value)}
           />
@@ -156,33 +158,33 @@ export default function ConsoleDms({
             disabled={busy || !newAs || !newTo || !draft.trim()}
             className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Sending…" : "Send"}
+            {busy ? t("altSending") : t("send")}
           </button>
         </div>
       </details>
 
       {staffThreads.length === 0 && (
         <p className="pt-10 text-center text-sm opacity-50">
-          No messages to your Staff Handles yet.
+          {t("cnNoStaffThreads")}
         </p>
       )}
 
-      {staffThreads.map(({ t, staffUid }) => {
-        const peerUid = t.participants.find((p) => p !== staffUid) ?? "";
-        const peerHandle = t.handles?.[peerUid] ?? "Member";
-        const staffHandle = t.handles?.[staffUid] ?? "Handle";
-        const unread = isUnread(t, staffUid);
-        const open = openId === t.id;
+      {staffThreads.map(({ t: thread, staffUid }) => {
+        const peerUid = thread.participants.find((p) => p !== staffUid) ?? "";
+        const peerHandle = thread.handles?.[peerUid] ?? t("member");
+        const staffHandle = thread.handles?.[staffUid] ?? t("handle");
+        const unread = isUnread(thread, staffUid);
+        const open = openId === thread.id;
 
         return (
-          <div key={t.id} className="rounded-2xl bg-surface shadow-sm">
+          <div key={thread.id} className="rounded-2xl bg-surface shadow-sm">
             <button
               type="button"
               onClick={() => {
-                const next = open ? null : t.id;
+                const next = open ? null : thread.id;
                 setOpenId(next);
                 setDraft("");
-                if (next) markThreadTriaged(t.id);
+                if (next) markThreadTriaged(thread.id);
               }}
               className="app-chrome flex w-full items-center gap-3 p-3.5 text-left active:opacity-80"
             >
@@ -200,8 +202,8 @@ export default function ConsoleDms({
                 <span
                   className={`block truncate text-xs ${unread ? "font-bold" : "opacity-50"}`}
                 >
-                  {t.lastSenderUid === staffUid ? `${staffHandle}: ` : ""}
-                  {t.lastText ?? ""}
+                  {thread.lastSenderUid === staffUid ? `${staffHandle}: ` : ""}
+                  {thread.lastText ?? ""}
                 </span>
               </span>
               <span className="shrink-0 text-[10px] opacity-40">{open ? "▲" : "▼"}</span>
@@ -246,7 +248,7 @@ export default function ConsoleDms({
                   <textarea
                     rows={1}
                     className="max-h-24 flex-1 resize-none rounded-2xl border border-black/10 bg-background px-3 py-2 text-sm outline-none focus:border-brand dark:border-white/10"
-                    placeholder={`Reply as ${staffHandle}…`}
+                    placeholder={t("cnReplyAs", { handle: staffHandle })}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                   />
@@ -254,7 +256,7 @@ export default function ConsoleDms({
                     type="button"
                     onClick={() => reply(staffUid, peerUid, peerHandle)}
                     disabled={busy || !draft.trim()}
-                    aria-label="Send reply"
+                    aria-label={t("cnSendReply")}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow active:scale-95 disabled:opacity-40"
                   >
                     {busy ? "…" : "➤"}

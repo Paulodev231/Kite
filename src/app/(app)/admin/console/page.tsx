@@ -14,17 +14,20 @@ import SplashScreen from "@/components/SplashScreen";
 import ConsoleDms from "@/components/console/ConsoleDms";
 import ConsoleBroadcast from "@/components/console/ConsoleBroadcast";
 import ConsoleRooms from "@/components/console/ConsoleRooms";
+import { useT } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 
 type Tab = "dms" | "broadcast" | "rooms";
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "dms", label: "DMs", icon: "📥" },
-  { id: "broadcast", label: "Noticeboard", icon: "📣" },
-  { id: "rooms", label: "Rooms", icon: "🗂️" },
+const TABS: { id: Tab; key: TranslationKey; icon: string }[] = [
+  { id: "dms", key: "cnTabDms", icon: "📥" },
+  { id: "broadcast", key: "cnTabBroadcast", icon: "📣" },
+  { id: "rooms", key: "cnTabRooms", icon: "🗂️" },
 ];
 
 export default function HandleConsolePage() {
   const { user, profile, loading } = useAuth();
+  const { t } = useT();
   const [people, setPeople] = useState<UserProfile[]>([]);
   const [tab, setTab] = useState<Tab>("dms");
   const superadmin = profile?.role === "superadmin";
@@ -41,10 +44,8 @@ export default function HandleConsolePage() {
   if (loading) return <SplashScreen />;
   if (!superadmin || !profile || !user) {
     return (
-      <AppShell title="🎛️ Handle Console">
-        <p className="p-8 text-center text-sm opacity-60">
-          The Handle Console is for the SuperAdmin.
-        </p>
+      <AppShell title={`🎛️ ${t("admConsole")}`}>
+        <p className="p-8 text-center text-sm opacity-60">{t("cnForSuperadmin")}</p>
       </AppShell>
     );
   }
@@ -53,33 +54,31 @@ export default function HandleConsolePage() {
   const members = people.filter((p) => p.role === "member");
 
   return (
-    <AppShell title="🎛️ Handle Console">
+    <AppShell title={`🎛️ ${t("admConsole")}`}>
       <div className="mx-auto max-w-lg space-y-3 p-3">
         <p className="px-1 text-[11px] leading-relaxed opacity-50">
-          You are signed in as <b>{profile.handle}</b> the whole time. Pick who each
-          message goes out as — members only ever see the handle.
+          {t("cnIntro", { handle: profile.handle })}
         </p>
 
         {/* Segmented control */}
         <div className="app-chrome flex gap-1 rounded-2xl bg-surface p-1 shadow-sm">
-          {TABS.map((t) => (
+          {TABS.map((item) => (
             <button
-              key={t.id}
+              key={item.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(item.id)}
               className={`flex-1 rounded-xl py-2 text-xs font-bold transition ${
-                tab === t.id ? "bg-brand text-white" : "opacity-60"
+                tab === item.id ? "bg-brand text-white" : "opacity-60"
               }`}
             >
-              {t.icon} {t.label}
+              {item.icon} {t(item.key)}
             </button>
           ))}
         </div>
 
         {handles.length === 0 && (
           <p className="rounded-2xl bg-amber-500/10 px-3 py-2 text-[11px] font-medium text-amber-600">
-            No Staff Handles yet — create one in <b>Admin Panel → Staff Handles</b>.
-            They need no email or password.
+            {t("cnNoHandles")}
           </p>
         )}
 

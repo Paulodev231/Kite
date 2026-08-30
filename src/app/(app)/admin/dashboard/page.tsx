@@ -13,11 +13,13 @@ import {
 } from "@/lib/types";
 import { dueLabel, dueState, DUE_META, DUE_SOON_DAYS } from "@/lib/dates";
 import AppShell from "@/components/AppShell";
+import { useT } from "@/context/LanguageContext";
 import StatTile from "@/components/dashboard/StatTile";
 import StatusBars from "@/components/dashboard/StatusBars";
 import FundingMeter, { formatMoney } from "@/components/dashboard/FundingMeter";
 
 export default function AdminDashboardPage() {
+  const { t } = useT();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function AdminDashboardPage() {
       const list = milestones.filter((m) => m.ownerUid === uid);
       return {
         uid,
-        name: list[0]?.ownerHandle || "Unassigned",
+        name: list[0]?.ownerHandle || t("csvUnassigned"),
         total: list.length,
         done: list.filter((m) => m.status === "completed").length,
         blocked: list.filter((m) => m.status === "blocked").length,
@@ -78,7 +80,7 @@ export default function AdminDashboardPage() {
       const list = milestones.filter((m) => m.roomId === roomId);
       return {
         roomId: roomId as string,
-        name: list[0]?.roomName || "Room",
+        name: list[0]?.roomName || t("room"),
         total: list.length,
         members: new Set(list.map((m) => m.ownerUid)).size,
         done: list.filter((m) => m.status === "completed").length,
@@ -88,12 +90,12 @@ export default function AdminDashboardPage() {
     .sort((a, b) => b.blocked - a.blocked || b.total - a.total);
 
   return (
-    <AppShell title="📊 Dashboard">
+    <AppShell title={`📊 ${t("admDashboard")}`}>
       <div className="mx-auto max-w-lg space-y-3 p-3">
         {/* Hero figure: the one number the dashboard leads with */}
         <div className="rounded-2xl bg-surface p-4 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-wide opacity-50">
-            Milestone completion
+            {t("dshCompletion")}
           </p>
           <p className="mt-1 text-5xl font-extrabold tabular-nums">{completionPct}%</p>
           <p className="mt-1 text-[11px] opacity-50">
@@ -109,15 +111,15 @@ export default function AdminDashboardPage() {
 
         {/* KPI row */}
         <div className="grid grid-cols-2 gap-2">
-          <StatTile label="Milestones" value={total} icon="🎯" />
+          <StatTile label={t("dshMilestones")} value={total} icon="🎯" />
           <StatTile
-            label="Blocked"
+            label={t("dshBlocked")}
             value={blocked}
             icon="⛔"
-            sub={blocked > 0 ? "Needs attention" : "Nothing blocked"}
+            sub={blocked > 0 ? t("dshNeedsAttention") : t("dshNothingBlocked")}
           />
-          <StatTile label="Committed" value={formatMoney(funded)} icon="💰" />
-          <StatTile label="Released" value={formatMoney(spent)} icon="✅" />
+          <StatTile label={t("dshCommitted")} value={formatMoney(funded)} icon="💰" />
+          <StatTile label={t("dshReleased")} value={formatMoney(spent)} icon="✅" />
         </div>
 
         {/* Needs attention — the working list, above the summaries */}
@@ -141,7 +143,7 @@ export default function AdminDashboardPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-semibold">{m.title}</p>
                     <p className="truncate text-[10px] opacity-50">
-                      👤 {m.ownerHandle || "Unassigned"}
+                      👤 {m.ownerHandle || t("csvUnassigned")}
                       {m.roomName ? ` · 🔐 ${m.roomName}` : ""}
                     </p>
                     {kind === "blocked" && m.hindrance && (
@@ -152,7 +154,7 @@ export default function AdminDashboardPage() {
                     className="shrink-0 text-[10px] font-bold"
                     style={{ color: meta && "color" in meta ? meta.color : undefined }}
                   >
-                    {kind === "blocked" ? "Blocked" : m.dueDate ? dueLabel(m.dueDate) : ""}
+                    {kind === "blocked" ? t("msBlocked") : m.dueDate ? dueLabel(m.dueDate) : ""}
                   </span>
                 </div>
               );
@@ -160,18 +162,18 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        <StatusBars counts={counts} title="Milestones by status" />
+        <StatusBars counts={counts} title={t("dshByStatus")} />
 
         <FundingMeter funded={funded} spent={spent} />
 
         {/* Per-member table — milestones are individual, so this is the primary view */}
         <div className="rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">By member</p>
+          <p className="text-sm font-bold">{t("dshByMember")}</p>
           <p className="mb-2 text-[11px] opacity-50">
-            Each member runs their own project · members with blockers first
+            {t("dshByMemberSub")}
           </p>
           {byMember.length === 0 && (
-            <p className="py-4 text-center text-xs opacity-50">No milestones recorded yet.</p>
+            <p className="py-4 text-center text-xs opacity-50">{t("dshNoMilestonesYet")}</p>
           )}
           {byMember.map((p) => (
             <div
@@ -193,12 +195,12 @@ export default function AdminDashboardPage() {
 
         {/* Per-room table — rooms group people with similar project scope */}
         <div className="rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">By project room</p>
+          <p className="text-sm font-bold">{t("dshByRoom")}</p>
           <p className="mb-2 text-[11px] opacity-50">
-            Rooms group members with similar project scope · blockers first
+            {t("dshByRoomSub")}
           </p>
           {rooms.length === 0 && (
-            <p className="py-4 text-center text-xs opacity-50">No milestones recorded yet.</p>
+            <p className="py-4 text-center text-xs opacity-50">{t("dshNoMilestonesYet")}</p>
           )}
           {rooms.map((r) => (
             <div
@@ -227,14 +229,11 @@ export default function AdminDashboardPage() {
           href="/admin/milestones"
           className="app-chrome block rounded-2xl bg-brand py-3 text-center text-sm font-bold text-white shadow-md active:scale-[0.98]"
         >
-          🎯 Manage milestones
+          {t("manageMilestones")}
         </Link>
 
         <p className="px-2 text-[10px] leading-relaxed opacity-40">
-          Status is shown with an icon and label as well as colour, so it stays
-          readable for colour-blind users and in print.{" "}
-          {MILESTONE_STATUS.blocked.icon} Blocked milestones are the operational
-          hindrances to resolve.
+          {t("dshFootnote")}
         </p>
       </div>
     </AppShell>

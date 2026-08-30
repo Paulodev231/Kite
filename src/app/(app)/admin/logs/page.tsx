@@ -7,52 +7,56 @@ import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestor
 import { db } from "@/lib/firebase";
 import type { ComplianceLog } from "@/lib/types";
 import AppShell from "@/components/AppShell";
+import { useT } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 
-const CATEGORY_META: Record<string, { icon: string; label: string }> = {
-  account_created: { icon: "🪪", label: "Account created" },
-  account_activated: { icon: "✅", label: "Account activated" },
-  account_deactivated: { icon: "⛔", label: "Account deactivated" },
-  room_created: { icon: "🔐", label: "Room created" },
-  room_member_added: { icon: "➕", label: "Member added to room" },
-  room_member_removed: { icon: "➖", label: "Member removed from room" },
-  form_published: { icon: "📋", label: "Form published" },
-  form_submission: { icon: "✍️", label: "Form submitted" },
-  staff_oncall_on: { icon: "🟢", label: "Staff handle On-Call" },
-  staff_oncall_off: { icon: "⚪", label: "Staff handle Off-Call" },
-  broadcast_post: { icon: "📣", label: "Noticeboard post" },
-  post_edited: { icon: "✏️", label: "Post edited" },
-  post_pinned: { icon: "📌", label: "Post pinned" },
-  post_unpinned: { icon: "📌", label: "Post unpinned" },
-  message_edited: { icon: "✏️", label: "Room message edited" },
-  posted_as_handle: { icon: "🎧", label: "Posted as a Staff Handle" },
-  dm_as_handle: { icon: "🎧", label: "DM sent as a Staff Handle" },
-  staff_handle_created: { icon: "🎧", label: "Staff Handle created" },
-  staff_handle_renamed: { icon: "✏️", label: "Staff Handle renamed" },
-  email_recorded: { icon: "✉️", label: "Email recorded" },
-  role_changed: { icon: "🛡️", label: "Role changed" },
-  dm_thread_started: { icon: "💬", label: "DM conversation started" },
-  handle_changed: { icon: "📝", label: "User changed their handle" },
-  account_deleted: { icon: "🗑️", label: "Account deleted" },
-  post_deleted: { icon: "🧹", label: "Broadcast post deleted" },
-  message_deleted: { icon: "🧹", label: "Room message deleted" },
-  milestone_created: { icon: "🎯", label: "Milestone recorded" },
-  milestone_planned: { icon: "📋", label: "Milestone set to Planned" },
-  milestone_in_progress: { icon: "⏳", label: "Milestone in progress" },
-  milestone_blocked: { icon: "⛔", label: "Milestone blocked" },
-  milestone_completed: { icon: "✅", label: "Milestone completed" },
-  funding_granted: { icon: "💰", label: "Member tagged as Funded" },
-  funding_cleared: { icon: "○", label: "Member funding removed" },
-  milestone_reassigned: { icon: "🔄", label: "Milestone reassigned" },
-  alert_sent: { icon: "🔔", label: "Alert sent to member" },
+// Each log category renders as an icon plus a translated label.
+const CATEGORY_META: Record<string, { icon: string; key: TranslationKey }> = {
+  account_created: { icon: "🪪", key: "logAccountCreated" },
+  account_activated: { icon: "✅", key: "logAccountActivated" },
+  account_deactivated: { icon: "⛔", key: "logAccountDeactivated" },
+  room_created: { icon: "🔐", key: "logRoomCreated" },
+  room_member_added: { icon: "➕", key: "logRoomMemberAdded" },
+  room_member_removed: { icon: "➖", key: "logRoomMemberRemoved" },
+  form_published: { icon: "📋", key: "logFormPublished" },
+  form_submission: { icon: "✍️", key: "logFormSubmission" },
+  staff_oncall_on: { icon: "🟢", key: "logStaffOnCallOn" },
+  staff_oncall_off: { icon: "⚪", key: "logStaffOnCallOff" },
+  broadcast_post: { icon: "📣", key: "logBroadcastPost" },
+  post_edited: { icon: "✏️", key: "logPostEdited" },
+  post_pinned: { icon: "📌", key: "logPostPinned" },
+  post_unpinned: { icon: "📌", key: "logPostUnpinned" },
+  message_edited: { icon: "✏️", key: "logMessageEdited" },
+  posted_as_handle: { icon: "🎧", key: "logPostedAsHandle" },
+  dm_as_handle: { icon: "🎧", key: "logDmAsHandle" },
+  staff_handle_created: { icon: "🎧", key: "logStaffHandleCreated" },
+  staff_handle_renamed: { icon: "✏️", key: "logStaffHandleRenamed" },
+  email_recorded: { icon: "✉️", key: "logEmailRecorded" },
+  role_changed: { icon: "🛡️", key: "logRoleChanged" },
+  dm_thread_started: { icon: "💬", key: "logDmThreadStarted" },
+  handle_changed: { icon: "📝", key: "logHandleChanged" },
+  account_deleted: { icon: "🗑️", key: "logAccountDeleted" },
+  post_deleted: { icon: "🧹", key: "logPostDeleted" },
+  message_deleted: { icon: "🧹", key: "logMessageDeleted" },
+  milestone_created: { icon: "🎯", key: "logMilestoneCreated" },
+  milestone_planned: { icon: "📋", key: "logMilestonePlanned" },
+  milestone_in_progress: { icon: "⏳", key: "logMilestoneInProgress" },
+  milestone_blocked: { icon: "⛔", key: "logMilestoneBlocked" },
+  milestone_completed: { icon: "✅", key: "logMilestoneCompleted" },
+  funding_granted: { icon: "💰", key: "logFundingGranted" },
+  funding_cleared: { icon: "○", key: "logFundingCleared" },
+  milestone_reassigned: { icon: "🔄", key: "logMilestoneReassigned" },
+  alert_sent: { icon: "🔔", key: "logAlertSent" },
   // Kept so older entries still read properly; codes are no longer issued.
-  funding_code_issued: { icon: "🔑", label: "Funding code issued" },
-  funding_code_revoked: { icon: "🗝️", label: "Funding code revoked" },
-  bank_details_updated: { icon: "🏦", label: "Bank details updated" },
-  dashboard_message_set: { icon: "📌", label: "Dashboard note set" },
-  dashboard_message_cleared: { icon: "📌", label: "Dashboard note cleared" },
+  funding_code_issued: { icon: "🔑", key: "logFundingCodeIssued" },
+  funding_code_revoked: { icon: "🗝️", key: "logFundingCodeRevoked" },
+  bank_details_updated: { icon: "🏦", key: "logBankDetailsUpdated" },
+  dashboard_message_set: { icon: "📌", key: "logDashboardNoteSet" },
+  dashboard_message_cleared: { icon: "📌", key: "logDashboardNoteCleared" },
 };
 
 export default function AdminLogsPage() {
+  const { t } = useT();
   const [logs, setLogs] = useState<ComplianceLog[]>([]);
 
   useEffect(() => {
@@ -63,26 +67,25 @@ export default function AdminLogsPage() {
   }, []);
 
   return (
-    <AppShell title="🧾 Compliance Logs">
+    <AppShell title={`🧾 ${t("admLogs")}`}>
       <div className="mx-auto max-w-lg space-y-1.5 p-3">
         <p className="px-2 py-1 text-[11px] leading-relaxed opacity-40">
-          Append-only audit trail — entries can never be edited or deleted, by
-          anyone. Newest first, latest 150 shown.
+          {t("logsIntro")}
         </p>
         {logs.length === 0 && (
           <p className="pt-12 text-center text-sm opacity-50">
-            No events logged yet. Actions across the platform will appear here.
+            {t("logsEmpty")}
           </p>
         )}
         {logs.map((log) => {
-          const meta = CATEGORY_META[log.category] ?? { icon: "•", label: log.category };
+          const meta = CATEGORY_META[log.category];
           return (
             <div key={log.id} className="flex items-start gap-3 rounded-2xl bg-surface p-3 shadow-sm">
-              <span className="mt-0.5 text-lg">{meta.icon}</span>
+              <span className="mt-0.5 text-lg">{meta ? meta.icon : "•"}</span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold">{meta.label}</p>
+                <p className="text-sm font-bold">{meta ? t(meta.key) : log.category}</p>
                 <p className="break-all text-[10px] font-mono opacity-50">
-                  actor {log.actorUid.slice(0, 8)}…
+                  {t("logActor")} {log.actorUid.slice(0, 8)}…
                   {Object.entries(log.meta ?? {}).map(
                     ([k, v]) => ` · ${k}: ${String(v).slice(0, 24)}`,
                   )}

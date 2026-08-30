@@ -4,6 +4,7 @@
 // small PNG data-URL upward (stored inline in the Firestore submission —
 // deliberately NOT in Storage, where member uploads are locked down).
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/context/LanguageContext";
 
 export default function SignaturePad({
   value,
@@ -12,6 +13,7 @@ export default function SignaturePad({
   value?: string | null;
   onChange: (dataUrl: string | null) => void;
 }) {
+  const { t } = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const [hasInk, setHasInk] = useState(Boolean(value));
@@ -98,14 +100,14 @@ export default function SignaturePad({
       />
       <div className="mt-1 flex items-center justify-between">
         <p className="text-[10px] opacity-50">
-          {hasInk ? "✅ Signature captured" : "Sign above with your finger"}
+          {hasInk ? t("signatureCaptured") : t("signHere")}
         </p>
         <button
           type="button"
           onClick={clear}
           className="rounded-full px-3 py-1 text-[11px] font-bold text-red-500 active:bg-red-500/10"
         >
-          Clear
+          {t("clear")}
         </button>
       </div>
     </div>

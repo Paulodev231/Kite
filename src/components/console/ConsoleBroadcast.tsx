@@ -28,6 +28,7 @@ import {
 } from "@/lib/types";
 import HandlePicker from "@/components/console/HandlePicker";
 import MediaAttachment from "@/components/MediaAttachment";
+import { useT } from "@/context/LanguageContext";
 
 export default function ConsoleBroadcast({
   handles,
@@ -38,6 +39,7 @@ export default function ConsoleBroadcast({
   me: UserProfile;
   actorUid: string;
 }) {
+  const { t } = useT();
   const [posts, setPosts] = useState<BroadcastPost[]>([]);
   const [asUid, setAsUid] = useState("");
   const [text, setText] = useState("");
@@ -95,7 +97,7 @@ export default function ConsoleBroadcast({
   return (
     <div className="space-y-2">
       <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">📣 Post to the Noticeboard</p>
+        <p className="text-sm font-bold">{t("cnPostToNoticeboard")}</p>
         <HandlePicker
           handles={handles}
           value={asUid}
@@ -105,7 +107,7 @@ export default function ConsoleBroadcast({
         <textarea
           rows={4}
           className="w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10"
-          placeholder={`Announcement from ${speaking?.handle ?? ""}…`}
+          placeholder={t("cnAnnouncementFrom", { handle: speaking?.handle ?? "" })}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -135,7 +137,7 @@ export default function ConsoleBroadcast({
             disabled={busy || (!text.trim() && !file)}
             className="app-chrome flex-1 rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Posting…" : `Post as ${speaking?.handle ?? ""}`}
+            {busy ? t("cnPosting") : t("cnPostAs", { handle: speaking?.handle ?? "" })}
           </button>
         </div>
       </div>
@@ -156,10 +158,10 @@ export default function ConsoleBroadcast({
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm("Delete this announcement for everyone?"))
+                  if (window.confirm(t("cnDeletePostConfirm")))
                     deleteBroadcastPost(p.id);
                 }}
-                aria-label="Delete post"
+                aria-label={t("cnDeletePostAria")}
                 className="app-chrome text-sm text-red-500"
               >
                 🗑️
@@ -189,8 +191,8 @@ export default function ConsoleBroadcast({
             <div className="mt-2 border-t border-black/5 pt-2 dark:border-white/10">
               <div className="mb-1 flex items-center gap-2">
                 <p className="text-[10px] font-semibold opacity-50">
-                  React as {speaking?.handle ?? "…"}
-                  {speakingAsHandle ? " · tap repeatedly to add more" : ""}
+                  {t("cnReactAs", { handle: speaking?.handle ?? "…" })}
+                  {speakingAsHandle ? t("cnTapRepeatedly") : ""}
                 </p>
                 {speakingAsHandle && myStackTotal > 0 && (
                   <button
@@ -198,7 +200,7 @@ export default function ConsoleBroadcast({
                     onClick={() => clearHandleReactions(p.id, speaking!.uid)}
                     className="app-chrome ml-auto text-[10px] font-bold text-red-500"
                   >
-                    Clear {myStackTotal}
+                    {t("cnClearCount", { n: myStackTotal })}
                   </button>
                 )}
               </div>
@@ -211,7 +213,7 @@ export default function ConsoleBroadcast({
                       key={emoji}
                       type="button"
                       onClick={() => reactAs(p, emoji)}
-                      aria-label={`React ${emoji}`}
+                      aria-label={t("cnReactAria", { emoji })}
                       className={`app-chrome relative flex h-9 w-9 items-center justify-center rounded-xl text-lg transition active:scale-125 ${
                         active ? "bg-brand-soft ring-1 ring-brand" : "active:bg-brand-soft"
                       }`}

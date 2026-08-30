@@ -28,12 +28,14 @@ import {
 } from "@/lib/types";
 import { downloadCsv, todayStamp, toCsv } from "@/lib/csv";
 import AppShell from "@/components/AppShell";
+import { useT } from "@/context/LanguageContext";
 
 const inputCls =
   "w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
 
 export default function AdminFormsPage() {
   const { user } = useAuth();
+  const { t } = useT();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomId, setRoomId] = useState("");
   const [forms, setForms] = useState<RoomForm[]>([]);
@@ -135,13 +137,13 @@ export default function AdminFormsPage() {
    *  live in a spreadsheet cell, so they are marked as captured instead. */
   function exportSubmissions(form: RoomForm) {
     const csv = toCsv(
-      ["Member", "Submitted at", ...form.fields.map((f) => f.label)],
+      [t("csvMember"), t("csvSubmittedAt"), ...form.fields.map((f) => f.label)],
       submissions.map((sub) => [
         sub.handle,
         sub.submittedAt?.toDate().toLocaleString() ?? "",
         ...form.fields.map((f) => {
           const v = sub.answers?.[f.id];
-          if (f.type === "signature") return v ? "Signature captured ✍️" : "";
+          if (f.type === "signature") return v ? t("csvSignatureCaptured") : "";
           return v ?? "";
         }),
       ]),
@@ -151,10 +153,10 @@ export default function AdminFormsPage() {
   }
 
   return (
-    <AppShell title="📋 Forms & Signatures">
+    <AppShell title={`📋 ${t("admForms")}`}>
       <div className="mx-auto max-w-lg space-y-3 p-3">
         <select className={inputCls} value={roomId} onChange={(e) => selectRoom(e.target.value)}>
-          <option value="">Choose a room…</option>
+          <option value="">{t("fmChooseRoom")}</option>
           {rooms.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
@@ -168,24 +170,24 @@ export default function AdminFormsPage() {
             onClick={() => setBuilding(true)}
             className="app-chrome w-full rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-md active:scale-[0.98]"
           >
-            ➕ Build a new form
+            {t("fmBuildNew")}
           </button>
         )}
 
         {/* ---------- Builder ---------- */}
         {roomId && building && (
           <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">New form</p>
+            <p className="text-sm font-bold">{t("fmNewForm")}</p>
             <input
               className={inputCls}
-              placeholder="Title (e.g. Milestone Report — March)"
+              placeholder={t("fmTitlePlaceholder")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
             <textarea
               className={inputCls}
               rows={2}
-              placeholder="Instructions shown to members (optional)"
+              placeholder={t("fmDescPlaceholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -194,19 +196,22 @@ export default function AdminFormsPage() {
               <div key={field.id} className="space-y-2 rounded-xl bg-background p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wide opacity-50">
-                    {FORM_FIELD_TYPES.find((t) => t.value === field.type)?.label}
+                    {(() => {
+                      const ft = FORM_FIELD_TYPES.find((x) => x.value === field.type);
+                      return ft ? t(ft.labelKey) : "";
+                    })()}
                   </span>
                   <button
                     type="button"
                     onClick={() => setFields(fields.filter((f) => f.id !== field.id))}
                     className="text-xs font-bold text-red-500"
                   >
-                    Remove
+                    {t("fmRemove")}
                   </button>
                 </div>
                 <input
                   className={inputCls}
-                  placeholder={`Question ${i + 1} — e.g. "What was achieved this week?"`}
+                  placeholder={t("fmQuestionPlaceholder", { n: i + 1 })}
                   value={field.label}
                   onChange={(e) =>
                     setFields(fields.map((f) => (f.id === field.id ? { ...f, label: e.target.value } : f)))
@@ -215,7 +220,7 @@ export default function AdminFormsPage() {
                 {field.type === "select" && (
                   <input
                     className={inputCls}
-                    placeholder="Options, separated by commas (e.g. On track, Delayed, Blocked)"
+                    placeholder={t("fmOptionsPlaceholder")}
                     value={(field.options ?? []).join(", ")}
                     onChange={(e) =>
                       setFields(
@@ -237,20 +242,20 @@ export default function AdminFormsPage() {
                     }
                     className="h-4 w-4 accent-[var(--brand)]"
                   />
-                  Required
+                  {t("fmRequired")}
                 </label>
               </div>
             ))}
 
             <div className="flex flex-wrap gap-1.5">
-              {FORM_FIELD_TYPES.map((t) => (
+              {FORM_FIELD_TYPES.map((ft) => (
                 <button
-                  key={t.value}
+                  key={ft.value}
                   type="button"
-                  onClick={() => addField(t.value)}
+                  onClick={() => addField(ft.value)}
                   className="app-chrome rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-bold text-brand active:scale-95"
                 >
-                  + {t.label}
+                  + {t(ft.labelKey)}
                 </button>
               ))}
             </div>
@@ -261,7 +266,7 @@ export default function AdminFormsPage() {
                 onClick={() => setBuilding(false)}
                 className="app-chrome flex-1 rounded-xl bg-background py-2.5 text-sm font-bold active:scale-[0.98]"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 type="button"
@@ -269,7 +274,7 @@ export default function AdminFormsPage() {
                 disabled={busy || !title.trim() || fields.filter((f) => f.label.trim()).length === 0}
                 className="app-chrome flex-1 rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
               >
-                {busy ? "Publishing…" : "Publish to room"}
+                {busy ? t("fmPublishing") : t("fmPublish")}
               </button>
             </div>
           </div>
@@ -287,14 +292,14 @@ export default function AdminFormsPage() {
                   form.open ? "bg-emerald-500/15 text-emerald-600" : "bg-gray-500/15 opacity-70"
                 }`}
               >
-                {form.open ? "Open" : "Closed"}
+                {form.open ? t("fmOpen") : t("fmClosed")}
               </button>
               <button
                 type="button"
                 onClick={() => toggleViewing(form)}
                 className="app-chrome rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand"
               >
-                {viewing?.id === form.id ? "Hide" : "Responses"}
+                {viewing?.id === form.id ? t("fmHide") : t("fmResponses")}
               </button>
             </div>
 
@@ -302,7 +307,7 @@ export default function AdminFormsPage() {
               <div className="mt-3 space-y-2 border-t border-black/5 pt-3 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <p className="flex-1 text-xs font-semibold opacity-50">
-                    {submissions.length} submission{submissions.length === 1 ? "" : "s"} — visible to Admins only
+                    {t("fmSubmissionCount", { n: submissions.length })}
                   </p>
                   {submissions.length > 0 && (
                     <button
@@ -333,12 +338,12 @@ export default function AdminFormsPage() {
                             {field.type === "signature" && typeof v === "string" && v ? (
                               <img
                                 src={v}
-                                alt={`Signature by ${sub.handle}`}
+                                alt={t("fmSignatureBy", { handle: sub.handle })}
                                 className="mt-1 h-20 rounded-lg border border-black/10 bg-white"
                               />
                             ) : (
                               <p className="text-sm">
-                                {typeof v === "boolean" ? (v ? "Yes ✅" : "No") : v || "—"}
+                                {typeof v === "boolean" ? (v ? t("fmYes") : t("fmNo")) : v || "—"}
                               </p>
                             )}
                           </div>

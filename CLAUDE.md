@@ -82,14 +82,23 @@ and never assume a local terminal is available.
 `npm run lint && npm run build`
 
 ## Language
-Member-facing screens are translated (en/fr/es/pt/ar) from `src/lib/i18n.ts`;
-`LanguageProvider` follows `navigator.languages` and flips `<html dir>` for
-Arabic. The Admin Panel and Handle Console stay in English. The language is
-read through `useSyncExternalStore`, so the server renders English and the
-browser swaps on hydration — do not "fix" this with `setState` in an effect
-(`react-hooks/set-state-in-effect` will fail the lint). Add a key to the `en`
-dictionary first: every other language is typed `Record<TranslationKey, string>`,
-so a missing translation is a build error.
+**The whole app is translated** (en/fr/es/pt/ar) — member screens, the Admin
+Panel and the Handle Console alike. Dictionaries live in `src/lib/i18n/`
+(`en.ts` is the source of truth; `index.ts` holds the machinery).
+`LanguageProvider` follows `navigator.languages`, flips `<html dir>` for Arabic,
+and honours an override anyone can set from their dashboard.
+
+- Add a key to `en.ts` first: the other four are typed
+  `Record<TranslationKey, string>`, so a missing translation fails the build.
+- Interpolate with `t("key", { name })` against `{name}` in the text — never
+  concatenate sentence fragments, since word order differs per language.
+- Text that pairs with an icon or colour (roles, milestone statuses, log
+  categories, form field types) keeps only its icon/colour in `types.ts` and
+  carries a translation KEY: see `ROLE_KEYS`, `MILESTONE_STATUS_KEYS`,
+  `FORM_FIELD_TYPES[].labelKey`, and `CATEGORY_META` in the logs page.
+- The language is read through `useSyncExternalStore`, so the server renders
+  English and the browser swaps on hydration — do not "fix" this with
+  `setState` in an effect (`react-hooks/set-state-in-effect` fails the lint).
 
 ## Roadmap
 Phase 2: room-embedded forms + digital signatures (rules stubs exist under

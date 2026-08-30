@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationContext";
-import { isAdmin, roleTag } from "@/lib/types";
+import { hasRoleTag, isAdmin } from "@/lib/types";
 import PresenceCounter from "@/components/PresenceCounter";
 import OfflineBanner from "@/components/OfflineBanner";
 
@@ -51,7 +51,7 @@ export default function AppShell({
         <div className="flex h-14 items-center gap-3 px-3">
           <button
             type="button"
-            aria-label="Open menu"
+            aria-label={t("openMenu")}
             onClick={() => setDrawerOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-xl active:bg-white/15"
           >
@@ -102,7 +102,7 @@ export default function AppShell({
         <div className="fixed inset-0 z-30" role="dialog" aria-modal="true">
           <button
             type="button"
-            aria-label="Close menu"
+            aria-label={t("closeMenu")}
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 bg-black/50"
           />
@@ -113,8 +113,8 @@ export default function AppShell({
               </span>
               <div>
                 <p className="text-sm font-bold">{profile?.handle ?? "…"}</p>
-                {roleTag(profile?.role) && (
-                  <p className="text-xs font-semibold text-brand">{roleTag(profile?.role)}</p>
+                {hasRoleTag(profile?.role) && (
+                  <p className="text-xs font-semibold text-brand">{t("adminTag")}</p>
                 )}
               </div>
             </div>

@@ -21,6 +21,7 @@ import {
   translate,
   type Lang,
   type TranslationKey,
+  type TranslationParams,
 } from "@/lib/i18n";
 
 const STORAGE_KEY = "kite:lang";
@@ -74,7 +75,7 @@ interface LanguageState {
   /** null when following the phone; a code when the member chose one. */
   override: Lang | null;
   setOverride: (lang: Lang | null) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, params?: TranslationParams) => string;
   rtl: boolean;
 }
 
@@ -82,7 +83,7 @@ const LanguageContext = createContext<LanguageState>({
   lang: "en",
   override: null,
   setOverride: () => {},
-  t: (key) => translate("en", key),
+  t: (key, params) => translate("en", key, params),
   rtl: false,
 });
 
@@ -99,7 +100,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [lang]);
 
   const setOverride = useCallback((next: Lang | null) => writeOverride(next), []);
-  const t = useCallback((key: TranslationKey) => translate(lang, key), [lang]);
+  const t = useCallback(
+    (key: TranslationKey, params?: TranslationParams) => translate(lang, key, params),
+    [lang],
+  );
 
   return (
     <LanguageContext.Provider value={{ lang, override, setOverride, t, rtl: isRtl(lang) }}>

@@ -17,6 +17,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
+import { MILESTONE_STATUS_KEYS } from "@/lib/i18n";
 import { logEvent } from "@/lib/log";
 import { dueLabel, dueState, DUE_META } from "@/lib/dates";
 import { downloadCsv, todayStamp, toCsv } from "@/lib/csv";
@@ -35,6 +37,7 @@ const inputCls =
 
 export default function AdminMilestonesPage() {
   const { user } = useAuth();
+  const { t } = useT();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [people, setPeople] = useState<UserProfile[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -108,7 +111,7 @@ export default function AdminMilestonesPage() {
   async function setStatus(m: Milestone, status: MilestoneStatus) {
     let hindrance = m.hindrance ?? "";
     if (status === "blocked") {
-      hindrance = window.prompt("What is blocking this milestone?", hindrance) ?? hindrance;
+      hindrance = window.prompt(t("mlBlockedPrompt"), hindrance) ?? hindrance;
     }
     await updateDoc(doc(db(), "milestones", m.id), { status, hindrance });
     if (user) logEvent(user.uid, `milestone_${status}`, { milestoneId: m.id });
@@ -116,7 +119,7 @@ export default function AdminMilestonesPage() {
 
   async function setSpent(m: Milestone) {
     const input = window.prompt(
-      `Funding released so far for “${m.title}” (committed: ${m.fundedAmount}):`,
+      t("mlSpentPrompt", { title: m.title, committed: m.fundedAmount }),
       String(m.spentAmount ?? 0),
     );
     if (input === null) return;
@@ -141,21 +144,21 @@ export default function AdminMilestonesPage() {
   function exportCsv() {
     const csv = toCsv(
       [
-        "Member",
-        "Milestone",
-        "Room (grouping)",
-        "Status",
-        "Due date",
-        "Due state",
-        "Funding committed",
-        "Funding released",
-        "Hindrance",
+        t("csvMember"),
+        t("csvMilestone"),
+        t("csvRoomGrouping"),
+        t("csvStatus"),
+        t("csvDueDate"),
+        t("csvDueState"),
+        t("csvFundingCommitted"),
+        t("csvFundingReleased"),
+        t("csvHindrance"),
       ],
       visible.map((m) => [
-        m.ownerHandle || "Unassigned",
+        m.ownerHandle || t("csvUnassigned"),
         m.title,
         m.roomName ?? "",
-        MILESTONE_STATUS[m.status]?.label ?? m.status,
+        t(MILESTONE_STATUS_KEYS[m.status]),
         m.dueDate ?? "",
         m.dueDate ? dueLabel(m.dueDate) : "",
         m.fundedAmount ?? 0,
@@ -167,7 +170,7 @@ export default function AdminMilestonesPage() {
   }
 
   return (
-    <AppShell title="🎯 Milestones">
+    <AppShell title={`🎯 ${t("admMilestones")}`}>
       <div className="mx-auto max-w-lg space-y-3 p-3">
         {!open && (
           <div className="flex gap-2">
@@ -176,13 +179,13 @@ export default function AdminMilestonesPage() {
               onClick={() => setOpen(true)}
               className="app-chrome flex-1 rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-md active:scale-[0.98]"
             >
-              ➕ Record a milestone
+              {t("mlRecord")}
             </button>
             {visible.length > 0 && (
               <button
                 type="button"
                 onClick={exportCsv}
-                aria-label="Export milestones to spreadsheet"
+                aria-label={t("mlExportAria")}
                 className="app-chrome rounded-2xl bg-surface px-4 py-3 text-sm font-bold shadow-sm active:scale-[0.98]"
               >
                 ⬇️ CSV
@@ -193,14 +196,14 @@ export default function AdminMilestonesPage() {
 
         {open && (
           <form onSubmit={create} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">New milestone</p>
+            <p className="text-sm font-bold">{t("mlNew")}</p>
             <select
               className={inputCls}
               required
               value={ownerUid}
               onChange={(e) => setOwnerUid(e.target.value)}
             >
-              <option value="">Whose project is this? (required)</option>
+              <option value="">{t("mlWhoseProject")}</option>
               {owners.map((p) => (
                 <option key={p.uid} value={p.uid}>
                   {p.handle}
@@ -209,13 +212,13 @@ export default function AdminMilestonesPage() {
             </select>
             <input
               className={inputCls}
-              placeholder="Milestone (e.g. Borehole drilling completed)"
+              placeholder={t("mlTitlePlaceholder")}
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
             <select className={inputCls} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-              <option value="">Group under a room (optional)</option>
+              <option value="">{t("mlGroupRoom")}</option>
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -226,7 +229,7 @@ export default function AdminMilestonesPage() {
               className={inputCls}
               type="number"
               inputMode="decimal"
-              placeholder="Funding committed (numbers only)"
+              placeholder={t("mlFundingCommitted")}
               value={funded}
               onChange={(e) => setFunded(e.target.value)}
             />
@@ -242,14 +245,14 @@ export default function AdminMilestonesPage() {
                 onClick={() => setOpen(false)}
                 className="app-chrome flex-1 rounded-xl bg-background py-2.5 text-sm font-bold active:scale-[0.98]"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={busy || !title.trim() || !ownerUid}
                 className="app-chrome flex-1 rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
               >
-                {busy ? "Saving…" : "Save"}
+                {busy ? t("saving") : t("save")}
               </button>
             </div>
           </form>
@@ -261,7 +264,7 @@ export default function AdminMilestonesPage() {
             value={filterOwner}
             onChange={(e) => setFilterOwner(e.target.value)}
           >
-            <option value="">All members ({milestones.length})</option>
+            <option value="">{t("mlAllMembers", { n: milestones.length })}</option>
             {owners.map((p) => {
               const n = milestones.filter((m) => m.ownerUid === p.uid).length;
               return (
@@ -275,8 +278,7 @@ export default function AdminMilestonesPage() {
 
         {visible.length === 0 && (
           <p className="pt-10 text-center text-sm opacity-50">
-            No milestones yet. Record one against a member to start tracking their
-            project delivery and funding.
+            {t("mlEmpty")}
           </p>
         )}
 
@@ -289,10 +291,10 @@ export default function AdminMilestonesPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm(`Delete milestone “${m.title}”?`))
+                    if (window.confirm(t("mlDeleteConfirm", { title: m.title })))
                       deleteDoc(doc(db(), "milestones", m.id));
                   }}
-                  aria-label="Delete milestone"
+                  aria-label={t("mlDeleteAria")}
                   className="app-chrome text-sm text-red-500"
                 >
                   🗑️
@@ -308,7 +310,7 @@ export default function AdminMilestonesPage() {
                   value=""
                   onChange={(e) => reassign(m, e.target.value)}
                 >
-                  <option value="">⚠️ Unassigned — choose the member…</option>
+                  <option value="">{t("mlUnassigned")}</option>
                   {owners.map((p) => (
                     <option key={p.uid} value={p.uid}>
                       {p.handle}
@@ -318,8 +320,8 @@ export default function AdminMilestonesPage() {
               )}
 
               <p className="text-[11px] opacity-50">
-                {m.roomName ? `🔐 ${m.roomName}` : "No room grouping"}
-                {m.dueDate ? ` · due ${m.dueDate}` : ""}
+                {m.roomName ? `🔐 ${m.roomName}` : t("mlNoRoomGrouping")}
+                {m.dueDate ? ` · ${t("mlDueOn", { date: m.dueDate })}` : ""}
               </p>
               {(() => {
                 const state = dueState(m.dueDate, m.status === "completed");
@@ -346,7 +348,7 @@ export default function AdminMilestonesPage() {
                       }`}
                       style={active ? { backgroundColor: sm.color } : undefined}
                     >
-                      {sm.icon} {sm.label}
+                      {sm.icon} {t(MILESTONE_STATUS_KEYS[s])}
                     </button>
                   );
                 })}
@@ -354,7 +356,7 @@ export default function AdminMilestonesPage() {
 
               {m.status === "blocked" && m.hindrance && (
                 <p className="rounded-xl bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-500">
-                  ⛔ Hindrance: {m.hindrance}
+                  {t("mlHindrance", { text: m.hindrance })}
                 </p>
               )}
 
@@ -363,10 +365,15 @@ export default function AdminMilestonesPage() {
                 onClick={() => setSpent(m)}
                 className="app-chrome w-full rounded-xl bg-background px-3 py-2 text-left text-[11px] font-semibold active:scale-[0.99]"
               >
-                💰 Released {m.spentAmount ?? 0} of {m.fundedAmount ?? 0} — tap to update
+                {t("mlReleased", {
+                  spent: m.spentAmount ?? 0,
+                  committed: m.fundedAmount ?? 0,
+                })}
               </button>
               <p className="text-[10px] opacity-40">
-                Current status: {meta.icon} {meta.label}
+                {t("mlCurrentStatus", {
+                  status: `${meta.icon} ${t(MILESTONE_STATUS_KEYS[m.status])}`,
+                })}
               </p>
             </div>
           );

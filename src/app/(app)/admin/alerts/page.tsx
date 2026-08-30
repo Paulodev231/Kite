@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { logEvent } from "@/lib/log";
 import { daysUntil } from "@/lib/dates";
 import type { MemberAlert, Milestone, UserProfile } from "@/lib/types";
@@ -28,6 +29,7 @@ const inputCls =
 
 export default function AdminAlertsPage() {
   const { user } = useAuth();
+  const { t } = useT();
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [sent, setSent] = useState<MemberAlert[]>([]);
@@ -71,17 +73,19 @@ export default function AdminAlertsPage() {
   function suggest(m: Milestone) {
     setMilestoneId(m.id);
     if (!m.dueDate) {
-      setMessage(`Reminder about “${m.title}” — please share your progress.`);
+      setMessage(t("altDraftNoDate", { title: m.title }));
       return;
     }
     const days = daysUntil(m.dueDate);
     if (days < 0) {
-      setMessage(
-        `“${m.title}” is ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue. Please update me on where it stands and what you need.`,
-      );
+      setMessage(t("altDraftOverdue", { title: m.title, days: Math.abs(days) }));
     } else {
       setMessage(
-        `${days} day${days === 1 ? "" : "s"} to “${m.title}” — you should be finishing this within ${Math.max(1, days - 1)} day${Math.max(1, days - 1) === 1 ? "" : "s"}.`,
+        t("altDraftCountdown", {
+          days,
+          title: m.title,
+          finish: Math.max(1, days - 1),
+        }),
       );
     }
   }
@@ -105,24 +109,23 @@ export default function AdminAlertsPage() {
         read: false,
       });
       logEvent(user.uid, "alert_sent", { targetUid });
-      setNotice(`✅ Alert sent to ${target?.handle ?? "member"}.`);
+      setNotice(t("altSent", { handle: target?.handle ?? "" }));
       setMessage("");
       setMilestoneId("");
     } catch {
-      setNotice("❌ Could not send the alert. Try again.");
+      setNotice(t("altSendFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <AppShell title="🔔 Member Alerts">
+    <AppShell title={`🔔 ${t("admAlerts")}`}>
       <div className="mx-auto max-w-lg space-y-3 p-3">
         <form onSubmit={send} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">✍️ Write an alert</p>
+          <p className="text-sm font-bold">{t("altWriteTitle")}</p>
           <p className="text-[11px] leading-relaxed opacity-50">
-            Goes to one member’s dashboard and notifies them. Only real members
-            appear here — Staff Handles don’t run projects.
+            {t("altWriteHint")}
           </p>
 
           <select
@@ -134,7 +137,7 @@ export default function AdminAlertsPage() {
               setMilestoneId("");
             }}
           >
-            <option value="">Which member?</option>
+            <option value="">{t("altWhichMember")}</option>
             {members.map((m) => (
               <option key={m.uid} value={m.uid}>
                 {m.handle}
@@ -145,7 +148,7 @@ export default function AdminAlertsPage() {
           {targetUid && theirMilestones.length > 0 && (
             <div>
               <p className="mb-1 text-[11px] font-semibold opacity-60">
-                Tap a milestone to auto-write the countdown:
+                {t("altTapMilestone")}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {theirMilestones.map((m) => (
@@ -167,8 +170,7 @@ export default function AdminAlertsPage() {
 
           {targetUid && theirMilestones.length === 0 && (
             <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-[11px] font-medium text-amber-600">
-              This member has no milestones yet. You can still send a free-text
-              alert, or record a milestone first.
+              {t("altNoMilestones")}
             </p>
           )}
 
@@ -176,7 +178,7 @@ export default function AdminAlertsPage() {
             className={inputCls}
             rows={4}
             required
-            placeholder="e.g. 20 days to Milestone 2 — you should finish the site survey in 19 days."
+            placeholder={t("altPlaceholder")}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
@@ -186,7 +188,7 @@ export default function AdminAlertsPage() {
             disabled={busy || !targetUid || !message.trim()}
             className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Sending…" : "🔔 Send alert"}
+            {busy ? t("altSending") : t("altSend")}
           </button>
           {notice && (
             <p className="rounded-xl bg-brand-soft px-3 py-2 text-xs font-medium">{notice}</p>
@@ -196,7 +198,7 @@ export default function AdminAlertsPage() {
         {sent.length > 0 && (
           <div className="space-y-2">
             <p className="px-2 text-xs font-semibold uppercase tracking-wide opacity-40">
-              Recently sent
+              {t("altRecentlySent")}
             </p>
             {sent.map((a) => (
               <div key={a.id} className="rounded-2xl bg-surface p-3.5 shadow-sm">
@@ -205,17 +207,17 @@ export default function AdminAlertsPage() {
                     <p className="text-xs font-bold text-brand">👤 {a.targetHandle}</p>
                     <p className="mt-0.5 text-sm leading-relaxed">{a.message}</p>
                     <p className="mt-1 text-[10px] opacity-40">
-                      {a.createdAt?.toDate().toLocaleString() ?? "Sending…"}
+                      {a.createdAt?.toDate().toLocaleString() ?? t("altSending")}
                       {a.milestoneTitle ? ` · 🎯 ${a.milestoneTitle}` : ""}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm("Delete this alert?"))
+                      if (window.confirm(t("altDeleteConfirm")))
                         deleteDoc(doc(db(), "alerts", a.id));
                     }}
-                    aria-label="Delete alert"
+                    aria-label={t("altDeleteAria")}
                     className="app-chrome text-sm text-red-500"
                   >
                     🗑️
@@ -226,7 +228,7 @@ export default function AdminAlertsPage() {
                     a.read ? "text-emerald-600" : "opacity-40"
                   }`}
                 >
-                  {a.read ? "✅ Read by member" : "○ Not read yet"}
+                  {a.read ? t("altReadByMember") : t("altNotReadYet")}
                 </p>
               </div>
             ))}

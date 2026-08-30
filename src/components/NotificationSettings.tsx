@@ -33,12 +33,11 @@ export default function NotificationSettings() {
       )}
       {denied && (
         <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-[11px] font-medium text-amber-600">
-          Your browser blocked the request. Allow notifications for this site in
-          your browser settings, then try again.
+          {t("notifBlocked")}
         </p>
       )}
       <p className="text-[10px] leading-relaxed opacity-40">
-        Unread counts always show on the tab bar, with or without notifications.
+        {t("notifFootnote")}
       </p>
     </div>
   );

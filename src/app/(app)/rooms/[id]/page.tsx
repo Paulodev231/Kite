@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { deleteRoomMessage, editRoomMessage } from "@/lib/adminActions";
@@ -29,6 +30,7 @@ import UserBadge from "@/components/UserBadge";
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
+  const { t } = useT();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [forms, setForms] = useState<RoomForm[]>([]);
@@ -80,7 +82,7 @@ export default function RoomPage() {
   }
 
   return (
-    <AppShell title={room ? `🔐 ${room.name}` : "Room"}>
+    <AppShell title={room ? `🔐 ${room.name}` : t("room")}>
       <div className="mx-auto flex min-h-full max-w-lg flex-col">
         {forms.length > 0 && (
           <div className="app-chrome flex gap-2 overflow-x-auto p-3 pb-1 no-scrollbar">
@@ -93,7 +95,7 @@ export default function RoomPage() {
                 <span>📋</span>
                 <span className="text-xs font-bold text-brand">{form.title}</span>
                 <span className="text-[10px] font-semibold text-brand opacity-60">
-                  Fill in →
+                  {t("fillIn")}
                 </span>
               </Link>
             ))}
@@ -116,7 +118,7 @@ export default function RoomPage() {
                     >
                       <button
                         type="button"
-                        aria-label="Edit message"
+                        aria-label={t("editMessage")}
                         onClick={() => {
                           setDraft(m.text ?? "");
                           setEditingId(m.id);
@@ -127,9 +129,9 @@ export default function RoomPage() {
                       </button>
                       <button
                         type="button"
-                        aria-label="Delete message"
+                        aria-label={t("deleteMessage")}
                         onClick={() => {
-                          if (window.confirm("Delete this message for everyone?"))
+                          if (window.confirm(t("deleteMessageConfirm")))
                             deleteRoomMessage(id, m.id);
                         }}
                         className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow"
@@ -176,7 +178,7 @@ export default function RoomPage() {
                           onClick={() => setEditingId(null)}
                           className="app-chrome flex-1 rounded-lg bg-background py-1 text-[11px] font-bold text-foreground"
                         >
-                          Cancel
+                          {t("cancel")}
                         </button>
                         <button
                           type="button"
@@ -186,7 +188,7 @@ export default function RoomPage() {
                           }}
                           className="app-chrome flex-1 rounded-lg bg-brand py-1 text-[11px] font-bold text-white"
                         >
-                          Save
+                          {t("save")}
                         </button>
                       </div>
                     </div>
@@ -213,7 +215,7 @@ export default function RoomPage() {
           <div ref={bottomRef} />
         </div>
         <Composer
-          placeholder={`Message ${room?.name ?? "room"}…`}
+          placeholder={t("messagePlaceholder", { name: room?.name ?? t("room") })}
           allowMedia={elevated}
           onSend={send}
         />

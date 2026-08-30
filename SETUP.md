@@ -465,15 +465,18 @@ and never share your Firebase login.
 
 ## 🆙 Automatic language
 
-The app now translates itself to the language of the phone it is opened on:
-**English, French, Spanish, Portuguese and Arabic**. Arabic also flips the
-whole layout right-to-left. Nothing to switch on — it just happens.
+The **whole app** now translates itself to the language of the phone it is
+opened on: **English, French, Spanish, Portuguese and Arabic**. That includes
+your Admin Panel and the Handle Console, not only the member screens. Arabic
+also flips the whole layout right-to-left. Nothing to switch on — it just
+happens.
 
-A member can override it: **Dashboard → 🌍 Language** → tap a flag, or
-**✨ Automatic** to go back to following their phone.
+Anyone can override it: **Dashboard → 🌍 Language** → tap a flag, or
+**✨ Automatic** to go back to following the phone.
 
-The Admin Panel and Handle Console stay in English, since you and your admins
-run those.
+A few things stay exactly as written, on purpose: people's handles, room names,
+milestone titles, and anything you typed yourself (announcements, notes,
+alerts). The app translates its own wording, not your content.
 
 ## 🗺️ Possible next steps
 

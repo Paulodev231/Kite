@@ -10,6 +10,7 @@ import { deleteRoomMessage } from "@/lib/adminActions";
 import type { QuotedMessage, Room, RoomMessage, UserProfile } from "@/lib/types";
 import HandlePicker from "@/components/console/HandlePicker";
 import MediaAttachment from "@/components/MediaAttachment";
+import { useT } from "@/context/LanguageContext";
 
 export default function ConsoleRooms({
   handles,
@@ -20,6 +21,7 @@ export default function ConsoleRooms({
   me: UserProfile;
   actorUid: string;
 }) {
+  const { t } = useT();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomId, setRoomId] = useState("");
   const [messages, setMessages] = useState<RoomMessage[]>([]);
@@ -81,7 +83,7 @@ export default function ConsoleRooms({
   return (
     <div className="space-y-2">
       <select className={inputCls} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-        <option value="">Choose a room…</option>
+        <option value="">{t("fmChooseRoom")}</option>
         {rooms.map((r) => (
           <option key={r.id} value={r.id}>
             {r.name}
@@ -91,7 +93,7 @@ export default function ConsoleRooms({
 
       {!roomId && (
         <p className="pt-10 text-center text-sm opacity-50">
-          Pick a room to read it and reply as any handle.
+          {t("cnPickRoom")}
         </p>
       )}
 
@@ -99,7 +101,7 @@ export default function ConsoleRooms({
         <>
           <div className="max-h-[45vh] space-y-2 overflow-y-auto rounded-2xl bg-surface p-3 no-scrollbar">
             {messages.length === 0 && (
-              <p className="py-6 text-center text-xs opacity-50">No messages yet.</p>
+              <p className="py-6 text-center text-xs opacity-50">{t("cnNoMessagesYet")}</p>
             )}
             {messages.map((m) => (
               <div key={m.id} className="rounded-xl bg-background p-2.5">
@@ -122,15 +124,15 @@ export default function ConsoleRooms({
                     }
                     className="app-chrome text-[10px] font-bold text-brand"
                   >
-                    ↩︎ Quote
+                    {t("quote")}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm("Delete this message for everyone?"))
+                      if (window.confirm(t("deleteMessageConfirm")))
                         deleteRoomMessage(roomId, m.id);
                     }}
-                    aria-label="Delete message"
+                    aria-label={t("deleteMessage")}
                     className="app-chrome text-[11px] text-red-500"
                   >
                     🗑️
@@ -164,7 +166,7 @@ export default function ConsoleRooms({
               <div className="flex items-start gap-2 rounded-xl bg-brand-soft p-2">
                 <div className="min-w-0 flex-1 border-l-2 border-brand pl-2">
                   <p className="text-[10px] font-bold text-brand">
-                    Replying to {quoted.handle}
+                    {t("cnReplyingTo", { handle: quoted.handle })}
                   </p>
                   <p className="truncate text-[10px] opacity-70">{quoted.text}</p>
                 </div>
@@ -181,7 +183,7 @@ export default function ConsoleRooms({
               <textarea
                 rows={2}
                 className="max-h-28 flex-1 resize-none rounded-2xl border border-black/10 bg-background px-3 py-2 text-sm outline-none focus:border-brand dark:border-white/10"
-                placeholder={`Message as ${speaking?.handle ?? ""}…`}
+                placeholder={t("cnMessageAs", { handle: speaking?.handle ?? "" })}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
@@ -189,7 +191,7 @@ export default function ConsoleRooms({
                 type="button"
                 onClick={send}
                 disabled={busy || !text.trim()}
-                aria-label="Send"
+                aria-label={t("send")}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow active:scale-95 disabled:opacity-40"
               >
                 {busy ? "…" : "➤"}

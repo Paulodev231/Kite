@@ -16,6 +16,8 @@ import {
   type RoomForm,
 } from "@/lib/types";
 import AppShell from "@/components/AppShell";
+import { useT } from "@/context/LanguageContext";
+import { MILESTONE_STATUS_KEYS } from "@/lib/i18n";
 import StatTile from "@/components/dashboard/StatTile";
 import StatusBars from "@/components/dashboard/StatusBars";
 import FundingMeter, { formatMoney } from "@/components/dashboard/FundingMeter";
@@ -26,6 +28,7 @@ interface FormStat {
 }
 
 export default function AdminReportsPage() {
+  const { t } = useT();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomId, setRoomId] = useState("");
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -119,34 +122,39 @@ export default function AdminReportsPage() {
   function exportReport() {
     if (!room) return;
     const csv = toCsv(
-      ["Section", "Item", "Detail", "Value"],
+      [t("csvSection"), t("csvItem"), t("csvDetail"), t("csvValue")],
       [
-        ["Summary", "Room", room.name, ""],
-        ["Summary", "Members", "", memberCount],
-        ["Summary", "Milestones total", "", total],
-        ["Summary", "Milestones completed", "", done],
-        ["Summary", "Milestones overdue", "", overdue],
-        ["Summary", "Funding committed", "", funded],
-        ["Summary", "Funding released", "", spent],
+        [t("csvSummary"), t("csvRoom"), room.name, ""],
+        [t("csvSummary"), t("csvMember"), "", memberCount],
+        [t("csvSummary"), t("csvMilestonesTotal"), "", total],
+        [t("csvSummary"), t("csvMilestonesCompleted"), "", done],
+        [t("csvSummary"), t("csvMilestonesOverdue"), "", overdue],
+        [t("csvSummary"), t("csvFundingCommitted"), "", funded],
+        [t("csvSummary"), t("csvFundingReleased"), "", spent],
         ...byMember.map((p) => [
-          "Member",
+          t("csvMember"),
           p.name,
-          `${p.done} of ${p.total} delivered · ${p.blocked} blocked · ${p.overdue} overdue`,
-          `${p.spent} of ${p.funded} released`,
+          t("csvMemberSummary", {
+            done: p.done,
+            total: p.total,
+            blocked: p.blocked,
+            overdue: p.overdue,
+          }),
+          t("csvReleasedOf", { spent: p.spent, funded: p.funded }),
         ]),
         ...milestones.map((m) => [
-          "Milestone",
-          `${m.ownerHandle || "Unassigned"} — ${m.title}`,
-          `${MILESTONE_STATUS[m.status]?.label ?? m.status}${
+          t("csvMilestone"),
+          `${m.ownerHandle || t("csvUnassigned")} — ${m.title}`,
+          `${t(MILESTONE_STATUS_KEYS[m.status])}${
             m.dueDate ? ` · ${dueLabel(m.dueDate)}` : ""
-          }${m.hindrance ? ` · Blocked: ${m.hindrance}` : ""}`,
-          `${m.spentAmount ?? 0} of ${m.fundedAmount ?? 0}`,
+          }${m.hindrance ? ` · ${t("csvBlockedBy", { text: m.hindrance })}` : ""}`,
+          t("csvSpentOf", { spent: m.spentAmount ?? 0, funded: m.fundedAmount ?? 0 }),
         ]),
         ...formStats.map((f) => [
-          "Form",
+          t("csvForm"),
           f.form.title,
-          f.form.open ? "Open" : "Closed",
-          `${f.responses} of ${memberCount} responded`,
+          f.form.open ? t("fmOpen") : t("fmClosed"),
+          t("csvResponded", { responses: f.responses, members: memberCount }),
         ]),
       ],
     );
@@ -157,10 +165,10 @@ export default function AdminReportsPage() {
     "w-full rounded-xl border border-black/10 bg-surface px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
 
   return (
-    <AppShell title="📑 Room Reports">
+    <AppShell title={`📑 ${t("admReports")}`}>
       <div className="mx-auto max-w-lg space-y-3 p-3">
         <select className={inputCls} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-          <option value="">Choose a room to report on…</option>
+          <option value="">{t("rpChooseRoom")}</option>
           {rooms.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
@@ -170,35 +178,39 @@ export default function AdminReportsPage() {
 
         {!roomId && (
           <p className="pt-12 text-center text-sm opacity-50">
-            Pick a room to see its delivery, funding and form response report.
+            {t("rpPickRoom")}
           </p>
         )}
 
         {roomId && (
           <>
             <div className="grid grid-cols-2 gap-2">
-              <StatTile label="Members" value={memberCount} icon="👥" />
+              <StatTile label={t("rpMembers")} value={memberCount} icon="👥" />
               <StatTile
-                label="Completed"
+                label={t("rpCompleted")}
                 value={`${done}/${total}`}
                 icon="✅"
-                sub={total > 0 ? `${Math.round((done / total) * 100)}% delivered` : "No milestones"}
+                sub={
+                  total > 0
+                    ? t("rpPctDelivered", { pct: Math.round((done / total) * 100) })
+                    : t("rpNoMilestones")
+                }
               />
               <StatTile
-                label="Overdue"
+                label={t("rpOverdue")}
                 value={overdue}
                 icon="🔴"
-                sub={overdue > 0 ? "Past due date" : "Nothing overdue"}
+                sub={overdue > 0 ? t("rpPastDue") : t("rpNothingOverdue")}
               />
-              <StatTile label="Released" value={formatMoney(spent)} icon="💰" />
+              <StatTile label={t("rpReleased")} value={formatMoney(spent)} icon="💰" />
             </div>
 
             {/* Each member's own project inside this room */}
             {byMember.length > 0 && (
               <div className="rounded-2xl bg-surface p-4 shadow-sm">
-                <p className="text-sm font-bold">Members in this room</p>
+                <p className="text-sm font-bold">{t("rpMembersInRoom")}</p>
                 <p className="mb-1 text-[11px] opacity-50">
-                  Each member runs their own project · blockers first
+                  {t("rpMembersSub")}
                 </p>
                 {byMember.map((p) => (
                   <div
@@ -208,7 +220,10 @@ export default function AdminReportsPage() {
                     <span className="min-w-0 flex-1 truncate font-semibold">
                       👤 {p.name}
                       <span className="block text-[10px] font-normal opacity-50">
-                        {formatMoney(p.spent)} of {formatMoney(p.funded)} released
+                        {t("rpReleasedOf", {
+                          spent: formatMoney(p.spent),
+                          funded: formatMoney(p.funded),
+                        })}
                       </span>
                     </span>
                     {p.blocked > 0 && (
@@ -229,20 +244,19 @@ export default function AdminReportsPage() {
               </div>
             )}
 
-            {total > 0 && <StatusBars counts={counts} title="Milestones in this room" />}
+            {total > 0 && <StatusBars counts={counts} title={t("rpMilestonesInRoom")} />}
             {funded > 0 && <FundingMeter funded={funded} spent={spent} />}
 
             {/* Form response rates — a meter per form, against room size */}
             <div className="rounded-2xl bg-surface p-4 shadow-sm">
-              <p className="text-sm font-bold">Form responses</p>
+              <p className="text-sm font-bold">{t("rpFormResponses")}</p>
               <p className="mb-2 text-[11px] opacity-50">
-                How many of the {memberCount} member{memberCount === 1 ? "" : "s"} in this room
-                have submitted
+                {t("rpFormResponsesSub", { n: memberCount })}
               </p>
-              {loadingForms && <p className="py-3 text-center text-xs opacity-50">Loading…</p>}
+              {loadingForms && <p className="py-3 text-center text-xs opacity-50">{t("loading")}</p>}
               {!loadingForms && formStats.length === 0 && (
                 <p className="py-3 text-center text-xs opacity-50">
-                  No forms published in this room yet.
+                  {t("rpNoForms")}
                 </p>
               )}
               {formStats.map(({ form, responses }) => {
@@ -270,7 +284,7 @@ export default function AdminReportsPage() {
             {/* Milestone detail with due-date warnings */}
             {milestones.length > 0 && (
               <div className="rounded-2xl bg-surface p-4 shadow-sm">
-                <p className="text-sm font-bold">Milestone detail</p>
+                <p className="text-sm font-bold">{t("rpMilestoneDetail")}</p>
                 {milestones.map((m) => {
                   const meta = MILESTONE_STATUS[m.status] ?? MILESTONE_STATUS.planned;
                   const dm = DUE_META[dueState(m.dueDate, m.status === "completed")];
@@ -283,11 +297,11 @@ export default function AdminReportsPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold">{m.title}</p>
                         <p className="truncate text-[10px] font-semibold text-brand">
-                          👤 {m.ownerHandle || "Unassigned"}
+                          👤 {m.ownerHandle || t("csvUnassigned")}
                         </p>
                         <p className="text-[10px] opacity-50">
-                          {meta.label}
-                          {m.dueDate ? ` · due ${m.dueDate}` : ""}
+                          {t(MILESTONE_STATUS_KEYS[m.status])}
+                          {m.dueDate ? ` · ${t("mlDueOn", { date: m.dueDate })}` : ""}
                         </p>
                         {dm && m.dueDate && (
                           <p className="text-[10px] font-bold" style={{ color: dm.color }}>
@@ -309,7 +323,7 @@ export default function AdminReportsPage() {
               onClick={exportReport}
               className="app-chrome w-full rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-md active:scale-[0.98]"
             >
-              ⬇️ Export this report as a spreadsheet
+              {t("rpExport")}
             </button>
           </>
         )}

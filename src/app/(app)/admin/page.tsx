@@ -5,11 +5,13 @@ import Link from "next/link";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import type { DmThread } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 
 export default function AdminHome() {
   const { profile } = useAuth();
+  const { t } = useT();
   const superadmin = profile?.role === "superadmin";
   const [inboxUnread, setInboxUnread] = useState(0);
 
@@ -51,50 +53,50 @@ export default function AdminHome() {
     {
       href: "/admin/dashboard",
       icon: "📊",
-      title: "Dashboard",
-      desc: "Milestone delivery, blockers and funded-outcome tracking at a glance",
+      title: t("admDashboard"),
+      desc: t("admDashboardDesc"),
       badge: 0,
     },
     {
       href: "/admin/milestones",
       icon: "🎯",
-      title: "Milestones",
-      desc: "Record milestones, log hindrances, track committed vs released funding",
+      title: t("admMilestones"),
+      desc: t("admMilestonesDesc"),
       badge: 0,
     },
     {
       href: "/admin/alerts",
       icon: "🔔",
-      title: "Member Alerts",
-      desc: "Write timing nudges to a member — auto-fills the countdown to their milestone",
+      title: t("admAlerts"),
+      desc: t("admAlertsDesc"),
       badge: 0,
     },
     {
       href: "/admin/reports",
       icon: "📑",
-      title: "Room Reports",
-      desc: "Per-room delivery, funding and form response rates — exportable to a spreadsheet",
+      title: t("admReports"),
+      desc: t("admReportsDesc"),
       badge: 0,
     },
     {
       href: "/admin/users",
       icon: "👥",
-      title: "Members & Accounts",
-      desc: "Invite-only account creation, full member directory, activate/deactivate",
+      title: t("admUsers"),
+      desc: t("admUsersDesc"),
       badge: 0,
     },
     {
       href: "/admin/rooms",
       icon: "🔐",
-      title: "Private Rooms",
-      desc: "Create Admin-locked workspaces and control exactly who is inside",
+      title: t("admRooms"),
+      desc: t("admRoomsDesc"),
       badge: 0,
     },
     {
       href: "/admin/forms",
       icon: "📋",
-      title: "Forms & Signatures",
-      desc: "Publish milestone reports & signature fields into rooms; review private submissions",
+      title: t("admForms"),
+      desc: t("admFormsDesc"),
       badge: 0,
     },
     ...(superadmin
@@ -102,15 +104,15 @@ export default function AdminHome() {
           {
             href: "/admin/console",
             icon: "🎛️",
-            title: "Handle Console",
-            desc: "Operate every Staff Handle from here — post, reply to DMs and quote-reply in rooms",
+            title: t("admConsole"),
+            desc: t("admConsoleDesc"),
             badge: inboxUnread,
           },
           {
             href: "/admin/staff",
             icon: "🎧",
-            title: "Staff Handles",
-            desc: "Managed profiles, On-Call/Off-Call presence control",
+            title: t("admStaff"),
+            desc: t("admStaffDesc"),
             badge: 0,
           },
         ]
@@ -118,17 +120,17 @@ export default function AdminHome() {
     {
       href: "/admin/logs",
       icon: "🧾",
-      title: "Compliance Logs",
-      desc: "Append-only audit trail of platform activity metadata",
+      title: t("admLogs"),
+      desc: t("admLogsDesc"),
       badge: 0,
     },
   ];
 
   return (
-    <AppShell title="🛡️ Admin Panel">
+    <AppShell title={`🛡️ ${t("adminPanel")}`}>
       <div className="mx-auto max-w-lg space-y-2 p-3">
         <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide opacity-40">
-          {superadmin ? "SuperAdmin Command Center" : "Admin Console"}
+          {superadmin ? t("admSuperCenter") : t("admConsoleLabel")}
         </p>
         {items.map((item) => (
           <Link
@@ -144,7 +146,7 @@ export default function AdminHome() {
                 {item.title}
                 {item.badge > 0 && (
                   <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                    🔴 {item.badge} DM{item.badge === 1 ? "" : "s"}
+                    {t("admUnreadDms", { n: item.badge })}
                   </span>
                 )}
               </p>

@@ -12,12 +12,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { createRoom, setRoomMembership } from "@/lib/adminActions";
 import type { Room, UserProfile } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 
 export default function AdminRoomsPage() {
   const { user } = useAuth();
+  const { t } = useT();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [selected, setSelected] = useState<Room | null>(null);
@@ -66,20 +68,20 @@ export default function AdminRoomsPage() {
     "w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
 
   return (
-    <AppShell title="🔐 Private Rooms">
+    <AppShell title={`🔐 ${t("admRooms")}`}>
       <div className="mx-auto max-w-lg space-y-4 p-3">
         <form onSubmit={handleCreate} className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">➕ Create a locked room</p>
+          <p className="text-sm font-bold">{t("rmCreateTitle")}</p>
           <input
             className={inputCls}
-            placeholder="Room name (e.g. Borehole Project — Phase 2)"
+            placeholder={t("rmNamePlaceholder")}
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
             className={inputCls}
-            placeholder="Topic (optional)"
+            placeholder={t("rmTopicPlaceholder")}
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
           />
@@ -88,13 +90,13 @@ export default function AdminRoomsPage() {
             disabled={busy}
             className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
           >
-            {busy ? "Creating…" : "Create Room"}
+            {busy ? t("usrCreating") : t("rmCreate")}
           </button>
         </form>
 
         <div className="space-y-2">
           <p className="px-2 text-xs font-semibold uppercase tracking-wide opacity-40">
-            Rooms ({rooms.length}) — tap to manage access
+            {t("rmList", { n: rooms.length })}
           </p>
           {rooms.map((room) => (
             <button
@@ -117,11 +119,13 @@ export default function AdminRoomsPage() {
         {selected && (
           <div className="space-y-1 rounded-2xl bg-surface p-4 shadow-sm">
             <p className="text-sm font-bold">
-              Access panel · {selected.name}{" "}
-              <span className="font-normal opacity-50">({memberUids.length} inside)</span>
+              {t("rmAccessPanel", { name: selected.name })}{" "}
+              <span className="font-normal opacity-50">
+                {t("rmInsideCount", { n: memberUids.length })}
+              </span>
             </p>
             <p className="mb-2 text-[10px] font-bold uppercase tracking-wide opacity-40">
-              Members
+              {t("rmMembers")}
             </p>
             {users
               .filter((u) => u.role === "member")
@@ -142,7 +146,7 @@ export default function AdminRoomsPage() {
                     />
                     <span className="flex-1 text-sm font-semibold">{u.handle}</span>
                     {u.active === false && (
-                      <span className="text-[10px] text-red-500">deactivated</span>
+                      <span className="text-[10px] text-red-500">{t("rmDeactivated")}</span>
                     )}
                   </label>
                 );
@@ -150,11 +154,11 @@ export default function AdminRoomsPage() {
             {/* Staff Handles: adding one here is what makes it count as
                 active in this room's header, and only while it is On-Call. */}
             <p className="mb-1 mt-3 border-t border-black/5 pt-3 text-[10px] font-bold uppercase tracking-wide opacity-40 dark:border-white/10">
-              Staff Handles in this room
+              {t("rmStaffHere")}
             </p>
             {users.filter((u) => u.role === "staff").length === 0 && (
               <p className="py-1 text-[11px] opacity-50">
-                No Staff Handles yet — create some in Admin Panel → Staff Handles.
+                {t("rmNoStaff")}
               </p>
             )}
             {users
@@ -180,16 +184,14 @@ export default function AdminRoomsPage() {
                         u.onCall ? "text-emerald-600" : "opacity-40"
                       }`}
                     >
-                      {u.onCall ? "On-Call" : "Off-Call"}
+                      {u.onCall ? t("onCallShort") : t("offCallShort")}
                     </span>
                   </label>
                 );
               })}
 
             <p className="pt-2 text-[10px] leading-relaxed opacity-40">
-              Admins and Staff Handles can reach every room. Ticking a handle here
-              is separate: it makes that handle count in this room&apos;s
-              “⚡ In room” number — and only while it is On-Call.
+              {t("rmAccessFootnote")}
             </p>
           </div>
         )}

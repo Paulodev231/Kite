@@ -4,6 +4,7 @@
 // - allowMedia: photos/videos/files (Admins & Staff only, enforced again by rules)
 // - allowDocs: document attachments only (standard users in DMs)
 import { useRef, useState } from "react";
+import { useT } from "@/context/LanguageContext";
 
 export default function Composer({
   placeholder,
@@ -16,6 +17,7 @@ export default function Composer({
   allowDocs?: boolean;
   onSend: (text: string, file: File | null) => Promise<void>;
 }) {
+  const { t } = useT();
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,7 +71,7 @@ export default function Composer({
             />
             <button
               type="button"
-              aria-label="Attach file"
+              aria-label={t("attachFile")}
               onClick={() => fileInput.current?.click()}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl active:bg-brand-soft"
             >
@@ -88,7 +90,7 @@ export default function Composer({
           type="button"
           onClick={submit}
           disabled={busy || (!text.trim() && !file)}
-          aria-label="Send"
+          aria-label={t("send")}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-lg text-white shadow active:scale-95 disabled:opacity-40"
         >
           {busy ? "…" : "➤"}

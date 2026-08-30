@@ -9,6 +9,8 @@ import { useParams, useRouter } from "next/navigation";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
+import { MILESTONE_STATUS_KEYS, ROLE_KEYS } from "@/lib/i18n";
 import {
   deleteUserAccount,
   setAccountActive,
@@ -37,6 +39,7 @@ interface Membership {
 export default function AdminUserProfilePage() {
   const { uid } = useParams<{ uid: string }>();
   const { profile: me } = useAuth();
+  const { t } = useT();
   const router = useRouter();
   const superadmin = me?.role === "superadmin";
 
@@ -101,12 +104,12 @@ export default function AdminUserProfilePage() {
             {person.handle?.slice(0, 1).toUpperCase()}
           </span>
           <p className="text-lg font-extrabold">{person.handle}</p>
-          <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold capitalize text-brand">
-            {person.role}
+          <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+            {t(ROLE_KEYS[person.role])}
           </span>
           {person.active === false && (
             <span className="rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-bold text-red-500">
-              ⛔ Banned
+              {t("banned")}
             </span>
           )}
         </div>
@@ -117,18 +120,18 @@ export default function AdminUserProfilePage() {
             href={`/messages/with/${person.uid}?handle=${encodeURIComponent(person.handle)}`}
             className="app-chrome block rounded-2xl bg-brand py-3 text-center text-sm font-bold text-white shadow-md active:scale-[0.98]"
           >
-            💬 Send direct message
+            {t("sendDm")}
           </Link>
         )}
 
         {/* Account record */}
         <div className="rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">Account</p>
+          <p className="text-sm font-bold">{t("account")}</p>
 
           <div className={rowCls}>
-            <span className="opacity-50">Email</span>
+            <span className="opacity-50">{t("email")}</span>
             <span className="min-w-0 flex-1 truncate text-right font-semibold">
-              {person.email || <span className="opacity-40">Not recorded</span>}
+              {person.email || <span className="opacity-40">{t("notRecorded")}</span>}
             </span>
           </div>
           {editingEmail ? (
@@ -136,14 +139,12 @@ export default function AdminUserProfilePage() {
               <input
                 className="w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10"
                 type="email"
-                placeholder="their@email.com"
+                placeholder={t("emailPlaceholder")}
                 value={emailDraft}
                 onChange={(e) => setEmailDraft(e.target.value)}
               />
               <p className="text-[10px] leading-relaxed opacity-50">
-                This records the address for your reference. It does not change
-                their actual sign-in — that lives in Firebase Console →
-                Authentication → Users.
+                {t("emailRecordHint")}
               </p>
               <div className="flex gap-2">
                 <button
@@ -151,7 +152,7 @@ export default function AdminUserProfilePage() {
                   onClick={() => setEditingEmail(false)}
                   className="app-chrome flex-1 rounded-xl bg-background py-2 text-xs font-bold"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="button"
@@ -161,7 +162,7 @@ export default function AdminUserProfilePage() {
                   }}
                   className="app-chrome flex-1 rounded-xl bg-brand py-2 text-xs font-bold text-white"
                 >
-                  Save
+                  {t("save")}
                 </button>
               </div>
             </div>
@@ -174,26 +175,26 @@ export default function AdminUserProfilePage() {
               }}
               className="app-chrome mt-1 text-[11px] font-bold text-brand"
             >
-              {person.email ? "Edit recorded email" : "➕ Record their email"}
+              {person.email ? t("editRecordedEmail") : t("recordEmail")}
             </button>
           )}
 
           <div className={rowCls}>
-            <span className="opacity-50">User ID</span>
+            <span className="opacity-50">{t("userId")}</span>
             <span className="min-w-0 flex-1 truncate text-right font-mono text-[10px]">
               {person.uid}
             </span>
           </div>
           <div className={rowCls}>
-            <span className="opacity-50">Created</span>
+            <span className="opacity-50">{t("created")}</span>
             <span className="font-semibold">
               {person.createdAt?.toDate().toLocaleDateString() ?? "—"}
             </span>
           </div>
           {person.role === "staff" && (
             <div className={rowCls}>
-              <span className="opacity-50">On-call</span>
-              <span className="font-semibold">{person.onCall ? "🟢 On-Call" : "⚪ Off-Call"}</span>
+              <span className="opacity-50">{t("onCallLabel")}</span>
+              <span className="font-semibold">{person.onCall ? t("onCallYes") : t("onCallNo")}</span>
             </div>
           )}
         </div>
@@ -201,14 +202,14 @@ export default function AdminUserProfilePage() {
         {/* Funding — real members only */}
         {isMember && (
           <div className="rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">💰 Funding</p>
+            <p className="text-sm font-bold">{t("funding")}</p>
             <p className="mt-1 text-lg font-extrabold tabular-nums">
               {person.funded ? (
                 <span style={{ color: "#0ca30c" }}>
                   {formatFunding(person.fundedAmount, person.fundedCurrency)}
                 </span>
               ) : (
-                <span className="text-sm font-semibold opacity-60">○ Not funded</span>
+                <span className="text-sm font-semibold opacity-60">○ {t("notFunded")}</span>
               )}
             </p>
             {person.fundedNote && (
@@ -222,7 +223,7 @@ export default function AdminUserProfilePage() {
                 onClick={() => setEditingFunding(true)}
                 className="app-chrome mt-2 w-full rounded-xl bg-background py-2 text-[11px] font-bold active:scale-[0.99]"
               >
-                💰 {person.funded ? "Edit funding" : "Set funding status"}
+                {person.funded ? t("usrEditFunding") : t("usrSetFunding")}
               </button>
             )}
           </div>
@@ -234,11 +235,11 @@ export default function AdminUserProfilePage() {
         {/* Their individual project */}
         {isMember && (
           <div className="rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">🎯 Their project</p>
+            <p className="text-sm font-bold">{t("theirProject")}</p>
             <p className="mb-1 text-[11px] opacity-50">
               {milestones.length === 0
-                ? "No milestones recorded"
-                : `${done} of ${milestones.length} delivered`}
+                ? t("noMilestonesRecorded")
+                : t("deliveredCount", { done, total: milestones.length })}
             </p>
             {milestones.map((m) => {
               const meta = MILESTONE_STATUS[m.status] ?? MILESTONE_STATUS.planned;
@@ -249,7 +250,7 @@ export default function AdminUserProfilePage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{m.title}</p>
                     <p className="text-[10px] opacity-50">
-                      {meta.label}
+                      {t(MILESTONE_STATUS_KEYS[m.status])}
                       {m.roomName ? ` · 🔐 ${m.roomName}` : ""}
                     </p>
                     {dm && m.dueDate && (
@@ -268,7 +269,7 @@ export default function AdminUserProfilePage() {
               href="/admin/milestones"
               className="app-chrome mt-2 block rounded-xl bg-background py-2 text-center text-[11px] font-bold active:scale-[0.99]"
             >
-              🎯 Manage milestones
+              {t("manageMilestones")}
             </Link>
           </div>
         )}
@@ -276,16 +277,16 @@ export default function AdminUserProfilePage() {
         {/* Alerts sent to them */}
         {isMember && (
           <div className="rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">🔔 Alerts sent</p>
+            <p className="text-sm font-bold">{t("alertsSent")}</p>
             {alerts.length === 0 ? (
-              <p className="py-2 text-[11px] opacity-50">No alerts sent yet.</p>
+              <p className="py-2 text-[11px] opacity-50">{t("noAlertsSent")}</p>
             ) : (
               alerts.slice(0, 6).map((a) => (
                 <div key={a.id} className="border-t border-black/5 py-2 text-xs dark:border-white/10">
                   <p className="leading-relaxed">{a.message}</p>
                   <p className="mt-0.5 text-[10px] opacity-40">
                     {a.createdAt?.toDate().toLocaleString() ?? ""} ·{" "}
-                    {a.read ? "✅ Read" : "○ Not read"}
+                    {a.read ? t("alertRead") : t("alertUnread")}
                   </p>
                 </div>
               ))
@@ -294,19 +295,17 @@ export default function AdminUserProfilePage() {
               href="/admin/alerts"
               className="app-chrome mt-2 block rounded-xl bg-background py-2 text-center text-[11px] font-bold active:scale-[0.99]"
             >
-              🔔 Write an alert
+              {t("writeAnAlert")}
             </Link>
           </div>
         )}
 
         {/* Rooms they belong to */}
         <div className="rounded-2xl bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold">🔐 Rooms</p>
+          <p className="text-sm font-bold">{t("roomsSection")}</p>
           {memberships.length === 0 ? (
             <p className="py-2 text-[11px] opacity-50">
-              {person.role === "member"
-                ? "Not in any room yet."
-                : "Admins and Staff Handles reach every room automatically."}
+              {person.role === "member" ? t("notInAnyRoom") : t("elevatedAllRooms")}
             </p>
           ) : (
             memberships.map((r) => (
@@ -324,14 +323,14 @@ export default function AdminUserProfilePage() {
             href="/admin/rooms"
             className="app-chrome mt-2 block rounded-xl bg-background py-2 text-center text-[11px] font-bold active:scale-[0.99]"
           >
-            🔐 Manage room access
+            {t("manageRoomAccess")}
           </Link>
         </div>
 
         {/* Admin actions */}
         {canAct && (
           <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">Actions</p>
+            <p className="text-sm font-bold">{t("actions")}</p>
 
             {superadmin && (
               <select
@@ -339,10 +338,10 @@ export default function AdminUserProfilePage() {
                 value={person.role}
                 onChange={(e) => setUserRole(person.uid, e.target.value as Role)}
               >
-                <option value="member">Role: Member (project manager)</option>
-                <option value="staff">Role: Staff Handle (managed)</option>
-                <option value="admin">Role: Admin</option>
-                <option value="superadmin">Role: SuperAdmin</option>
+                <option value="member">{t("roleOptionMember")}</option>
+                <option value="staff">{t("roleOptionStaff")}</option>
+                <option value="admin">{t("roleOptionAdmin")}</option>
+                <option value="superadmin">{t("roleOptionSuper")}</option>
               </select>
             )}
 
@@ -355,40 +354,34 @@ export default function AdminUserProfilePage() {
                   : "bg-amber-500/15 text-amber-600"
               }`}
             >
-              {person.active === false ? "✅ Unban this account" : "⛔ Ban this account"}
+              {person.active === false ? t("unbanAccount") : t("banAccount")}
             </button>
 
             <button
               type="button"
               onClick={async () => {
                 if (
-                  !window.confirm(
-                    `Permanently delete ${person.handle}? They lose all access immediately. This cannot be undone.`,
-                  )
+                  !window.confirm(t("usrDeleteConfirm", { handle: person.handle }))
                 )
                   return;
                 try {
                   await deleteUserAccount(person.uid);
-                  window.alert(
-                    `${person.handle} deleted. To reuse their email later, also remove them in Firebase Console → Authentication → Users.`,
-                  );
+                  window.alert(t("usrDeleted", { handle: person.handle }));
                   router.replace("/admin/users");
                 } catch {
-                  window.alert("Could not delete that account.");
+                  window.alert(t("usrDeleteFailed"));
                 }
               }}
               className="app-chrome w-full rounded-xl bg-red-500/10 py-2.5 text-sm font-bold text-red-500"
             >
-              🗑️ Delete this account
+              {t("deleteAccount")}
             </button>
           </div>
         )}
 
         {!canAct && (
           <p className="px-2 text-center text-[11px] leading-relaxed opacity-50">
-            {isSelf
-              ? "This is your own account — manage it from your Dashboard tab."
-              : "Only the SuperAdmin can act on a SuperAdmin account."}
+            {isSelf ? t("selfAccountHint") : t("superOnlyHint")}
           </p>
         )}
       </div>

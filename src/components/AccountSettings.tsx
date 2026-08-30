@@ -86,7 +86,7 @@ export default function AccountSettings() {
         </p>
         <input
           className={inputCls}
-          placeholder={`Current: ${profile?.handle ?? ""}`}
+          placeholder={t("currentValue", { value: profile?.handle ?? "" })}
           value={handle}
           minLength={2}
           maxLength={24}

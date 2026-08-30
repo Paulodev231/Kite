@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
 import { daysUntil, dueLabel, dueState, DUE_META } from "@/lib/dates";
 import { MILESTONE_STATUS, type Milestone } from "@/lib/types";
+import { MILESTONE_STATUS_KEYS } from "@/lib/i18n";
 
 export default function MyMilestones() {
   const { user } = useAuth();
@@ -62,7 +63,7 @@ export default function MyMilestones() {
                   </p>
                 )}
                 <p className="text-[10px] opacity-50">
-                  {meta.label}
+                  {t(MILESTONE_STATUS_KEYS[m.status])}
                   {m.dueDate ? ` · due ${m.dueDate}` : ""}
                 </p>
                 {m.status === "blocked" && m.hindrance && (

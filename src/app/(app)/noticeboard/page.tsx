@@ -132,7 +132,7 @@ export default function NoticeboardPage() {
                         onClick={() => setEditingId(null)}
                         className="app-chrome flex-1 rounded-xl bg-background py-2 text-xs font-bold"
                       >
-                        Cancel
+                        {t("cancel")}
                       </button>
                       <button
                         type="button"
@@ -142,7 +142,7 @@ export default function NoticeboardPage() {
                         }}
                         className="app-chrome flex-1 rounded-xl bg-brand py-2 text-xs font-bold text-white"
                       >
-                        Save changes
+                        {t("saveChanges")}
                       </button>
                     </div>
                   </div>
@@ -180,7 +180,7 @@ export default function NoticeboardPage() {
                       key={emoji}
                       type="button"
                       onClick={() => react(p, emoji)}
-                      aria-label={`React ${emoji}`}
+                      aria-label={t("cnReactAria", { emoji })}
                       className={`app-chrome flex h-9 w-9 items-center justify-center rounded-xl text-lg transition active:scale-125 ${
                         mine === emoji ? "bg-brand-soft ring-1 ring-brand" : "active:bg-brand-soft"
                       }`}
@@ -201,7 +201,7 @@ export default function NoticeboardPage() {
                       }}
                       className="app-chrome flex-1 rounded-lg bg-background py-1.5 text-[11px] font-bold"
                     >
-                      ✏️ Edit
+                      {t("edit")}
                     </button>
                     <button
                       type="button"
@@ -210,12 +210,12 @@ export default function NoticeboardPage() {
                         p.pinned ? "bg-brand text-white" : "bg-background"
                       }`}
                     >
-                      {p.pinned ? "📌 Unpin" : "📌 Pin"}
+                      {p.pinned ? t("unpin") : t("pin")}
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm("Delete this announcement for everyone?"))
+                        if (window.confirm(t("cnDeletePostConfirm")))
                           deleteBroadcastPost(p.id);
                       }}
                       className="app-chrome rounded-lg bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-500"
@@ -230,7 +230,7 @@ export default function NoticeboardPage() {
         </div>
 
         {admin ? (
-          <Composer placeholder="Post an announcement…" allowMedia onSend={post} />
+          <Composer placeholder={t("postAnnouncement")} allowMedia onSend={post} />
         ) : (
           <p className="app-chrome border-t border-black/5 bg-surface px-4 py-3 text-center text-[11px] font-medium opacity-50 dark:border-white/10">
             {t("readOnlyNotice")}

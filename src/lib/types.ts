@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
+import type { TranslationKey } from "./i18n";
 
 /** Role hierarchy. "staff" = a Managed Staff Handle operated by the SuperAdmin. */
 export type Role = "member" | "staff" | "admin" | "superadmin";
@@ -15,8 +16,8 @@ export function isAdmin(role: Role | null | undefined): boolean {
  * only who speaks with authority. Members and Staff Handles carry no tag, so a
  * Staff Handle still looks like an ordinary user.
  */
-export function roleTag(role: Role | null | undefined): string | null {
-  return role === "superadmin" || role === "admin" ? "Admin" : null;
+export function hasRoleTag(role: Role | null | undefined): boolean {
+  return role === "superadmin" || role === "admin";
 }
 
 /** The single public doc listing admin uids: status/admins { uids: [...] } */
@@ -75,20 +76,15 @@ export function formatFunding(amount: number | undefined, currency?: string): st
   })}`;
 }
 
-/** Funding badge text + icon. Icon and words carry the meaning, not colour. */
-export function fundingBadge(profile: {
-  funded?: boolean;
-  fundedAmount?: number;
-  fundedCurrency?: string;
-}): { icon: string; label: string; color: string } {
-  if (profile.funded) {
-    return {
-      icon: "💰",
-      label: `Funded — ${formatFunding(profile.fundedAmount, profile.fundedCurrency)}`,
-      color: "#0ca30c",
-    };
-  }
-  return { icon: "○", label: "Not funded", color: "#898781" };
+/** Funding badge icon + colour. The words come from the dictionary, so the
+ *  icon always carries the meaning alongside the colour. */
+export function fundingBadge(profile: { funded?: boolean }): {
+  icon: string;
+  color: string;
+} {
+  return profile.funded
+    ? { icon: "💰", color: "#0ca30c" }
+    : { icon: "○", color: "#898781" };
 }
 
 /**
@@ -182,14 +178,15 @@ export type FormFieldType =
   | "select"
   | "signature";
 
-export const FORM_FIELD_TYPES: { value: FormFieldType; label: string }[] = [
-  { value: "text", label: "Short text" },
-  { value: "textarea", label: "Long text" },
-  { value: "number", label: "Number" },
-  { value: "date", label: "Date" },
-  { value: "checkbox", label: "Yes / No" },
-  { value: "select", label: "Dropdown" },
-  { value: "signature", label: "✍️ Digital signature" },
+/** `labelKey` is a translation key — see src/lib/i18n. */
+export const FORM_FIELD_TYPES: { value: FormFieldType; labelKey: TranslationKey }[] = [
+  { value: "text", labelKey: "ftText" },
+  { value: "textarea", labelKey: "ftTextarea" },
+  { value: "number", labelKey: "ftNumber" },
+  { value: "date", labelKey: "ftDate" },
+  { value: "checkbox", labelKey: "ftCheckbox" },
+  { value: "select", labelKey: "ftSelect" },
+  { value: "signature", labelKey: "ftSignature" },
 ];
 
 export interface FormField {
@@ -232,12 +229,12 @@ export type MilestoneStatus = "planned" | "in_progress" | "blocked" | "completed
  */
 export const MILESTONE_STATUS: Record<
   MilestoneStatus,
-  { label: string; icon: string; color: string; darkColor: string }
+  { icon: string; color: string; darkColor: string }
 > = {
-  planned: { label: "Planned", icon: "📋", color: "#898781", darkColor: "#898781" },
-  in_progress: { label: "In progress", icon: "⏳", color: "#4f46e5", darkColor: "#818cf8" },
-  blocked: { label: "Blocked", icon: "⛔", color: "#d03b3b", darkColor: "#d03b3b" },
-  completed: { label: "Completed", icon: "✅", color: "#0ca30c", darkColor: "#0ca30c" },
+  planned: { icon: "📋", color: "#898781", darkColor: "#898781" },
+  in_progress: { icon: "⏳", color: "#4f46e5", darkColor: "#818cf8" },
+  blocked: { icon: "⛔", color: "#d03b3b", darkColor: "#d03b3b" },
+  completed: { icon: "✅", color: "#0ca30c", darkColor: "#0ca30c" },
 };
 
 export const MILESTONE_STATUS_ORDER: MilestoneStatus[] = [

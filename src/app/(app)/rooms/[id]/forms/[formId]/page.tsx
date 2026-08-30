@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { logEvent } from "@/lib/log";
 import type { FormSubmission, RoomForm } from "@/lib/types";
 import AppShell from "@/components/AppShell";
@@ -16,6 +17,7 @@ import SignaturePad from "@/components/SignaturePad";
 export default function FormFillPage() {
   const { id: roomId, formId } = useParams<{ id: string; formId: string }>();
   const { user, profile } = useAuth();
+  const { t } = useT();
   const router = useRouter();
   const [form, setForm] = useState<RoomForm | null>(null);
   const [existing, setExisting] = useState<FormSubmission | null>(null);
@@ -55,7 +57,7 @@ export default function FormFillPage() {
     for (const field of form.fields) {
       const v = answers[field.id];
       if (field.required && (v === undefined || v === "" || v === false)) {
-        setError(`Please complete: “${field.label}”`);
+        setError(t("formRequired", { label: field.label }));
         return;
       }
     }
@@ -72,7 +74,7 @@ export default function FormFillPage() {
       setSaved(true);
       setTimeout(() => router.back(), 1200);
     } catch {
-      setError("Could not submit. Check your connection and try again.");
+      setError(t("formSubmitError"));
     } finally {
       setBusy(false);
     }
@@ -82,11 +84,11 @@ export default function FormFillPage() {
     "w-full rounded-xl border border-black/10 bg-background px-3 py-2.5 text-sm outline-none focus:border-brand dark:border-white/10";
 
   return (
-    <AppShell title={form ? `📋 ${form.title}` : "Form"}>
+    <AppShell title={form ? `📋 ${form.title}` : t("form")}>
       <div className="mx-auto max-w-lg space-y-3 p-4">
         {form && !form.open && (
           <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-600">
-            This form is closed and no longer accepts submissions.
+            {t("formClosed")}
           </p>
         )}
         {form?.description && (
@@ -94,12 +96,13 @@ export default function FormFillPage() {
         )}
         {existing && (
           <p className="rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600">
-            ✅ Submitted {existing.submittedAt?.toDate().toLocaleString() ?? ""} — you can
-            revise below while the form stays open.
+            {t("formSubmittedOn", {
+              when: existing.submittedAt?.toDate().toLocaleString() ?? "",
+            })}
           </p>
         )}
         <p className="rounded-xl bg-brand-soft px-3 py-2 text-[11px] font-medium text-brand">
-          🔒 Private: only you and the Admins can see your answers.
+          {t("formPrivate")}
         </p>
 
         {form?.fields.map((field) => (
@@ -148,7 +151,7 @@ export default function FormFillPage() {
                   onChange={(e) => setAnswers({ ...answers, [field.id]: e.target.checked })}
                   className="h-5 w-5 accent-[var(--brand)]"
                 />
-                <span className="text-sm">Yes</span>
+                <span className="text-sm">{t("yes")}</span>
               </label>
             )}
             {field.type === "select" && (
@@ -157,7 +160,7 @@ export default function FormFillPage() {
                 value={(answers[field.id] as string) ?? ""}
                 onChange={(e) => setAnswers({ ...answers, [field.id]: e.target.value })}
               >
-                <option value="">Choose…</option>
+                <option value="">{t("choose")}</option>
                 {(field.options ?? []).map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -188,7 +191,13 @@ export default function FormFillPage() {
             disabled={busy || saved}
             className="app-chrome w-full rounded-2xl bg-brand py-3.5 text-base font-bold text-white shadow-md active:scale-[0.98] disabled:opacity-50"
           >
-            {saved ? "✅ Submitted!" : busy ? "Submitting…" : existing ? "Update Submission" : "Submit"}
+            {saved
+              ? t("submitted")
+              : busy
+                ? t("submitting")
+                : existing
+                  ? t("updateSubmission")
+                  : t("submit")}
           </button>
         )}
       </div>

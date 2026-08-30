@@ -4,6 +4,7 @@
 // details, and pin a private note to their dashboard.
 import { useState } from "react";
 import { setBankDetails, setDashboardMessage } from "@/lib/adminActions";
+import { useT } from "@/context/LanguageContext";
 import type { UserProfile } from "@/lib/types";
 
 const baseInput =
@@ -11,6 +12,8 @@ const baseInput =
 const inputCls = `w-full ${baseInput}`;
 
 export default function AdminMemberTools({ person }: { person: UserProfile }) {
+  const { t } = useT();
+
   // ----- Bank details -----
   const [bankName, setBankName] = useState(person.bankName ?? "");
   const [bankWebsite, setBankWebsite] = useState(person.bankWebsite ?? "");
@@ -39,7 +42,7 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
       setBankSaved(true);
       setTimeout(() => setBankSaved(false), 2500);
     } catch {
-      setBankError("Could not save. Check your connection and try again.");
+      setBankError(t("saveFailed"));
     } finally {
       setBankBusy(false);
     }
@@ -60,25 +63,24 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
     <>
       {/* Bank details */}
       <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">🏦 Bank details</p>
+        <p className="text-sm font-bold">{t("bankAdminTitle")}</p>
         <p className="text-[11px] leading-relaxed opacity-50">
-          You type these in for {person.handle}. Only they and Admins can see
-          them. Leave a box empty to hide that line on their dashboard.
+          {t("bankAdminHint", { handle: person.handle })}
         </p>
 
-        <label className="block text-[11px] font-bold opacity-60">Bank name</label>
+        <label className="block text-[11px] font-bold opacity-60">{t("bankName")}</label>
         <input
           className={inputCls}
-          placeholder="e.g. First National Bank"
+          placeholder={t("bankNameExample")}
           autoComplete="off"
           value={bankName}
           onChange={(e) => setBankName(e.target.value)}
         />
 
-        <label className="block text-[11px] font-bold opacity-60">Bank website</label>
+        <label className="block text-[11px] font-bold opacity-60">{t("bankWebsite")}</label>
         <input
           className={inputCls}
-          placeholder="e.g. www.fnb.com"
+          placeholder={t("bankWebsiteExample")}
           inputMode="url"
           autoCapitalize="none"
           autoComplete="off"
@@ -86,22 +88,22 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
           onChange={(e) => setBankWebsite(e.target.value)}
         />
 
-        <label className="block text-[11px] font-bold opacity-60">Login</label>
+        <label className="block text-[11px] font-bold opacity-60">{t("bankLogin")}</label>
         <input
           className={inputCls}
-          placeholder="Username or account number"
+          placeholder={t("bankLoginExample")}
           autoCapitalize="none"
           autoComplete="off"
           value={bankLogin}
           onChange={(e) => setBankLogin(e.target.value)}
         />
 
-        <label className="block text-[11px] font-bold opacity-60">Password</label>
+        <label className="block text-[11px] font-bold opacity-60">{t("bankPassword")}</label>
         <div className="flex gap-2">
           <input
             className={`min-w-0 flex-1 ${baseInput}`}
             type={showPassword ? "text" : "password"}
-            placeholder="Password"
+            placeholder={t("bankPassword")}
             autoCapitalize="none"
             autoComplete="off"
             value={bankPassword}
@@ -112,7 +114,7 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
             onClick={() => setShowPassword((s) => !s)}
             className="app-chrome shrink-0 rounded-xl bg-background px-3 text-xs font-bold active:scale-[0.98]"
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? t("hide") : t("show")}
           </button>
         </div>
 
@@ -128,25 +130,23 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
           disabled={bankBusy}
           className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
         >
-          {bankBusy ? "Saving…" : bankSaved ? "✅ Saved" : "Save bank details"}
+          {bankBusy ? t("saving") : bankSaved ? t("savedTick") : t("bankSave")}
         </button>
 
         <p className="text-[10px] leading-relaxed opacity-40">
-          These are stored as you type them. Treat this as the most sensitive
-          information in the app — anyone with your admin account can read it.
+          {t("bankAdminWarning")}
         </p>
       </div>
 
       {/* Private dashboard note */}
       <div className="space-y-2 rounded-2xl bg-surface p-4 shadow-sm">
-        <p className="text-sm font-bold">📌 Note on their dashboard</p>
+        <p className="text-sm font-bold">{t("dashNoteTitle")}</p>
         <p className="text-[11px] leading-relaxed opacity-50">
-          Pinned to the top of {person.handle}&apos;s dashboard. Only they can see it.
-          Clear the box and save to remove it.
+          {t("dashNoteHint", { handle: person.handle })}
         </p>
         <textarea
           className={`${inputCls} min-h-[90px] resize-y`}
-          placeholder="e.g. Your second tranche is approved — send your receipts by Friday."
+          placeholder={t("dashNotePlaceholder")}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
@@ -156,7 +156,7 @@ export default function AdminMemberTools({ person }: { person: UserProfile }) {
           disabled={msgBusy}
           className="app-chrome w-full rounded-xl bg-brand py-2.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50"
         >
-          {msgBusy ? "Saving…" : msgSaved ? "✅ Saved" : "Save note"}
+          {msgBusy ? t("saving") : msgSaved ? t("savedTick") : t("dashNoteSave")}
         </button>
       </div>
     </>
