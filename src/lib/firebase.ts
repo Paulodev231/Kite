@@ -42,7 +42,7 @@ export function firebaseAuth(): Auth {
 let firestore: Firestore | null = null;
 
 /**
- * Firestore with an on-device cache. This is what makes Kite work offline:
+ * Firestore with an on-device cache. This is what makes Community work offline:
  * previously loaded rooms/messages still open with no signal, and anything
  * you write while offline is queued and sent automatically once you are
  * back online — no extra code at the call sites.

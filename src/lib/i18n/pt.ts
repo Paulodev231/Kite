@@ -515,7 +515,7 @@ export const pt: Record<TranslationKey, string> = {
   quote: "↩︎ Citar",
   openMenu: "Abrir o menu",
   closeMenu: "Fechar o menu",
-  profileFooter: "Kite · Espaço empresarial fechado",
+  profileFooter: "Community · Espaço empresarial fechado",
   profileFooterPrivacy: "A sua visibilidade no diretório está protegida. Outros membros não o podem procurar.",
   setupTitle: "Quase — o Firebase ainda não está ligado",
   setupBody: "Adicione as suas chaves do Firebase como variáveis de ambiente (veja SETUP.md no repositório, passo 3) e volte a publicar.",

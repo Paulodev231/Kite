@@ -158,7 +158,7 @@ export default function AdminReportsPage() {
         ]),
       ],
     );
-    downloadCsv(`kite-report-${room.name.replace(/[^\w-]+/g, "_").slice(0, 30)}-${todayStamp()}`, csv);
+    downloadCsv(`community-report-${room.name.replace(/[^\w-]+/g, "_").slice(0, 30)}-${todayStamp()}`, csv);
   }
 
   const inputCls =

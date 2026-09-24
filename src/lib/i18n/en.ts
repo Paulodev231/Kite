@@ -525,7 +525,7 @@ export const en = {
   quote: "↩︎ Quote",
   openMenu: "Open menu",
   closeMenu: "Close menu",
-  profileFooter: "Kite · Closed enterprise workspace",
+  profileFooter: "Community · Closed enterprise workspace",
   profileFooterPrivacy: "Your directory visibility is protected. Other members cannot look you up.",
   setupTitle: "Almost there — Firebase isn’t connected yet",
   setupBody: "Add your Firebase keys as environment variables (see SETUP.md in the repository, Step 3), then redeploy.",

@@ -166,7 +166,7 @@ export default function AdminMilestonesPage() {
         m.hindrance ?? "",
       ]),
     );
-    downloadCsv(`kite-milestones-${todayStamp()}`, csv);
+    downloadCsv(`community-milestones-${todayStamp()}`, csv);
   }
 
   return (

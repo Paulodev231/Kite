@@ -4,7 +4,7 @@ export default function SplashScreen() {
       <span className="text-6xl" aria-hidden>
         🪁
       </span>
-      <p className="text-xl font-bold tracking-wide">Kite</p>
+      <p className="text-xl font-bold tracking-wide">Community</p>
       <span className="h-1.5 w-24 overflow-hidden rounded-full bg-white/25">
         <span className="block h-full w-1/2 animate-pulse rounded-full bg-white" />
       </span>

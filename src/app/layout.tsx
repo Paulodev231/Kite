@@ -6,14 +6,14 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
-  title: "Kite — Project Ops Hub",
+  title: "Community — Project Ops Hub",
   description:
     "Closed-tenant project management, accountability and community support platform.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Kite",
+    title: "Community",
   },
   icons: {
     icon: "/icons/icon-192.png",
