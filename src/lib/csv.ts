@@ -27,7 +27,7 @@ export function downloadCsv(filename: string, csv: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** File-safe stamp for export names, e.g. kite-milestones-2026-08-20.csv */
+/** File-safe stamp for export names, e.g. community-milestones-2026-08-20.csv */
 export function todayStamp(): string {
   return new Date().toISOString().slice(0, 10);
 }

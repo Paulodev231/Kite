@@ -1,4 +1,4 @@
-// Minimal service worker: makes Kite installable as a PWA and keeps
+// Minimal service worker: makes Community installable as a PWA and keeps
 // navigation snappy with a network-first / cache-fallback strategy.
 const CACHE = "kite-shell-v1";
 

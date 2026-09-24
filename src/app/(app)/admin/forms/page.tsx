@@ -149,7 +149,7 @@ export default function AdminFormsPage() {
       ]),
     );
     const safeTitle = form.title.replace(/[^\w-]+/g, "_").slice(0, 40);
-    downloadCsv(`kite-${safeTitle}-${todayStamp()}`, csv);
+    downloadCsv(`community-${safeTitle}-${todayStamp()}`, csv);
   }
 
   return (

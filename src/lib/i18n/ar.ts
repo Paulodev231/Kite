@@ -505,7 +505,7 @@ export const ar: Record<TranslationKey, string> = {
   quote: "↩︎ اقتباس",
   openMenu: "فتح القائمة",
   closeMenu: "إغلاق القائمة",
-  profileFooter: "Kite · مساحة عمل مؤسسية مغلقة",
+  profileFooter: "Community · مساحة عمل مؤسسية مغلقة",
   profileFooterPrivacy: "ظهورك في الدليل محمي. لا يستطيع الأعضاء الآخرون البحث عنك.",
   setupTitle: "اقتربنا — لم يُربط Firebase بعد",
   setupBody: "أضف مفاتيح Firebase كمتغيرات بيئة (انظر SETUP.md في المستودع، الخطوة ٣) ثم أعد النشر.",
