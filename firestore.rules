@@ -165,7 +165,9 @@ service cloud.firestore {
         // Admins may correct a message (text only); nobody can rewrite authorship.
         allow update: if isAdmin()
           && request.resource.data.authorUid == resource.data.authorUid;
-        allow delete: if isAdmin();
+        // Admins may remove any message; a member may delete their OWN.
+        allow delete: if isAdmin()
+          || (isActive() && resource.data.authorUid == request.auth.uid);
       }
 
       // Fillable forms published inside the room by Admins.
@@ -246,7 +248,9 @@ service cloud.firestore {
             && request.resource.data.senderUid in threadData().participants
             && senderIsManagedStaff());
         allow update: if false;
-        allow delete: if isSuper();
+        // SuperAdmin may remove any DM; a participant may delete their OWN.
+        allow delete: if isSuper()
+          || (isActive() && resource.data.senderUid == request.auth.uid);
       }
     }
 

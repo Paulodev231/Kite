@@ -19,7 +19,13 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
-import { isAdmin, type Room, type RoomForm, type RoomMessage } from "@/lib/types";
+import {
+  isAdmin,
+  type QuotedMessage,
+  type Room,
+  type RoomForm,
+  type RoomMessage,
+} from "@/lib/types";
 import { uploadFile } from "@/lib/upload";
 import { deleteRoomMessage, editRoomMessage } from "@/lib/adminActions";
 import AppShell from "@/components/AppShell";
@@ -36,6 +42,7 @@ export default function RoomPage() {
   const [forms, setForms] = useState<RoomForm[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<QuotedMessage | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const elevated = isAdmin(profile?.role) || profile?.role === "staff";
 
@@ -76,9 +83,11 @@ export default function RoomPage() {
       authorUid: user.uid,
       authorHandle: profile.handle,
       text,
+      ...(replyTo ? { replyTo } : {}),
       ...(media ? { mediaUrl: media.url, mediaType: media.kind, mediaName: media.name } : {}),
       createdAt: serverTimestamp(),
     });
+    setReplyTo(null);
   }
 
   return (
@@ -105,6 +114,7 @@ export default function RoomPage() {
           {messages.map((m) => {
             const mine = m.authorUid === user?.uid;
             const canModerate = isAdmin(profile?.role);
+            const canDelete = canModerate || mine;
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
@@ -112,32 +122,50 @@ export default function RoomPage() {
                     mine ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-surface"
                   }`}
                 >
-                  {canModerate && id && (
+                  {id && editingId !== m.id && (
                     <div
                       className={`absolute -top-2 flex gap-1 ${mine ? "-left-2" : "-right-2"}`}
                     >
                       <button
                         type="button"
-                        aria-label={t("editMessage")}
-                        onClick={() => {
-                          setDraft(m.text ?? "");
-                          setEditingId(m.id);
-                        }}
-                        className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[9px] text-white shadow"
+                        aria-label={t("quote")}
+                        onClick={() =>
+                          setReplyTo({
+                            id: m.id,
+                            handle: m.authorHandle,
+                            text: (m.text || t("attachment")).slice(0, 140),
+                          })
+                        }
+                        className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[10px] text-white shadow"
                       >
-                        ✏️
+                        ↩︎
                       </button>
-                      <button
-                        type="button"
-                        aria-label={t("deleteMessage")}
-                        onClick={() => {
-                          if (window.confirm(t("deleteMessageConfirm")))
-                            deleteRoomMessage(id, m.id);
-                        }}
-                        className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow"
-                      >
-                        ✕
-                      </button>
+                      {canModerate && (
+                        <button
+                          type="button"
+                          aria-label={t("editMessage")}
+                          onClick={() => {
+                            setDraft(m.text ?? "");
+                            setEditingId(m.id);
+                          }}
+                          className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[9px] text-white shadow"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          aria-label={t("deleteMessage")}
+                          onClick={() => {
+                            if (window.confirm(t("deleteMessageConfirm")))
+                              deleteRoomMessage(id, m.id);
+                          }}
+                          className="app-chrome flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   )}
                   {!mine && (
@@ -214,6 +242,24 @@ export default function RoomPage() {
           })}
           <div ref={bottomRef} />
         </div>
+        {replyTo && (
+          <div className="app-chrome mx-3 mb-1 flex items-start gap-2 rounded-xl bg-brand-soft p-2">
+            <div className="min-w-0 flex-1 border-l-2 border-brand pl-2">
+              <p className="text-[10px] font-bold text-brand">
+                {t("cnReplyingTo", { handle: replyTo.handle })}
+              </p>
+              <p className="truncate text-[10px] opacity-70">{replyTo.text}</p>
+            </div>
+            <button
+              type="button"
+              aria-label={t("cancel")}
+              onClick={() => setReplyTo(null)}
+              className="text-xs font-bold text-red-500"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <Composer
           placeholder={t("messagePlaceholder", { name: room?.name ?? t("room") })}
           allowMedia={elevated}

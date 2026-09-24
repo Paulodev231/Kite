@@ -351,6 +351,13 @@ export async function deleteRoomMessage(roomId: string, messageId: string) {
   logEvent(actorUid(), "message_deleted", { roomId, messageId });
 }
 
+/** Removes a direct message. The rules let a participant delete their OWN
+ *  message and the SuperAdmin delete any. */
+export async function deleteDmMessage(threadId: string, messageId: string) {
+  await deleteDoc(doc(db(), "dms", threadId, "messages", messageId));
+  logEvent(actorUid(), "dm_message_deleted", { threadId, messageId });
+}
+
 /**
  * Permanently removes a user from the platform: their profile, their room
  * memberships (and ACL entries) and their presence doc. They are locked out

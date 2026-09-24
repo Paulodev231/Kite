@@ -311,6 +311,7 @@ export interface DmMessage {
   id: string;
   senderUid: string;
   text: string;
+  replyTo?: QuotedMessage;
   fileUrl?: string;
   fileName?: string;
   createdAt?: Timestamp;
