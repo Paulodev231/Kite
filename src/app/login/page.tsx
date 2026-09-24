@@ -55,7 +55,7 @@ export default function LoginPage() {
       <div className="mx-auto w-full max-w-sm">
         <div className="app-chrome mb-8 flex flex-col items-center gap-2">
           <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-brand text-3xl shadow-lg">
-            🤝
+            👥
           </span>
           <h1 className="text-2xl font-extrabold">Community</h1>
           <p className="text-center text-xs font-medium opacity-60">
