@@ -129,6 +129,12 @@ export default function AdminUserProfilePage() {
           <p className="text-sm font-bold">{t("account")}</p>
 
           <div className={rowCls}>
+            <span className="opacity-50">{t("username")}</span>
+            <span className="min-w-0 flex-1 truncate text-right font-semibold">
+              {person.username ? `@${person.username}` : <span className="opacity-40">{t("notRecorded")}</span>}
+            </span>
+          </div>
+          <div className={rowCls}>
             <span className="opacity-50">{t("email")}</span>
             <span className="min-w-0 flex-1 truncate text-right font-semibold">
               {person.email || <span className="opacity-40">{t("notRecorded")}</span>}

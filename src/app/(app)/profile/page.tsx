@@ -23,7 +23,7 @@ import BankDetails from "@/components/BankDetails";
 import LanguagePicker from "@/components/LanguagePicker";
 
 export default function DashboardPage() {
-  const { user, profile, logout } = useAuth();
+  const { profile, logout } = useAuth();
   const { t } = useT();
   const router = useRouter();
   // Only real members have a project to track.
@@ -42,7 +42,10 @@ export default function DashboardPage() {
               {t("adminTag")}
             </span>
           )}
-          <p className="text-xs opacity-50">{user?.email}</p>
+          {profile?.username && (
+            <p className="text-xs font-semibold opacity-60">@{profile.username}</p>
+          )}
+          {profile?.email && <p className="text-xs opacity-50">{profile.email}</p>}
         </div>
 
         {runsAProject && (

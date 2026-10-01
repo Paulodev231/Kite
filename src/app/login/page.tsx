@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
+import { loginEmailFor, normalizeUsername } from "@/lib/usernames";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,7 +42,14 @@ export default function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      await signInWithEmailAndPassword(firebaseAuth(), email.trim(), password);
+      // Usernames resolve to the account's hidden login address. Anything
+      // with an "@" is treated as an email, so older accounts still work.
+      const typed = username.trim();
+      const email = typed.includes("@") && !typed.startsWith("@")
+        ? typed
+        : await loginEmailFor(normalizeUsername(typed));
+      if (!email) throw new Error("unknown-username");
+      await signInWithEmailAndPassword(firebaseAuth(), email, password);
       router.replace("/noticeboard");
     } catch {
       setError(t("signInFailed"));
@@ -65,13 +73,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
-            type="email"
+            type="text"
             required
-            autoComplete="email"
-            inputMode="email"
-            placeholder={t("email")}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder={t("username")}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full rounded-2xl border border-black/10 bg-surface px-4 py-3.5 text-base outline-none focus:border-brand dark:border-white/10"
           />
           <input

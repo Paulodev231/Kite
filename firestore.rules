@@ -59,8 +59,8 @@ service cloud.firestore {
       //  1. SuperAdmin — unrestricted, including other SuperAdmins and self.
       //  2. Standard Admin — any member/staff/admin record, but may not touch
       //     a SuperAdmin account or hand out roles (that stays with SuperAdmin).
-      //  3. Anyone — their OWN handle and nothing else (the field-diff check
-      //     blocks any attempt to touch role/active/onCall/funding).
+      //  3. Anyone — their OWN handle, username or contact email, one at a
+      //     time (the field-diff check blocks role/active/onCall/funding).
       allow update: if isSuper()
         || (isAdmin()
           && resource.data.role != 'superadmin'
@@ -70,6 +70,19 @@ service cloud.firestore {
           && request.resource.data.handle is string
           && request.resource.data.handle.size() >= 2
           && request.resource.data.handle.size() <= 24)
+        // Anyone may change their OWN username — but only together with
+        // claiming it in usernames/{name} in the same write, which is what
+        // keeps usernames unique.
+        || (isActive() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username'])
+          && request.resource.data.username is string
+          && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid)
+        // Anyone may change their OWN contact email. It is a record only —
+        // sign-in uses the username, so this grants nothing.
+        || (isActive() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email'])
+          && request.resource.data.email is string
+          && request.resource.data.email.size() <= 254)
         // A member may record the confirmation code they were given. It is a
         // record of what they typed — it grants nothing on its own, and the
         // funding figure itself stays Admin-controlled.
@@ -89,6 +102,31 @@ service cloud.firestore {
         allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
         allow write: if isAdmin();
       }
+    }
+
+    // ---------- username → login lookup ----------
+    // Sign-in happens BEFORE anyone is authenticated, so a single username
+    // may be looked up by anyone (get only — the list can never be read).
+    // Each doc holds the owner's uid and the hidden Auth address behind the
+    // username. A doc can never be overwritten, which keeps names unique.
+    match /usernames/{name} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if name.matches('^[a-z0-9._-]{3,24}$')
+        && request.resource.data.keys().hasOnly(['uid', 'loginEmail'])
+        && request.resource.data.uid is string
+        && request.resource.data.loginEmail is string
+        && (isAdmin()
+          // You may claim a name for YOURSELF, pointing at your OWN login,
+          // and only while setting it on your profile in the same write.
+          || (isActive() && request.resource.data.uid == request.auth.uid
+            && request.resource.data.loginEmail == request.auth.token.email
+            && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == name));
+      allow update: if false;
+      // Freeing your old name is only allowed once your profile has moved on.
+      allow delete: if isAdmin()
+        || (isActive() && resource.data.uid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('username', '') != name);
     }
 
     // ---------- anonymous presence heartbeats ----------

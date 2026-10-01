@@ -6,7 +6,8 @@ and never assume a local terminal is available.
 
 ## Stack & constraints
 - Next.js App Router + TypeScript + Tailwind v4, deployed on Vercel (free tier).
-- Firebase client SDK only: Auth (email/password), Firestore, Storage.
+- Firebase client SDK only: Auth (email/password under the hood — people sign
+  in with a USERNAME, see Security model), Firestore, Storage.
   NO Cloud Functions / Admin SDK (requires paid plan) — admin operations run
   client-side and are enforced by `firestore.rules` / `storage.rules`.
 - All Firebase pages are client components; `src/lib/firebase.ts` guards
@@ -44,6 +45,13 @@ and never assume a local terminal is available.
 - Roles in `users/{uid}.role`: member | staff | admin | superadmin.
 - No self-registration. Member/admin accounts minted by admins via a secondary
   Firebase app instance (`src/lib/adminActions.ts`).
+- **Sign-in is username + password.** New accounts get a random hidden Auth
+  email (`newLoginEmail` in `src/lib/usernames.ts`) that never changes;
+  `usernames/{name}` → `{uid, loginEmail}` is world-gettable (never listable)
+  so the login screen can resolve it. Uniqueness comes from create-only docs;
+  a user claims/frees names in one batch with `users/{uid}.username`
+  (checked with `getAfter`). `users/{uid}.email` is self-editable contact
+  info only. Input containing `@` signs in as an email (legacy accounts).
 - **Staff Handles have NO Auth account** — no email, no password, they never
   sign in. They are `users/{autoId}` docs with `role: "staff"`.
 - **There is no "acting as" mode.** The normal app always authors as the

@@ -15,7 +15,7 @@ export const ar: Record<TranslationKey, string> = {
   password: "كلمة المرور",
   signIn: "تسجيل الدخول",
   signingIn: "جارٍ تسجيل الدخول…",
-  signInFailed: "تعذّر تسجيل الدخول. تحقّق من البريد وكلمة المرور اللذين منحك إياهما المسؤول.",
+  signInFailed: "تعذّر تسجيل الدخول. تحقّق من اسم المستخدم وكلمة المرور اللذين منحك إياهما المسؤول.",
   noAccount: "ليس لديك حساب؟ الوصول إلى هذه المنصة يمنحه المسؤول. تواصل معه للحصول على بياناتك.",
   noticeboard: "الإعلانات",
   noticeboardEmpty: "ستظهر الإعلانات هنا. تفاعل برمز تعبيري لتُعلم الفريق أنك اطّلعت عليها.",
@@ -142,7 +142,7 @@ export const ar: Record<TranslationKey, string> = {
   usrRoleAdmin: "مسؤول",
   usrCreate: "إنشاء الحساب",
   usrCreating: "جارٍ الإنشاء…",
-  usrCreated: "✅ أُنشئ الحساب. سلّم هذه البيانات بشكل خاص: {email} / {password}",
+  usrCreated: "✅ أُنشئ الحساب. سلّم بيانات الدخول هذه بشكل خاص — اسم المستخدم: {username} · كلمة المرور: {password}",
   usrCreateFailed: "تعذّر إنشاء الحساب.",
   usrStaffHint: "تنشئ حساب فريق؟ لا يحتاج بريدًا ولا كلمة مرور — أنشئه من لوحة الإدارة ← حسابات الفريق وشغّله من هناك.",
   usrFundedMembers: "💰 الأعضاء المموّلون",
@@ -526,4 +526,22 @@ export const ar: Record<TranslationKey, string> = {
 
   // small shared bits
   currentValue: "الحالي: {value}",
+
+  // username sign-in
+  username: "اسم المستخدم",
+  usrUsernamePlaceholder: "اسم المستخدم لتسجيل الدخول (مثل ade.p)",
+  usrEmailOptional: "البريد الإلكتروني (اختياري)",
+  usernameInvalid: "❌ اسم المستخدم من 3 إلى 24 حرفًا: أحرف لاتينية صغيرة أو أرقام أو نقطة أو شرطة أو شرطة سفلية.",
+  usernameTaken: "❌ اسم المستخدم هذا مستخدم بالفعل. جرّب اسمًا آخر.",
+  usrNoUsername: "لا يوجد اسم مستخدم بعد",
+  changeUsername: "تغيير اسم المستخدم",
+  changeUsernameHint: "تسجّل الدخول به. من 3 إلى 24 حرفًا: أحرف أو أرقام أو نقطة أو شرطة أو شرطة سفلية.",
+  saveUsername: "حفظ اسم المستخدم",
+  usernameSaved: "✅ تم تحديث اسم المستخدم. استخدمه في المرة القادمة لتسجيل الدخول.",
+  changeEmail: "تغيير بريدي الإلكتروني",
+  changeEmailHint: "عنوان تواصل اختياري. ما زلت تسجّل الدخول باسم المستخدم.",
+  saveEmail: "حفظ البريد",
+  emailSaved: "✅ تم تحديث البريد الإلكتروني.",
+  logUsernameChanged: "غيّر مستخدم اسم المستخدم الخاص به",
+  logEmailChanged: "غيّر مستخدم بريده الإلكتروني",
 };

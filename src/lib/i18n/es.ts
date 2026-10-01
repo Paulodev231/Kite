@@ -16,8 +16,7 @@ export const es: Record<TranslationKey, string> = {
   password: "Contraseña",
   signIn: "Iniciar sesión",
   signingIn: "Iniciando sesión…",
-  signInFailed:
-    "No se pudo iniciar sesión. Revisa el correo y la contraseña que te dio tu administrador.",
+  signInFailed: "No se pudo iniciar sesión. Revisa el nombre de usuario y la contraseña que te dio tu administrador.",
   noAccount:
     "¿Sin cuenta? El acceso a esta plataforma lo concede tu administrador. Contáctalo para obtener tus credenciales.",
   noticeboard: "Anuncios",
@@ -152,7 +151,7 @@ export const es: Record<TranslationKey, string> = {
   usrRoleAdmin: "Administrador",
   usrCreate: "Crear cuenta",
   usrCreating: "Creando…",
-  usrCreated: "✅ Cuenta creada. Comparte estas credenciales en privado: {email} / {password}",
+  usrCreated: "✅ Cuenta creada. Comparte estos datos en privado — usuario: {username} · contraseña: {password}",
   usrCreateFailed: "No se pudo crear la cuenta.",
   usrStaffHint: "¿Creas un perfil del equipo? No necesita correo ni contraseña: créalo en Panel de administración → Perfiles del equipo y opéralo desde allí.",
   usrFundedMembers: "💰 Miembros financiados",
@@ -536,4 +535,22 @@ export const es: Record<TranslationKey, string> = {
 
   // small shared bits
   currentValue: "Actual: {value}",
+
+  // username sign-in
+  username: "Nombre de usuario",
+  usrUsernamePlaceholder: "Nombre de usuario para entrar (p. ej. ade.p)",
+  usrEmailOptional: "Correo (opcional)",
+  usernameInvalid: "❌ Los nombres de usuario tienen de 3 a 24 caracteres: minúsculas, números, punto, guion o guion bajo.",
+  usernameTaken: "❌ Ese nombre de usuario ya está en uso. Prueba otro.",
+  usrNoUsername: "sin nombre de usuario aún",
+  changeUsername: "Cambiar mi nombre de usuario",
+  changeUsernameHint: "Inicias sesión con él. De 3 a 24 caracteres: letras, números, punto, guion o guion bajo.",
+  saveUsername: "Guardar nombre de usuario",
+  usernameSaved: "✅ Nombre de usuario actualizado. Úsalo la próxima vez que inicies sesión.",
+  changeEmail: "Cambiar mi correo",
+  changeEmailHint: "Dirección de contacto opcional. Sigues entrando con tu nombre de usuario.",
+  saveEmail: "Guardar correo",
+  emailSaved: "✅ Correo actualizado.",
+  logUsernameChanged: "Un usuario cambió su nombre de usuario",
+  logEmailChanged: "Un usuario cambió su correo",
 };
