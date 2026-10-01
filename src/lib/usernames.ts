@@ -36,14 +36,30 @@ export async function loginEmailFor(username: string): Promise<string | null> {
 }
 
 /**
+ * The domain for the hidden login addresses. These are never delivered to —
+ * they only need a valid, stable email FORMAT — so we build it from the project
+ * id, which is always clean (lowercase letters, digits and hyphens), on
+ * Firebase's own `firebaseapp.com`. We deliberately do NOT use
+ * `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`: it is not part of the required config, so
+ * it is often unset, blank or pasted with an `https://` prefix / trailing
+ * slash, any of which produced an invalid address and the `auth/invalid-email`
+ * error when creating accounts.
+ */
+function loginDomain(): string {
+  const projectId = (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "");
+  return projectId ? `${projectId}.firebaseapp.com` : "kite.local";
+}
+
+/**
  * A random, never-shown Auth address for a new account. It sits on the
  * project's own Firebase domain so it is always a valid email, and it is
  * random (not the username) so renaming never touches the login.
  */
 export function newLoginEmail(): string {
   const id = doc(collection(db(), "usernames")).id.toLowerCase();
-  const domain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "kite.local";
-  return `u-${id}@${domain}`;
+  return `u-${id}@${loginDomain()}`;
 }
 
 /**
