@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
 import { ROLE_KEYS } from "@/lib/i18n";
 import { createManagedAccount, deleteUserAccount, setAccountActive } from "@/lib/adminActions";
+import { normalizeUsername } from "@/lib/usernames";
 import { formatFunding, fundingBadge, type Role, type UserProfile } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 import FundingEditor from "@/components/FundingEditor";
@@ -21,6 +22,7 @@ export default function AdminUsersPage() {
   const superadmin = profile?.role === "superadmin";
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [handle, setHandle] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("member");
@@ -40,13 +42,17 @@ export default function AdminUsersPage() {
     setNotice(null);
     setBusy(true);
     try {
-      await createManagedAccount(email.trim(), password, handle.trim(), role);
-      setNotice(t("usrCreated", { email: email.trim(), password }));
+      await createManagedAccount(username, email.trim(), password, handle.trim(), role);
+      setNotice(t("usrCreated", { username: normalizeUsername(username), password }));
       setHandle("");
+      setUsername("");
       setEmail("");
       setPassword("");
     } catch (err) {
-      setNotice(`❌ ${err instanceof Error ? err.message : t("usrCreateFailed")}`);
+      const code = err instanceof Error ? err.message : "";
+      if (code === "username-invalid") setNotice(t("usernameInvalid"));
+      else if (code === "username-taken") setNotice(t("usernameTaken"));
+      else setNotice(`❌ ${code || t("usrCreateFailed")}`);
     } finally {
       setBusy(false);
     }
@@ -69,9 +75,18 @@ export default function AdminUsersPage() {
           />
           <input
             className={inputCls}
-            type="email"
-            placeholder={t("email")}
+            placeholder={t("usrUsernamePlaceholder")}
             required
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            className={inputCls}
+            type="email"
+            placeholder={t("usrEmailOptional")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -158,7 +173,8 @@ export default function AdminUsersPage() {
                   {u.handle} <span className="text-[10px] font-normal opacity-30">›</span>
                 </p>
                 <p className="truncate text-[10px] opacity-50">
-                  {u.email || t("usrNoEmail")}
+                  {u.username ? `@${u.username}` : t("usrNoUsername")}
+                  {u.email ? ` · ${u.email}` : ""}
                 </p>
                 <p className="text-[10px] opacity-50">
                   {t(ROLE_KEYS[u.role])}

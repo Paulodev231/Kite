@@ -28,8 +28,11 @@ export interface AdminRoster {
 export interface UserProfile {
   uid: string;
   handle: string; // public display handle, e.g. "PM_Ade"
-  /** Sign-in email, recorded here so Admins can see it. Firebase Auth is the
-   *  real source of truth — changing this field does not change their login. */
+  /** What they type to sign in (lower-case, unique — see usernames/{name}).
+   *  Older accounts made with an email may not have one yet. */
+  username?: string;
+  /** Contact email. The person (or an Admin) may edit it freely — it does not
+   *  change how they sign in. */
   email?: string;
   role: Role;
   active: boolean; // deactivated accounts cannot use the app

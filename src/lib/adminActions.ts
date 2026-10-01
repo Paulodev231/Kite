@@ -20,6 +20,7 @@ import {
 import { db, firebaseAuth } from "@/lib/firebase";
 import { logEvent } from "@/lib/log";
 import type { Role } from "@/lib/types";
+import { isUsernameTaken, isValidUsername, newLoginEmail, normalizeUsername } from "@/lib/usernames";
 
 function actorUid(): string {
   return firebaseAuth().currentUser?.uid ?? "unknown";
@@ -82,29 +83,43 @@ const firebaseConfig = {
 /**
  * Creates a new account WITHOUT signing the current Admin out. Uses a
  * throwaway secondary Firebase app so the Admin's own session is untouched.
- * The Admin then hands the credentials to the invited member (closed,
+ * The Admin then hands the username + password to the invited member (closed,
  * invite-only model — there is no public sign-up).
+ *
+ * No email is needed: the account signs in with its username, backed by a
+ * hidden login address (see src/lib/usernames.ts). `email` is optional
+ * contact info only. Throws "username-invalid" or "username-taken".
  */
 export async function createManagedAccount(
+  rawUsername: string,
   email: string,
   password: string,
   handle: string,
   role: Role,
 ): Promise<string> {
+  const username = normalizeUsername(rawUsername);
+  if (!isValidUsername(username)) throw new Error("username-invalid");
+  // Checked before minting the login so a clash never leaves an orphan.
+  if (await isUsernameTaken(username)) throw new Error("username-taken");
+
+  const loginEmail = newLoginEmail();
   const secondary = initializeApp(firebaseConfig, `acct-mgr-${Date.now()}`);
   try {
-    const cred = await createUserWithEmailAndPassword(getAuth(secondary), email, password);
+    const cred = await createUserWithEmailAndPassword(getAuth(secondary), loginEmail, password);
     const uid = cred.user.uid;
-    await setDoc(doc(db(), "users", uid), {
+    const batch = writeBatch(db());
+    batch.set(doc(db(), "users", uid), {
       handle,
-      // Recorded so Admins can see it in the directory — Firebase Auth remains
-      // the source of truth for the actual login.
-      email,
+      username,
+      // Contact email only — sign-in uses the username.
+      ...(email ? { email } : {}),
       role,
       active: true,
       ...(role === "staff" ? { onCall: false } : {}),
       createdAt: serverTimestamp(),
     });
+    batch.set(doc(db(), "usernames", username), { uid, loginEmail });
+    await batch.commit();
     await signOut(getAuth(secondary));
     if (role === "admin") await syncAdminRoster(uid, true);
     logEvent(actorUid(), "account_created", { newUid: uid, role });
@@ -362,11 +377,12 @@ export async function deleteDmMessage(threadId: string, messageId: string) {
  * Permanently removes a user from the platform: their profile, their room
  * memberships (and ACL entries) and their presence doc. They are locked out
  * instantly — with no profile document, the rules deny them everything.
- * Note: the login record in Firebase *Authentication* cannot be deleted from
- * the client; remove it in Firebase Console → Authentication → Users if you
- * want the email address reusable.
+ * Their username is freed straight away. Note: the login record in Firebase
+ * *Authentication* cannot be deleted from the client; remove it in Firebase
+ * Console → Authentication → Users if you want an old email address reusable.
  */
 export async function deleteUserAccount(uid: string) {
+  const username = (await getDoc(doc(db(), "users", uid))).data()?.username;
   const memberships = await getDocs(collection(db(), "users", uid, "memberships"));
   const roomIds = memberships.docs.map((m) => m.id);
   const batch = writeBatch(db());
@@ -376,6 +392,8 @@ export async function deleteUserAccount(uid: string) {
   });
   batch.delete(doc(db(), "presence", uid));
   batch.delete(doc(db(), "users", uid));
+  // Frees the username so it can be given to someone else.
+  if (typeof username === "string" && username) batch.delete(doc(db(), "usernames", username));
   await batch.commit();
   await syncAdminRoster(uid, false);
   for (const roomId of roomIds) await recountRoomOnCall(roomId);

@@ -17,7 +17,7 @@ export const en = {
   password: "Password",
   signIn: "Sign In",
   signingIn: "Signing in…",
-  signInFailed: "Sign-in failed. Check the email and password given to you by your Admin.",
+  signInFailed: "Sign-in failed. Check the username and password given to you by your Admin.",
   noAccount:
     "No account? Access to this platform is provisioned by your administrator. Contact them for credentials.",
 
@@ -162,7 +162,7 @@ export const en = {
   usrRoleAdmin: "Admin",
   usrCreate: "Create account",
   usrCreating: "Creating…",
-  usrCreated: "✅ Account created. Share these credentials privately: {email} / {password}",
+  usrCreated: "✅ Account created. Share these sign-in details privately — username: {username} · password: {password}",
   usrCreateFailed: "Could not create the account.",
   usrStaffHint: "Creating a Staff Handle? They need no email or password — make them in Admin Panel → Staff Handles and operate them from there.",
   usrFundedMembers: "💰 Funded members",
@@ -546,4 +546,22 @@ export const en = {
 
   // small shared bits
   currentValue: "Current: {value}",
+
+  // username sign-in
+  username: "Username",
+  usrUsernamePlaceholder: "Username for signing in (e.g. ade.p)",
+  usrEmailOptional: "Email (optional)",
+  usernameInvalid: "❌ Usernames are 3–24 characters: lowercase letters, numbers, dot, dash or underscore.",
+  usernameTaken: "❌ That username is already taken. Try another.",
+  usrNoUsername: "no username yet",
+  changeUsername: "Change my username",
+  changeUsernameHint: "You sign in with this. 3–24 characters: letters, numbers, dot, dash or underscore.",
+  saveUsername: "Save username",
+  usernameSaved: "✅ Username updated. Use it next time you sign in.",
+  changeEmail: "Change my email",
+  changeEmailHint: "Optional contact address. You still sign in with your username.",
+  saveEmail: "Save email",
+  emailSaved: "✅ Email updated.",
+  logUsernameChanged: "User changed their username",
+  logEmailChanged: "User changed their email",
 } as const;

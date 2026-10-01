@@ -16,8 +16,7 @@ export const fr: Record<TranslationKey, string> = {
   password: "Mot de passe",
   signIn: "Se connecter",
   signingIn: "Connexion…",
-  signInFailed:
-    "Échec de la connexion. Vérifiez l’e-mail et le mot de passe fournis par votre administrateur.",
+  signInFailed: "Échec de la connexion. Vérifiez le nom d’utilisateur et le mot de passe fournis par votre administrateur.",
   noAccount:
     "Pas de compte ? L’accès à cette plateforme est fourni par votre administrateur. Contactez-le pour obtenir vos identifiants.",
   noticeboard: "Annonces",
@@ -152,7 +151,7 @@ export const fr: Record<TranslationKey, string> = {
   usrRoleAdmin: "Administrateur",
   usrCreate: "Créer le compte",
   usrCreating: "Création…",
-  usrCreated: "✅ Compte créé. Transmettez ces identifiants en privé : {email} / {password}",
+  usrCreated: "✅ Compte créé. Transmettez ces identifiants en privé — nom d’utilisateur : {username} · mot de passe : {password}",
   usrCreateFailed: "Impossible de créer le compte.",
   usrStaffHint: "Vous créez un pseudo d’équipe ? Ni e-mail ni mot de passe : créez-le dans Panneau d’administration → Pseudos d’équipe et pilotez-le de là.",
   usrFundedMembers: "💰 Membres financés",
@@ -536,4 +535,22 @@ export const fr: Record<TranslationKey, string> = {
 
   // small shared bits
   currentValue: "Actuel : {value}",
+
+  // username sign-in
+  username: "Nom d’utilisateur",
+  usrUsernamePlaceholder: "Nom d’utilisateur pour se connecter (ex. ade.p)",
+  usrEmailOptional: "E-mail (facultatif)",
+  usernameInvalid: "❌ Un nom d’utilisateur compte 3 à 24 caractères : lettres minuscules, chiffres, point, tiret ou tiret bas.",
+  usernameTaken: "❌ Ce nom d’utilisateur est déjà pris. Essayez-en un autre.",
+  usrNoUsername: "pas encore de nom d’utilisateur",
+  changeUsername: "Changer mon nom d’utilisateur",
+  changeUsernameHint: "Vous vous connectez avec. 3 à 24 caractères : lettres, chiffres, point, tiret ou tiret bas.",
+  saveUsername: "Enregistrer le nom d’utilisateur",
+  usernameSaved: "✅ Nom d’utilisateur mis à jour. Utilisez-le à votre prochaine connexion.",
+  changeEmail: "Changer mon e-mail",
+  changeEmailHint: "Adresse de contact facultative. Vous vous connectez toujours avec votre nom d’utilisateur.",
+  saveEmail: "Enregistrer l’e-mail",
+  emailSaved: "✅ E-mail mis à jour.",
+  logUsernameChanged: "Un utilisateur a changé de nom d’utilisateur",
+  logEmailChanged: "Un utilisateur a changé d’e-mail",
 };

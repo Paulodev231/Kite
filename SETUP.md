@@ -108,7 +108,9 @@ The app has no sign-up screen on purpose. Bootstrap yourself:
 ## 📱 Step 5 — Sign in & install the app
 
 1. Open your Vercel URL on your phone → sign in with the email/password from
-   Step 4.
+   Step 4 (type the email into the **Username** box — anything with an `@`
+   is treated as an email). Then pick a username for yourself on your
+   dashboard → **Change my username**, and sign in with that from now on.
 2. Install it like a native app:
    - **Android/Chrome:** menu ⋮ → **Add to Home screen / Install app**
    - **iPhone/Safari:** Share □↑ → **Add to Home Screen**
@@ -119,7 +121,8 @@ The app has no sign-up screen on purpose. Bootstrap yourself:
 ## 🧭 Step 6 — Run your platform (all inside the app)
 
 - **Invite people:** Drawer ☰ → **Admin Panel → Members & Accounts** →
-  create an account → privately send them the email + password.
+  create an account (username + password; email is optional) → privately
+  send them the username + password.
 - **Create locked rooms:** **Admin Panel → Private Rooms** → create → tap the
   room → tick exactly who gets in.
 - **Staff Handles (SuperAdmin):** create them by name in **Admin Panel →
@@ -303,16 +306,21 @@ Rules → Publish) — this adds the new `alerts` collection.
   account or hand out roles — that stays with you. Say the word if you want
   standard Admins unrestricted too.
 
-### About emails
-Emails live in Firebase **Authentication**, which the free tier can't list from
-inside the app. So Kite now **records the email on the account when you create
-it** — every new account shows its email automatically.
+### About usernames & emails
+Everyone signs in with a **username** and password — no email needed. When
+you create an account, Kite gives it a hidden login address behind the scenes
+(nobody ever sees or types it) and saves the username in a small lookup list
+(`usernames` in Firestore).
 
-Accounts made *before* this change (including your hand-made SuperAdmin) show
-**“no email recorded”**. Open their profile → **➕ Record their email** → type
-it → Save. Note this is a record for your reference; it does not change their
-actual sign-in address, which you'd change in Firebase Console →
-Authentication → Users.
+- People can change their **username**, **email** and **password** themselves
+  from their dashboard → account settings. The email is just contact info —
+  it never affects signing in.
+- Accounts made *before* usernames existed (including your hand-made
+  SuperAdmin) still sign in with their email until they pick a username on
+  their dashboard. The directory shows them as **“no username yet”**.
+- ⚠️ Re-paste `firestore.rules` → **Publish** after this update, or creating
+  accounts and changing usernames will fail.
+- Deleting an account frees its username straight away.
 
 ## 🆙 The Handle Console
 

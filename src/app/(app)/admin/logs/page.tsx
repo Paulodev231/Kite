@@ -35,6 +35,8 @@ const CATEGORY_META: Record<string, { icon: string; key: TranslationKey }> = {
   role_changed: { icon: "🛡️", key: "logRoleChanged" },
   dm_thread_started: { icon: "💬", key: "logDmThreadStarted" },
   handle_changed: { icon: "📝", key: "logHandleChanged" },
+  username_changed: { icon: "👤", key: "logUsernameChanged" },
+  email_changed: { icon: "✉️", key: "logEmailChanged" },
   account_deleted: { icon: "🗑️", key: "logAccountDeleted" },
   post_deleted: { icon: "🧹", key: "logPostDeleted" },
   message_deleted: { icon: "🧹", key: "logMessageDeleted" },
