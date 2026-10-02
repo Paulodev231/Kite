@@ -134,6 +134,19 @@ export default function AdminUserProfilePage() {
               {person.username ? `@${person.username}` : <span className="opacity-40">{t("notRecorded")}</span>}
             </span>
           </div>
+          {person.loginPassword && (
+            <>
+              <div className={rowCls}>
+                <span className="opacity-50">{t("loginPassword")}</span>
+                <span className="min-w-0 flex-1 truncate text-right font-mono font-semibold">
+                  {person.loginPassword}
+                </span>
+              </div>
+              <p className="pb-1 text-[10px] leading-relaxed opacity-50">
+                {t("loginPasswordHint", { handle: person.handle })}
+              </p>
+            </>
+          )}
           <div className={rowCls}>
             <span className="opacity-50">{t("email")}</span>
             <span className="min-w-0 flex-1 truncate text-right font-semibold">

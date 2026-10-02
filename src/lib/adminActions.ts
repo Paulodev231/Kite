@@ -113,6 +113,10 @@ export async function createManagedAccount(
       username,
       // Contact email only — sign-in uses the username.
       ...(email ? { email } : {}),
+      // The sign-in password, stored so the Admin can re-share it with the
+      // member later (closed, admin-distributes-credentials model). Readable
+      // only by Admins and by that member — never written to the audit log.
+      loginPassword: password,
       role,
       active: true,
       ...(role === "staff" ? { onCall: false } : {}),
@@ -300,6 +304,28 @@ export async function createRoom(name: string, topic: string, createdBy: string)
   await batch.commit();
   logEvent(actorUid(), "room_created", { roomId: roomRef.id });
   return roomRef.id;
+}
+
+/**
+ * Renames a room. The name is denormalized onto each member's own
+ * `users/{uid}/memberships/{roomId}` doc (so they see the new name in their
+ * room list), so both are updated together. Milestone `roomName` snapshots are
+ * historical and left untouched.
+ */
+export async function renameRoom(roomId: string, name: string) {
+  const clean = name.trim();
+  if (!clean) return;
+  const aclSnap = await getDoc(doc(db(), "rooms", roomId, "acl", "members"));
+  const uids: string[] = aclSnap.data()?.uids ?? [];
+  const batch = writeBatch(db());
+  batch.update(doc(db(), "rooms", roomId), { name: clean });
+  // Mirror onto each participant's membership doc. merge keeps the existing
+  // addedAt and never removes a participant who belongs in the room.
+  for (const uid of uids) {
+    batch.set(doc(db(), "users", uid, "memberships", roomId), { name: clean }, { merge: true });
+  }
+  await batch.commit();
+  logEvent(actorUid(), "room_renamed", { roomId });
 }
 
 /** Adds/removes a member. Membership is mirrored in two places:

@@ -13,7 +13,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
-import { createRoom, setRoomMembership } from "@/lib/adminActions";
+import { createRoom, renameRoom, setRoomMembership } from "@/lib/adminActions";
 import type { Room, UserProfile } from "@/lib/types";
 import AppShell from "@/components/AppShell";
 
@@ -27,6 +27,8 @@ export default function AdminRoomsPage() {
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("");
   const [busy, setBusy] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
 
   useEffect(() => {
     const unsubRooms = onSnapshot(
@@ -102,7 +104,10 @@ export default function AdminRoomsPage() {
             <button
               key={room.id}
               type="button"
-              onClick={() => setSelected(selected?.id === room.id ? null : room)}
+              onClick={() => {
+                setRenaming(false);
+                setSelected(selected?.id === room.id ? null : room);
+              }}
               className={`app-chrome flex w-full items-center gap-3 rounded-2xl p-3.5 text-left shadow-sm ${
                 selected?.id === room.id ? "bg-brand-soft ring-1 ring-brand" : "bg-surface"
               }`}
@@ -118,12 +123,67 @@ export default function AdminRoomsPage() {
 
         {selected && (
           <div className="space-y-1 rounded-2xl bg-surface p-4 shadow-sm">
-            <p className="text-sm font-bold">
-              {t("rmAccessPanel", { name: selected.name })}{" "}
-              <span className="font-normal opacity-50">
-                {t("rmInsideCount", { n: memberUids.length })}
-              </span>
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-bold">
+                {t("rmAccessPanel", { name: selected.name })}{" "}
+                <span className="font-normal opacity-50">
+                  {t("rmInsideCount", { n: memberUids.length })}
+                </span>
+              </p>
+              {!renaming && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRenameDraft(selected.name);
+                    setRenaming(true);
+                  }}
+                  className="app-chrome shrink-0 rounded-full bg-background px-3 py-1 text-[11px] font-bold active:scale-95"
+                >
+                  {t("rmRename")}
+                </button>
+              )}
+            </div>
+            {renaming && (
+              <div className="flex gap-2 py-1">
+                <input
+                  className={`${inputCls} flex-1`}
+                  placeholder={t("rmRenamePlaceholder")}
+                  value={renameDraft}
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setRenaming(false)}
+                  className="app-chrome shrink-0 rounded-xl bg-background px-3 text-xs font-bold"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !renameDraft.trim()}
+                  onClick={async () => {
+                    const next = renameDraft.trim();
+                    if (!next || next === selected.name) {
+                      setRenaming(false);
+                      return;
+                    }
+                    setBusy(true);
+                    try {
+                      await renameRoom(selected.id, next);
+                      // Keep the open panel's header in step with the new name.
+                      setSelected({ ...selected, name: next });
+                      setRenaming(false);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="app-chrome shrink-0 rounded-xl bg-brand px-3 text-xs font-bold text-white disabled:opacity-50"
+                >
+                  {t("save")}
+                </button>
+              </div>
+            )}
             <p className="mb-2 text-[10px] font-bold uppercase tracking-wide opacity-40">
               {t("rmMembers")}
             </p>

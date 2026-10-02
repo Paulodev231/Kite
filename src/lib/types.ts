@@ -34,6 +34,10 @@ export interface UserProfile {
   /** Contact email. The person (or an Admin) may edit it freely — it does not
    *  change how they sign in. */
   email?: string;
+  /** The sign-in password, kept so an Admin can re-share it with the member.
+   *  Stored as typed; readable only by Admins and by that member. Set when the
+   *  account is minted — changing the real password happens in Firebase Auth. */
+  loginPassword?: string;
   role: Role;
   active: boolean; // deactivated accounts cannot use the app
   onCall?: boolean; // staff handles only: counted in the presence indicator
