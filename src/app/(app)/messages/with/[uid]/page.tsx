@@ -73,7 +73,7 @@ function DmScreen() {
 
   async function send(text: string, file: File | null) {
     if (!user || !profile || !threadId || !peerUid) return;
-    const attached = file ? await uploadFile(`dms/${threadId}`, file) : null;
+    const attached = file ? await uploadFile(`dms/${threadId}`, file, 25) : null;
     // Compliance metadata: log when a brand-new conversation starts.
     if (!thread) logEvent(user.uid, "dm_thread_started", { threadId });
     // Create/update the thread summary first so security rules and the inbox
@@ -203,6 +203,7 @@ function DmScreen() {
           placeholder={t("messagePlaceholder", { name: peerHandle })}
           allowMedia={elevated}
           allowDocs
+          maxFileMB={25}
           onSend={send}
         />
       </div>

@@ -16,12 +16,14 @@ export default function MediaAttachment({
 
   if (type === "image") {
     return (
-      <img
-        src={url}
-        alt={name ?? t("attachedImage")}
-        className="mt-2 max-h-72 w-full rounded-xl object-cover"
-        loading="lazy"
-      />
+      <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+        <img
+          src={url}
+          alt={name ?? t("attachedImage")}
+          className="mt-2 max-h-72 w-auto max-w-full rounded-xl object-contain"
+          loading="lazy"
+        />
+      </a>
     );
   }
   if (type === "video") {
